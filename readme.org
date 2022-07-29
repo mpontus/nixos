@@ -1,4 +1,4 @@
-# -*- eval: (add-hook 'after-save-hook 'org-babel-tangle nil 'local) -*-
+# -*- eval: (add-hook 'after-save-hook 'org-babel-tangle nil 'local); compile-command: "nixos-rebuild build"  -*-
 #+TITLE: NixOS configuratoin
 #+STARTUP: showall
 #+PROPERTY: header-args :tangle no :noweb yes :noweb-ref system-configuration
@@ -466,8 +466,11 @@ hardware.bluetooth.enable = true;
 
 * Apps
 ** Editor
-*** Emacs (system)
+*** Emacs
 
+#+begin_src nix :noweb-ref home-configuration
+  programs.emacs.enable = true;
+#+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap
   "<Super>e" = {
@@ -475,59 +478,37 @@ hardware.bluetooth.enable = true;
     command = "launch-or-raise -W Emacs emacs";
   };
 #+end_src
-#+begin_src nix :noweb-ref system-configuration
-services.emacs = {
-  enable = true;
-};
-#+end_src
 
-**** COMMENT Overlay
+**** Unstable
 
-#+begin_src nix :noweb-ref system-configuration
-  services.emacs.package = pkgs.emacsUnstable.pkgs.withPackages (epkgs: [ epkgs.vterm ]);
-#+end_src
-
+Import emacs-overlay from nix-community.
 
 #+begin_src nix :noweb-ref overlays
 (import (builtins.fetchTarball {
-    url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
+  url = "https://github.com/nix-community/emacs-overlay/archive/master.tar.gz";
 }))
+#+end_src
+
+Use emacs from master branch.
+
+#+begin_src nix :noweb-ref home-configuration
+programs.emacs.package = pkgs.emacsGitNativeComp;
 #+end_src
 
 **** COMMENT VTerm
 
-#+begin_src nix :noweb-ref system-configuration
-  services.emacs.package = with pkgs; (emacs.pkgs.withPackages (epkgs: [ epkgs.vterm ]));
-#+end_src
-
-**** COMMENT Emacs (overlay)
-
-#+begin_src nix :noweb-ref system-configuration
-  services.emacs.package = with pkgs; (emacsPgtkGcc.emacsWithPackages (epkgs: [ epkgs.vterm ]));
-#+end_src
-
-#+begin_src nix :noweb-ref system-packages
-  emacsPgtkGcc
-#+end_src
+Enable vterm support.
 
 #+begin_src nix :noweb-ref overlays
-    (import (builtins.fetchGit {
-      url = "https://github.com/nix-community/emacs-overlay.git";
-      ref = "master";
-      rev = "bfc8f6edcb7bcf3cf24e4a7199b3f6fed96aaecf"; # change the revision
-    }))
+(self: super: {
+  emacs = super.emacs.pkgs.withPackages (epkgs: [ epkgs.vterm ]);
+})
 #+end_src
 
-**** COMMENT Emacs (home-manager)
+**** COMMENT Service
+
 #+begin_src nix :noweb-ref home-configuration
-# programs.emacs = {
-#   enable = true;
-# };
-services.emacs = {
-  enable = true;
-  client.enable = true;
-  defaultEditor = true;
-};
+services.emacs.enable = true;
 #+end_src
 
 *** vim
@@ -630,7 +611,8 @@ ledger
 *** bash
 #+begin_src nix :noweb-ref home-configuration
   programs.bash = {
-    enable = true;
+    enable = true
+    ;
     historySize = 100000;
     historyFileSize = 100000;
     historyControl = ["ignoredups" "erasedups"];
