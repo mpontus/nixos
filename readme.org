@@ -350,13 +350,15 @@ gnome.gnome-tweaks
   # services.xserver.displayManager.autoLogin.user = "mpontus";
 #+end_src
 
-*** DConf
+*** Dconf & keybindings
+
+Install dconf editor
 
 #+begin_src nix :noweb-ref home-packages
   gnome.dconf-editor
 #+end_src
 
-DConf settings
+Enable literate configuration for dconf settings and keymap
 
 #+begin_src nix :noweb-ref home-configuration
   dconf.settings = {
@@ -380,63 +382,6 @@ DConf settings
 
 #+begin_src nix :noweb-ref dconf-settings
   "ca/desrt/dconf-editor" = { show-warning = false; };
-#+end_src
-
-*** Hotkeys
-
-Install run-or-raise
-
-#+begin_src nix :noweb-ref home-packages
-  (callPackage ./pkgs/run-or-raise { })
-#+end_src
-
-Configure gnome keybindings
-
-#+begin_src nix :noweb-ref dconf-keymap
-  "<Super>e" = {
-    name = "Switch to Emacs";
-    command = "launch-or-raise -W Emacs emacs";
-  };
-  "<Shift><Super>e" = {
-    name = "Switch to Element";
-    command = "launch-or-raise -W Element1 element-desktop";
-  };
-  "<Super>w" = {
-    name = "Switch to Firefox";
-    command = "launch-or-raise -W Navigator firefox";
-  };
-  "<Shift><Super>c" = {
-    name = "Switch to Chromium";
-    command = "run-or-raise 'class = \"Chroimum\"' chromium-browser";
-  };
-  "<Super>t" = {
-    name = "Switch to Telegram";
-    command = "run-or-raise 'class = \"TelegramDesktop\"' telegram-desktop";
-  };
-  "<Super>c" = {
-    name = "Tilix";
-    command = "launch-or-raise -W tilix tilix";
-  };
-  "<Super><Return>" = {
-    name = "Tilix (dropdown)";
-    command = "tilix --quake";
-  };
-  "<Shift><Super>c" = {
-    name = "Tilix (preferences)";
-    command = "tilix --preferences";
-  };
-  "<Super>s" = {
-    name = "Switch to Slack";
-    command = "run-or-raise 'class = \"Slack\"' slack";
-  };
-  "<Super>v" = {
-    name = "Switch to VSCode";
-    command = "run-or-raise 'class = \"Code\"' code";
-  };
-  "<Shift><Super>t" = {
-    name = "Switch to TopTracker";
-    command = "launch-or-raise -W TopTracker TopTracker";
-  };
 #+end_src
 
 *** Gestures
@@ -523,6 +468,13 @@ hardware.bluetooth.enable = true;
 ** Editor
 *** Emacs (system)
 
+
+#+begin_src nix :noweb-ref dconf-keymap
+  "<Super>e" = {
+    name = "Switch to Emacs";
+    command = "launch-or-raise -W Emacs emacs";
+  };
+#+end_src
 #+begin_src nix :noweb-ref system-configuration
 services.emacs = {
   enable = true;
@@ -590,6 +542,13 @@ programs.vim.defaultEditor = true;
 programs.firefox.enable = true;
 #+end_src
 
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>w" = {
+  name = "Switch to Firefox";
+  command = "launch-or-raise -W Navigator firefox";
+};
+#+end_src
+
 **** COMMENT Nightly
 
 #+begin_src nix :noweb-ref overlays
@@ -642,6 +601,19 @@ Make firefox use xinput2 for improved touchscreen support
 #+end_src
 
 **** COMMENT Firefox (system)
+
+*** COMMENT Chromium
+
+#+begin_src nix :noweb-ref home-packages
+chromium
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Shift><Super>c" = {
+  name = "Switch to Chromium";
+  command = "launch-or-raise -W Chroimum chromium-browser";
+};
+#+end_src
 
 ** Passwords
 *** GNU Pass
@@ -754,6 +726,17 @@ Source: https://github.com/fish-shell/fish-shell/issues/825#issuecomment-4402860
 tilix
 #+end_src
 
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>c" = {
+  name = "Tilix";
+  command = "launch-or-raise -W tilix tilix";
+};
+"<Super><Return>" = {
+  name = "Tilix (dropdown)";
+  command = "tilix --quake";
+};
+#+end_src
+
 *** COMMENT Urxvt
 
 #+begin_src nix :noweb-ref home-configuration
@@ -787,6 +770,14 @@ obsidian
 #+begin_src nix :noweb-ref home-packages
 (callPackage ./pkgs/toptracker { })
 #+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Shift><Super>t" = {
+  name = "Switch to TopTracker";
+  command = "launch-or-raise -W TopTracker TopTracker";
+};
+#+end_src
+
 ** Communication
 *** Slack
 
@@ -798,16 +789,39 @@ obsidian
 slack
 #+end_src
 
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>s" = {
+  name = "Switch to Slack";
+  command = "launch-or-raise -W Slack slack";
+};
+#+end_src
+
+
 *** Telegram
 
 #+begin_src nix :noweb-ref home-packages
 tdesktop
 #+end_src
 
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>t" = {
+  name = "Switch to Telegram";
+  command = "launch-or-raise -W TelegramDesktop telegram-desktop";
+};
+#+end_src
+
+
 *** Element
 
 #+begin_src nix :noweb-ref home-packages
 element-desktop
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Shift><Super>e" = {
+  name = "Switch to Element";
+  command = "launch-or-raise -W Element1 element-desktop";
+};
 #+end_src
 
 *** Discord
@@ -964,6 +978,13 @@ vscode
 
 #+begin_src nix :noweb-ref unfree-packages
 "vscode"
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>v" = {
+  name = "Switch to VSCode";
+  command = "launch-or-raise -W Code code";
+};
 #+end_src
 
 ** COMMENT Direnv
