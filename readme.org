@@ -1083,6 +1083,12 @@ Format Nix files
 nixfmt
 #+end_src
 
+** pandoc
+
+#+begin_src nix :noweb-ref home-packages
+pandoc
+#+end_src
+
 * Entertainment
 ** Stremio
 
