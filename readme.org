@@ -1277,14 +1277,45 @@ environment.variables = {
 };
 #+end_src
 
-** COMMENT StarSector
+** StarSector
 
-#+begin_src nix :noweb-ref system-packages
-starsector                      #
+#+begin_src nix :noweb-ref home-packages
+starsector
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
 "starsector"
+#+end_src
+
+*** Use necauqua's fork
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  inherit (import (fetchTarball {
+    url = "https://github.com/necauqua/nixpkgs/archive/starsector-fixes.tar.gz";
+    sha256 = "1nizf43qsy59vprx2s3h01v0md9a74aww0a5l2k5m5mfvqprhz7r";
+  }) {
+    inherit pkgs;
+    config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+      <<unfree-packages>>
+    ];
+  }) starsector;
+})
+#+end_src
+
+*** COMMENT Use Shados's fork
+
+#+begin_src nix :noweb-ref overlays
+(self: super: with {
+  inherit (import (fetchTarball {
+    url = "https://github.com/Shados/nixpkgs/archive/starsector-package-improvements.tar.gz";
+    sha256 = "16g182421bhp5crdijlnn55v5m5wg64fwj8ld2vfb9jfjpwpwwkd";
+  }) {
+    config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+      <<unfree-packages>>
+    ];
+  }) starsector;
+})
 #+end_src
 
 *** COMMENT Overlay
