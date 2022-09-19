@@ -1,5 +1,5 @@
 # -*- eval: (add-hook 'after-save-hook 'org-babel-tangle nil 'local); compile-command: "nixos-rebuild build"  -*-
-#+TITLE: NixOS configuratoin
+#+TITLE: NixOS configuration
 #+STARTUP: showall
 #+PROPERTY: header-args :tangle no :noweb yes :noweb-ref system-configuration
 
@@ -13,6 +13,7 @@
     imports =
       [ # include the results of the hardware scan.
         ./hardware-configuration.nix ./secrets.nix ./pia-openvpn.nix
+        # ./cachix.nix
         <<import-files>>
       ];
 
@@ -24,6 +25,10 @@
       <<overlays>>
     ];
 
+    nixpkgs.config.packageOverrides = pkgs: {
+      <<package-overrides>>
+    };
+
     nixpkgs.config.permittedInsecurePackages = [
       <<insecure-packages>>
     ];
@@ -31,6 +36,8 @@
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
       <<unfree-packages>>
     ];
+
+
 
     <<system-configuration>>
 
@@ -48,9 +55,31 @@
 ** Flakes
 
 #+begin_src nix :noweb-ref system-configuration
-nix.extraOptions = ''
-  experimental-features = nix-command flakes
-'';
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
+#+end_src
+
+** Trusted users
+
+#+begin_src nix :noweb-ref system-configuration
+nix.settings.trusted-users = [ "root" "@wheel" ];
+#+end_src
+
+** COMMENT Trusted users
+
+#+begin_src nix :noweb-ref system-configuration
+nix.buildMachines = [ {
+  hostName = "builder";
+  system = "x86_64-linux";
+  # if the builder supports building for multiple architectures, 
+  # replace the previous line by, e.g.,
+  # systems = ["x86_64-linux" "aarch64-linux"];
+  maxJobs = 1;
+  speedFactor = 2;
+  supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+  mandatoryFeatures = [ ];
+}] ;
+nix.distributedBuilds = true;
+nix.settings.builders-use-substitutes = true;
 #+end_src
 
 ** Home Manager
@@ -90,12 +119,10 @@ home-manager.useGlobalPkgs = true;
 
 Enable custom user repositories
 
-#+begin_src nix :noweb-ref home-configuration
-  nixpkgs.config.packageOverrides = pkgs: {
-    nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-      inherit pkgs;
-    };
-  };
+#+begin_src nix :noweb-ref package-overrides
+nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+  inherit pkgs;
+};
 #+end_src
 
 *** Root user
@@ -109,16 +136,29 @@ Give root user git
   };
 #+end_src
 
-** Store optimization
+** COMMENT Store optimization
 
 #+begin_src nix
 nix.settings.auto-optimise-store = true;
 #+end_src
 
-** Unstable channel
+** COMMENT Unstable channel
 
 #+begin_src nix :noweb-ref system-configuration
 nix.package = pkgs.nixUnstable;
+#+end_src
+
+** COMMENT Unstable packages
+
+#+begin_src nix :noweb-ref package-overrides
+unstable = import <nixos-unstable> {
+  config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    <<unfree-packages>>
+  ];
+  config.permittedInsecurePackages = [
+    <<insecure-packages>>
+  ];
+};
 #+end_src
 
 * System
@@ -130,7 +170,7 @@ nix.package = pkgs.nixUnstable;
   boot.loader.efi.canTouchEfiVariables = true;
 #+end_src
 
-** Time zone
+** COMMENT Time zone
 
 #+begin_src nix
   # Set your time zone.
@@ -222,11 +262,11 @@ services.openvpn.servers.pia = {
     url = "https://www.privateinternetaccess.com/openvpn/openvpn.zip";
     sha256 = "0vxm18gzn7fi7dd85rmj3hnbral568bgczhvgi8cb348lx5i23v4";
     stripRoot = false   ;
-  }}/belgium.ovpn";
+  }}/netherlands.ovpn";
 };
 #+end_src
 
-**** Restart VPN after network configuration change
+**** COMMENT Restart VPN after network configuration change
 
 #+begin_src nix
 # See https://discourse.nixos.org/t/run-script-on-network-interface-down/9167/2
@@ -252,7 +292,7 @@ networking.networkmanager.dispatcherScripts = [
 
 #+begin_src nix
 boot.kernel.sysctl = {
-  "net.ipv4.ip_default_ttl" = 65;
+  "net.ipv4.ip_default_ttl" = 129;
 };
 
 #+end_src
@@ -402,10 +442,36 @@ services.xserver.modules = [ pkgs.xf86_input_wacom ];
 services.xserver.wacom.enable = true;
 #+end_src
 
+*** gnomecast
+
+#+begin_src nix :noweb-ref home-packages
+gnomecast
+#+end_src
+
+**** Use fork
+
+#+begin_src nix :noweb-ref overlays
+(self: super:
+  with import (fetchTarball {
+    url =
+      "https://github.com/MaeIsBad/nixpkgs/archive/fix-gnomecast.tar.gz";
+    sha256 = "16g182421bhp5crdijlnn55v5m5wg64fwj8ld2vfb9jfjpwpwwkd";
+  }) {inherit pkgs;}; {
+    inherit gnomecast;
+  })
+#+end_src
+
+
 ** DWM
 
 #+begin_src nix :noweb-ref system-configuration
 services.xserver.windowManager.dwm.enable = true;
+#+end_src
+
+** ly
+
+#+begin_src nix :noweb-ref system-packages
+ly
 #+end_src
 
 ** COMMENT LightDM
@@ -479,7 +545,13 @@ hardware.bluetooth.enable = true;
   };
 #+end_src
 
-**** Unstable
+**** COMMENT XWidgets
+
+#+begin_src nix :noweb-ref overlays
+(self: super: { emacs = super.emacs.override { withXwidgets = true; }; })
+#+end_src
+
+**** COMMENT Pgtk
 
 Import emacs-overlay from nix-community.
 
@@ -489,10 +561,10 @@ Import emacs-overlay from nix-community.
 }))
 #+end_src
 
-Use emacs from master branch.
+Use latest emacs with natively compiled modules.
 
 #+begin_src nix :noweb-ref home-configuration
-programs.emacs.package = pkgs.emacsGitNativeComp;
+programs.emacs.package = pkgs.emacsPgtk;
 #+end_src
 
 **** COMMENT VTerm
@@ -509,6 +581,49 @@ Enable vterm support.
 
 #+begin_src nix :noweb-ref home-configuration
 services.emacs.enable = true;
+#+end_src
+
+
+*** COMMENT Doom Emacs
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+    doom-emacs = pkgs.callPackage (builtins.fetchTarball {
+        url = https://github.com/vlaci/nix-doom-emacs/archive/master.tar.gz;
+    }) {
+        doomPrivateDir = ./doom.d;
+        # Use the latest emacs-overlay
+        dependencyOverrides = {
+            <<doom-dependency-overrides>>
+        };
+    };
+})
+#+end_src
+
+#+begin_src nix :noweb-ref home-packages
+    doom-emacs
+#+end_src
+
+**** Overlay
+
+#+begin_src nix :noweb-ref doom-dependency-overrides
+"emacs-overlay" = (builtins.fetchTarball {
+    url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
+});
+#+end_src
+
+**** COMMENT Packages
+
+***** grip
+
+Github-styled markdown previewer.
+
+#+begin_src nix :noweb-ref doom-extra-packages
+   grip
+#+end_src
+
+#+begin_src elisp :noweb-ref doom-extra-config
+  (setq-default grip-binary-path "${pkgs.python3Packages.grip}/bin/grip")
 #+end_src
 
 *** vim
@@ -540,29 +655,26 @@ programs.firefox.enable = true;
 programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
 #+end_src
 
-**** COMMENT Native extensions
-#
+**** Native extensions
+
 #+begin_src nix :noweb-ref home-configuration
-  programs.firefox.package = pkgs.firefox-unwrapped.override {
-    # See nixpkgs' firefox/wrapper.nix to check which options you can use
-    cfg = {
-      # Gnome shell native connector
-      enableGnomeExtensions = true;
-      # Tridactyl native connector
-      enableTridactylNative = true;
-    };
-  };
+programs.firefox.enableGnomeExtensions = true;
+#+end_sr
+
+#+begin_src nix :noweb-ref overlays
+# (self: super: {
+#     firefox = super.firefox.override {
+#         enableGnomeExtensions = true;
+#         enableTridactylNative = true;
+#     };
+# })
+#+end_src
+
+#+begin_src nix :noweb-ref system-configuration
+services.gnome.chrome-gnome-shell.enable = true;
 #+end_src
 
 **** Addons
-
-#+begin_src nix :noweb-ref system-configuration
-nixpkgs.config.packageOverrides = pkgs: {
-  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-    inherit pkgs;
-  };
-};
-#+end_src
 
 #+begin_src nix :noweb-ref home-configuration
   programs.firefox.extensions = with pkgs.nur.repos.rycee.firefox-addons; [
@@ -583,7 +695,19 @@ Make firefox use xinput2 for improved touchscreen support
 
 **** COMMENT Firefox (system)
 
-*** COMMENT Chromium
+**** COMMENT fx_cast
+
+#+begin_src nix :noweb-ref home-packages
+unstable.fx_cast_bridge
+#+end_src
+
+*** nyxt
+
+#+begin_src nix :noweb-ref home-packages
+nyxt
+#+end_src
+
+*** Chromium
 
 #+begin_src nix :noweb-ref home-packages
 chromium
@@ -920,6 +1044,14 @@ Transform JSON files
 
 #+begin_src nix :noweb-ref home-packages
 jq
+#+end_src
+
+*** xsv
+
+Transform CSV files
+
+#+begin_src RemoveRemovenix :noweb-ref home-packages
+xsv
 #+end_src
 
 *** htmlq
