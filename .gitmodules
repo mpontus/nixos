@@ -2,3 +2,6 @@
 	path = pkgs
 	url = https://github.com/mpontus/nixpkgs.git
 	branch = packages
+[submodule "doom.d"]
+	path = doom.d
+	url = https://github.com/mpontus/doom.d.git

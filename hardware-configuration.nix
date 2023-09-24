@@ -4,38 +4,36 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "usb_storage" "usbhid" "sd_mod" ];
+  boot.initrd.availableKernelModules =
+    [ "xhci_pci" "nvme" "usb_storage" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ "dm-snapshot" ];
-  boot.kernelModules = [ "kvm-intel" ];
-  boot.extraModulePackages = [ ];
+  boot.kernelModules = [ "kvm-intel" "8821ce" ];
+  boot.extraModulePackages = with config.boot.kernelPackages; [ rtl8821ce ];
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/3aa8776e-4a7e-4ca3-9374-5698f117bc98";
-      fsType = "ext4";
-    };
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/3aa8776e-4a7e-4ca3-9374-5698f117bc98";
+    fsType = "ext4";
+  };
 
-  fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/d559859a-f37e-42ae-9f34-727a1c07bd7e";
-      fsType = "ext4";
-    };
+  fileSystems."/home" = {
+    device = "/dev/disk/by-uuid/d559859a-f37e-42ae-9f34-727a1c07bd7e";
+    fsType = "ext4";
+  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/B4AA-D625";
-      fsType = "vfat";
-    };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/B4AA-D625";
+    fsType = "vfat";
+  };
 
-  fileSystems."/run" =
-    { device = "tmpfs";
-      fsType = "tmpfs";
-    };
+  fileSystems."/run" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+  };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/e1497da9-9f67-434b-a52f-520d71ecc540"; }
-    ];
+    [{ device = "/dev/disk/by-uuid/e1497da9-9f67-434b-a52f-520d71ecc540"; }];
 
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
   # high-resolution display
