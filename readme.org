@@ -171,6 +171,14 @@ unstable = import <nixos-unstable> {
   boot.loader.efi.canTouchEfiVariables = true;
 #+end_src
 
+** Kernel modules
+
+#+begin_src nix
+  boot.kernelModules = [
+    <<kernel-modules>>
+  ];
+#+end_src
+
 ** Filesystems
 *** NTFS
 #+begin_src nix
@@ -238,7 +246,10 @@ Don't forget to reset a password with ‘passwd’
 #+begin_src nix
   networking.hostName = "nixos"; # Define your hostname.
 #+end_src
-
+*** Disable IPV6
+#+begin_src nix
+networking.enableIPv6  = false;
+#+end_src
 *** DHCP
 
 Disable DHCP by default to run NixOS in a VM.
@@ -262,17 +273,18 @@ Disabled to allow visiting locally running website from mobile
 
 *** VPN
 
+**** OpenVPN
 #+begin_src nix
 services.openvpn.servers.pia = {
   config = "config ${pkgs.fetchzip {
     url = "https://www.privateinternetaccess.com/openvpn/openvpn.zip";
-    sha256 = "0vxm18gzn7fi7dd85rmj3hnbral568bgczhvgi8cb348lx5i23v4";
+    sha256 = "sha256-ZA8RS6eIjMVQfBt+9hYyhaq8LByy5oJaO9Ed+x8KtW8=";
     stripRoot = false   ;
   }}/netherlands.ovpn";
 };
 #+end_src
 
-**** Disable by default
+***** Disable by default
 
 #+begin_src nix :noweb-ref system-configuration
 services.openvpn.servers.pia.autoStart = false;
@@ -322,6 +334,10 @@ services.piavpn.enable = true;
 };
 #+end_src
 
+*** Paper VPN
+#+begin_src nix :noweb-ref system-packages
+(callPackage ./pkgs/outline.nix { })
+#+end_src
 *** COMMENT Spoof defalt ttl
 
 #+begin_src nix
@@ -335,16 +351,22 @@ boot.kernel.sysctl = {
 
 #+begin_src nix :noweb-ref system-configuration
 boot.extraModulePackages = with config.boot.kernelPackages; [ rtl8821ce rtl8821cu ];
-boot.kernelModules = [ "8821ce" ];
+#+end_src
+
+#+begin_src nix :noweb-ref kernel-modules
+"8821ce"
 #+end_src
 ** Virtualization
 #+begin_src nix :noweb-ref system-packages
-  pkgs.virt-manager
+pkgs.virt-manager
 #+end_src
 
 #+begin_src nix :noweb-ref system-configuration
-  boot.kernelModules = ["kvm-intel" "kvm-amd"];
-  virtualisation.libvirtd.enable = true;
+virtualisation.libvirtd.enable = true;
+#+end_src
+
+#+begin_src nix :noweb-ref kernel-modules
+"kvm-intel" "kvm-amd"
 #+end_src
 
 *** Increase default msize
@@ -584,6 +606,9 @@ barrier
     package = pkgs.emacsWithPackages (epkgs: with epkgs; [
       <<emacs-packages>>
     ]);
+    # package = (pkgs.emacsGit.override {
+    #   withXwidgets = true;
+    # });
   };
 #+end_src
 
@@ -603,7 +628,7 @@ barrier
 };
 #+end_src
 
-**** COMMENT XWidgets
+**** XWidgets
 
 #+begin_src nix :noweb-ref overlays
 (self: super: { emacs = super.emacs.override { withXwidgets = true; }; })
@@ -779,6 +804,8 @@ programs.vim.defaultEditor = true;
 
 #+begin_src nix :noweb-ref home-configuration
 programs.firefox.enable = true;
+# programs.firefox.package = pkgs.unstable.firefox-unwrapped;
+programs.firefox.package = pkgs.firefox-beta-bin.unwrapped;
 #+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap
@@ -788,14 +815,23 @@ programs.firefox.enable = true;
 };
 #+end_src
 
-**** COMMENT Nightly
+**** Nightly
 
 #+begin_src nix :noweb-ref overlays
-(import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz))
+(let
+    # Change this to a rev sha to pin
+    moz-rev = "master";
+    moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";};
+    nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
+  in nightlyOverlay)
 #+end_src
 
 #+begin_src nix :noweb-ref home-configuration
-programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
+# programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
+#+end_src
+
+#+begin_src nix :noweb-ref home-packages
+# latest.firefox-nightly-bin
 #+end_src
 
 **** COMMENT Native extensions
@@ -817,7 +853,7 @@ programs.firefox.enableGnomeExtensions = true;
 services.gnome.chrome-gnome-shell.enable = true;
 #+end_src
 
-**** Addons
+**** COMMENT Addons
 
 #+begin_src nix :noweb-ref home-configuration
   programs.firefox.extensions = with pkgs.nur.repos.rycee.firefox-addons; [
@@ -836,14 +872,16 @@ Make firefox use xinput2 for improved touchscreen support
   };
 #+end_src
 
-**** COMMENT Firefox (system)
-
 **** COMMENT fx_cast
 
 #+begin_src nix :noweb-ref home-packages
 unstable.fx_cast_bridge
 #+end_src
-
+**** Overlay
+#+begin_src nix :noweb-ref overlays
+(import (builtins.fetchTarball
+    "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz"))
+#+end_src
 *** COMMENT nyxt
 
 #+begin_src nix :noweb-ref home-packages
@@ -853,12 +891,12 @@ nyxt
 *** Tor Browser
 
 #+begin_src nix :noweb-ref home-packages
-tor-browser-bundle-bin
+unstable.tor-browser-bundle-bin
 #+end_src
 *** Chromium
 
 #+begin_src nix :noweb-ref home-packages
-chromium
+unstable.chromium
 #+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap
@@ -871,11 +909,11 @@ chromium
 *** Edge
 
 #+begin_src nix :noweb-ref home-packages
-unstable.microsoft-edge-dev
+unstable.microsoft-edge
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
-"microsoft-edge-dev"
+"microsoft-edge"
 #+end_src
 
 ** Docs
@@ -894,6 +932,10 @@ hunspellDicts.th_TH
 okular
 #+end_src
 
+** Audacity
+#+begin_src nix :noweb-ref home-packages
+audacity
+#+end_src
 ** Passwords
 *** GNU Pass
 #+begin_src nix :noweb-ref home-packages
@@ -1080,6 +1122,13 @@ obsidian
 #+begin_src nix :noweb-ref home-packages
 (callPackage ./pkgs/marvin.nix { })
 #+end_src
+
+*** Responsively App
+
+#+begin_src nix :noweb-ref home-packages
+(callPackage ./pkgs/responsively-app.nix { })
+#+end_src
+
 *** Cursor
 
 Evaluating GPT-4 powered ide
@@ -1148,7 +1197,7 @@ element-desktop
 };
 #+end_src
 
-*** COMMENT Discord
+*** Discord
 
 #+begin_src nix :noweb-ref home-packages
 discord
@@ -1168,9 +1217,9 @@ discord
 beep
 #+end_src
 
-*** COMMENT Kernel module
+*** Kernel module
 #+begin_src :nix :noweb-ref kernel-modules
-pcspkr
+"pcspkr"
 #+end_src
 ** Diagnostics
 *** htop
@@ -1312,7 +1361,6 @@ Needed for [emacs-anywhere](https://github.com/zachcurry/emacs-anywhere#try-it).
   xclip
 #+end_src
 
-
 *** WM controls
 
 #+begin_src nix :noweb-ref home-packages
@@ -1322,11 +1370,49 @@ Needed for [emacs-anywhere](https://github.com/zachcurry/emacs-anywhere#try-it).
 * Development
 ** NodeJS
 #+begin_src nix :noweb-ref home-packages
-unstable.nodejs yarn
+unstable.nodejs
+# unstable.nodejs_16
+yarn
+#+end_src
+
+#+begin_src nix :noweb-ref insecure-packages
+"nodejs-16.20.2"
+#+end_src
+*** Yarn overlay
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  yarn = super.unstable.yarn.overrideAttrs (oldAttrs: {
+    version = "1.22.19";
+    src = super.fetchurl {
+      url = "https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-v1.22.19.tar.gz";
+      hash = "sha256-cyYgusixaQ1QcnTwJfPGz9w2J6hNlkLjigdFLMAODy4=";
+      # sha256 = "1mfzm3k6kpfy45kzmijg9vsrck8y14jjb6rrhba6gaifa4slzdl7";
+    };
+  });
+})
 #+end_src
 ** Python
 #+begin_src nix :noweb-ref home-packages
 (python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py ]))
+#+end_src
+
+** Rust toolchain
+#+begin_src nix :noweb-ref home-packages
+unstable.rustc cargo wasm-pack
+#+end_src
+
+*** Needed for ~cargo generate~
+
+#+begin_src nix :noweb-ref system-packages
+pkg-config libssh2 zlib
+#+end_src
+
+#+begin_src nix :noweb-ref system-configuration
+# See https://github.com/sfackler/rust-openssl/issues/1663#issuecomment-1603606249
+environment.variables = {
+  PKG_CONFIG_PATH = [ "${pkgs.openssl.dev}/lib/pkgconfig" "${pkgs.zlib.dev}/lib/pkgconfig" ];
+}   ;
 #+end_src
 ** VSCode
 
@@ -1349,7 +1435,7 @@ programs.vscode = {
 };
 #+end_src
 
-*** COMMENT Insiders
+*** Insiders
 #+begin_src nix :noweb-ref overlays
 (final: prev: {                 #
   vscode = (prev.vscode.override { isInsiders = true; }).overrideAttrs
@@ -1367,6 +1453,14 @@ programs.vscode = {
 
 #+begin_src nix :noweb-ref unfree-packages
 "code-insiders" "vscode-insiders"
+#+end_src
+** Postman
+#+begin_src nix :noweb-ref system-packages
+unstable.postman
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"postman"
 #+end_src
 ** COMMENT Direnv
 ** Git
@@ -1386,9 +1480,12 @@ git-lfs
 *** GitHub CLI
 
 #+begin_src nix :noweb-ref home-packages
-hub
+unstable.gh hub
 #+end_src
-
+** GCC
+#+begin_src nix :noweb-ref system-packages
+gnumake gcc binutils cmake
+#+end_src
 ** GPG
 
 #+begin_src nix :noweb-ref home-packages
@@ -1406,12 +1503,16 @@ hub
     enableSshSupport = true;
   };
 #+end_src
-
+** OpenSSL
+#+begin_src nix :noweb-ref system-packages
+openssl
+#+end_src
 ** IPFS
 *** /etc/hosts
 
 #+begin_src nix :noweb-ref system-configuration
 networking.extraHosts = ''
+  127.0.0.1 localhost
   127.0.0.1 ipfs.local
   192.168.1.121 grafana.orangepi argocd.orangepi portainer.orangepi
 '';
@@ -1435,6 +1536,13 @@ See https://discourse.nixos.org/t/docker-hanging-on-reboot/18270
 
 #+begin_src nix :noweb-ref system-configuration
 virtualisation.docker.liveRestore = false;
+#+end_src
+** Ngrok
+#+begin_src nix :noweb-ref home-packages
+unstable.ngrok
+#+end_src
+#+begin_src nix :noweb-ref unfree-packages
+"ngrok"
 #+end_src
 ** COMMENT Minikube
 #+begin_src nix :noweb-ref home-packages
@@ -1489,6 +1597,10 @@ awscli2
 unstable.aws-sam-cli
 #+end_src
 
+** Databases
+#+begin_src nix :noweb-ref home-packages
+dbeaver
+#+end_src
 ** NoSQL Workbench
 
 #+begin_src nix :noweb-ref home-packages
@@ -1513,7 +1625,7 @@ altair
 Format code using prettier
 
 #+begin_src nix :noweb-ref home-packages
-nodePackages."prettier"
+unstable.nodePackages."prettier"
 #+end_src
 
 ** nixfmt
@@ -1531,12 +1643,15 @@ pandoc
 #+end_src
 
 * Entertainment
-** COMMENT Stremio
+** Stremio
 
 #+begin_src nix :noweb-ref home-packages
 (callPackage ./pkgs/stremio.nix { })
 #+end_src
-
+** Spotify
+#+begin_src nix :noweb-ref home-packages
+spotify
+#+end_src
 ** Deluge
 
 #+begin_src nix :noweb-ref home-packages
@@ -1554,6 +1669,10 @@ vlc
 unstable.kodi
 #+end_src
 ** OBS
+
+#+begin_src nix :noweb-ref home-packages
+obs-studio
+#+end_src
 ** Calibre
 
 GTK+ book reader
@@ -1562,11 +1681,22 @@ GTK+ book reader
 calibre
 #+end_src
 
-
+** COMMENT Tremulous
 #+begin_src nix :noweb-ref home-packages
-obs-studio
+tremulous
 #+end_src
 
+#+begin_src nix :noweb-ref system-configuration
+nixpkgs.config.allowBroken = true;
+#+end_src
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  tremulous = super.tremulous.overrideAttrs (old: rec {
+    buildInputs = [self.which];
+  });
+})
+#+end_src
 ** Steam
 
 Whitelist unfree packages
@@ -1590,6 +1720,13 @@ environment.variables = {
 };
 #+end_src
 
+** Spotify
+#+begin_src nix :noweb-ref unfree-packages
+  "spotify" "spotify-unwrapped"
+#+end_src
+#+begin_src nix :noweb-ref home-packages
+spotify
+#+end_src
 ** StarSector
 
 #+begin_src nix :noweb-ref home-packages
