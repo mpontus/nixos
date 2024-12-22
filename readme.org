@@ -385,7 +385,7 @@ environment.variables = {
     enableDefaultFonts = false;
     fonts = with pkgs; [
       noto-fonts
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
       noto-fonts-emoji
       twitter-color-emoji
       liberation_ttf
@@ -440,7 +440,7 @@ Enable the GNOME Desktop Environment
 *** Extensions
 
 #+begin_src nix :noweb-ref system-packages
-gnome.gnome-tweaks
+gnome-tweaks
 #+end_src
 
 *** Auto-login
@@ -457,7 +457,7 @@ gnome.gnome-tweaks
 Install dconf editor
 
 #+begin_src nix :noweb-ref home-packages
-  gnome.dconf-editor
+  dconf-editor
 #+end_src
 
 Enable literate configuration for dconf settings and keymap
@@ -545,7 +545,7 @@ services.xserver.windowManager.xmonad = {
 };
 #+end_src
 
-** Sound
+** COMMENT Sound
 
 #+begin_src nix
   sound.enable = true;
@@ -603,9 +603,9 @@ barrier
 #+begin_src nix :noweb-ref home-configuration
   programs.emacs = {
     enable = true;
-    package = pkgs.emacsWithPackages (epkgs: with epkgs; [
-      <<emacs-packages>>
-    ]);
+    # package = pkgs.emacs.withPackages (epkgs: with epkgs; [
+    #   <<emacs-packages>>
+    # ]);
     # package = (pkgs.emacsGit.override {
     #   withXwidgets = true;
     # });
@@ -628,10 +628,12 @@ barrier
 };
 #+end_src
 
-**** XWidgets
+**** COMMENT XWidgets
 
 #+begin_src nix :noweb-ref overlays
-(self: super: { emacs = super.emacs.override { withXwidgets = true; }; })
+(self: super: {
+  emacs = super.emacs.overrideAttrs (old: rec { withXwidgets = true; });
+})
 #+end_src
 
 **** COMMENT Pgtk
@@ -893,7 +895,7 @@ nyxt
 #+begin_src nix :noweb-ref home-packages
 unstable.tor-browser-bundle-bin
 #+end_src
-*** Chromium
+*** COMMENT Chromium
 
 #+begin_src nix :noweb-ref home-packages
 unstable.chromium
@@ -906,7 +908,7 @@ unstable.chromium
 };
 #+end_src
 
-*** Edge
+*** COMMENT Edge
 
 #+begin_src nix :noweb-ref home-packages
 unstable.microsoft-edge
@@ -941,7 +943,7 @@ audacity
 #+begin_src nix :noweb-ref home-packages
 pass
 #+end_src
-*** Authy
+*** COMMENT Authy
 
 I also use Authy for 2FA
 
@@ -1100,7 +1102,7 @@ programs.urxvt = {
 };
 #+end_src
 ** Productivity
-*** Obsidian
+*** COMMENT Obsidian
 
 #+begin_src nix :noweb-ref home-packages
 obsidian
@@ -1129,7 +1131,7 @@ obsidian
 (callPackage ./pkgs/responsively-app.nix { })
 #+end_src
 
-*** Cursor
+*** COMMENT Cursor
 
 Evaluating GPT-4 powered ide
 
@@ -1599,7 +1601,7 @@ unstable.aws-sam-cli
 
 ** Databases
 #+begin_src nix :noweb-ref home-packages
-dbeaver
+dbeaver-bin
 #+end_src
 ** NoSQL Workbench
 
@@ -1702,7 +1704,7 @@ nixpkgs.config.allowBroken = true;
 Whitelist unfree packages
 
 #+begin_src nix :noweb-ref unfree-packages
-  "steam" "steam-original" "steam-runtime"
+  "steam" "steam-unwrapped"
 #+end_src
 
 Install steam
@@ -1727,7 +1729,7 @@ environment.variables = {
 #+begin_src nix :noweb-ref home-packages
 spotify
 #+end_src
-** StarSector
+** COMMENT StarSector
 
 #+begin_src nix :noweb-ref home-packages
 starsector
