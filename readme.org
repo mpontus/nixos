@@ -471,8 +471,8 @@ gnome-tweaks
 #+begin_src nix :noweb-ref system-configuration
   systemd.services."getty@tty1".enable = true;
   systemd.services."autovt@tty1".enable = true;
-  # services.xserver.displayManager.autoLogin.enable = true;
-  # services.xserver.displayManager.autoLogin.user = "mpontus";
+  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.user = "mpontus";
 #+end_src
 
 *** Dconf & keybindings
