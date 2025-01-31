@@ -1519,11 +1519,17 @@ gnumake gcc binutils cmake
 #+end_src
 ** GPG
 
-#+begin_src nix :noweb-ref home-packages
-  gnupg
+#+begin_src nix :noweb-ref system-configuration
+# programs.gnupg.agent.enable = true;
+programs.gnupg.agent = {
+  enable = true;
+  enableSSHSupport = true;
+  pinentryPackage = pkgs.pinentry-gtk2;
+};
 #+end_src
+  gnupg
 
-*** gpg-agent
+*** COMMENT gpg-agent
 
 ???
 
