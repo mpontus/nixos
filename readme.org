@@ -509,7 +509,7 @@ Enable literate configuration for dconf settings and keymap
   "ca/desrt/dconf-editor" = { show-warning = false; };
 #+end_src
 
-*** Gestures
+*** COMMENT Gestures
 
 #+begin_src nix :noweb-ref system-packages
 gnomeExtensions.x11-gestures touchegg
