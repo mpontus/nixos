@@ -1417,6 +1417,12 @@ yarn
   });
 })
 #+end_src
+*** Pnpm
+
+#+begin_src nix :noweb-ref home-packages
+pnpm
+#+end_src
+
 ** Python
 #+begin_src nix :noweb-ref home-packages
 (python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py ]))
@@ -1562,6 +1568,19 @@ See https://discourse.nixos.org/t/docker-hanging-on-reboot/18270
 #+begin_src nix :noweb-ref system-configuration
 virtualisation.docker.liveRestore = false;
 #+end_src
+
+*** Docker compose
+
+#+begin_src nix :noweb-ref home-packages
+docker-compose
+#+end_src
+
+** Protobuf
+
+#+begin_src nix :noweb-ref home-packages
+protobuf
+#+end_src
+
 ** Ngrok
 #+begin_src nix :noweb-ref home-packages
 unstable.ngrok
