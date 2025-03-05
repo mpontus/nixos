@@ -3,7 +3,7 @@
 #+STARTUP: showall
 #+PROPERTY: header-args :tangle no :noweb yes :noweb-ref system-configuration
 
-#+BEGIN_SRC nix :tangle /etc/nixos/configuration.nix :noweb-ref none
+#+BEGIN_SRC nix :tangle configuration.nix :noweb-ref none
   # edit this configuration file to define what should be installed on
   # your system.  help is available in the configuration.nix(5) man page
   # and in the nixos manual (accessible by running ‘nixos-help’).
