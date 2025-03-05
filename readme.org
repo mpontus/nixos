@@ -12,7 +12,7 @@
   {
     imports =
       [ # include the results of the hardware scan.
-        ./hardware-configuration.nix ./secrets.nix
+        ./hardware-configuration.nix
         # ./pia-openvpn.nix
         ./cachix.nix
         <<import-files>>
