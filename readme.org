@@ -1587,6 +1587,11 @@ docker-compose
 protobuf
 #+end_src
 
+** Temporal CLI
+#+begin_src nix :noweb-ref home-packages
+unstable.temporal-cli
+#+end_src
+
 ** Ngrok
 #+begin_src nix :noweb-ref home-packages
 unstable.ngrok
