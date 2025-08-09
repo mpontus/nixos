@@ -163,10 +163,10 @@ Give root user git
 nix.settings.auto-optimise-store = true;
 #+end_src
 
-** COMMENT Unstable channel
+** Unstable channel
 
 #+begin_src nix :noweb-ref system-configuration
-nix.package = pkgs.nixUnstable;
+nix.package = pkgs.nixVersions.git;
 #+end_src
 
 ** Unstable packages
