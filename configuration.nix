@@ -1,7 +1,7 @@
   # edit this configuration file to define what should be installed on
   # your system.  help is available in the configuration.nix(5) man page
   # and in the nixos manual (accessible by running ‘nixos-help’).
-  { config, lib,  pkgs, ... }:
+  { config, lib,  pkgs, inputs, ... }:
 
   {
     imports =
@@ -9,7 +9,7 @@
         ./hardware-configuration.nix
         # ./pia-openvpn.nix
         # ./cachix.nix
-          <home-manager/nixos>
+        
       ];
 
     environment.systemPackages = with pkgs; [
@@ -440,7 +440,7 @@
         home.packages = with pkgs; [ htop git ];
         home.stateVersion = "18.09";
       };
-    nix.package = pkgs.nixVersions.latest;
+    nix.package = pkgs.nixVersions.git;
       # Use the systemd-boot EFI boot loader.
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;

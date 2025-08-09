@@ -10,7 +10,7 @@
   # edit this configuration file to define what should be installed on
   # your system.  help is available in the configuration.nix(5) man page
   # and in the nixos manual (accessible by running ‘nixos-help’).
-  { config, lib,  pkgs, ... }:
+  { config, lib,  pkgs, inputs, ... }:
 
   {
     imports =
@@ -76,11 +76,16 @@ To enable flakes for NixOS configuration, we need to create ~/etc/nixos/flake.ni
   description = "NixOS Flake Configuration";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    <<inputs>>
   };
   outputs = { self, nixpkgs, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      modules = [./configuration.nix];
+      specialArgs = { inherit inputs; };
+      modules = [
+        ./configuration.nix
+        <<modules>>
+      ];
     };
   };
 }
@@ -112,10 +117,19 @@ nix.settings.builders-use-substitutes = true;
 
 ** Home Manager
 
-Load home-manager module
+Add home-manager as Nix flake input
 
-#+begin_src nix :noweb-ref import-files
-  <home-manager/nixos>
+#+begin_src nix :noweb-ref inputs
+home-manager = {
+  url = "github:nix-community/home-manager/release-24.11";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
+#+end_src
+
+Include home-manager as NixOS module
+
+#+begin_src nix :noweb-ref modules
+inputs.home-manager.nixosModules.home-manager
 #+end_src
 
 Configure home environment
