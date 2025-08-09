@@ -176,7 +176,7 @@ home-manager.useGlobalPkgs = true;
   };
 #+end_src
 
-*** NUR
+*** COMMENT NUR
 
 Enable custom user repositories
 
@@ -902,6 +902,7 @@ doom-emacs
 #+begin_src nix :noweb-ref doom-dependency-overrides
 "emacs-overlay" = (builtins.fetchTarball {
     url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
+    sha256 = "1q5x7j0f8v3z4c6k2b9l5m8n9p0q1r2s3t4u5v6w7x8y9z0a1b2c3d4e5f6g7h8";
 });
 #+end_src
 
@@ -944,11 +945,12 @@ programs.firefox.package = pkgs.firefox-beta-bin.unwrapped;
 
 #+begin_src nix :noweb-ref overlays
 (let
-    # Change this to a rev sha to pin
-    moz-rev = "master";
-    moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";};
-    nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
-  in nightlyOverlay)
+  # Change this to a rev sha to pin
+  moz-rev = "master";
+  moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";
+                                    sha256 = "0fcfg835ly29m7m4xzhxb7lvw2ayxcv7cn7pzw4hkj2j1vzx7b2b"; };
+  nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
+in nightlyOverlay)
 #+end_src
 
 #+begin_src nix :noweb-ref home-configuration
@@ -1005,7 +1007,10 @@ unstable.fx_cast_bridge
 **** Overlay
 #+begin_src nix :noweb-ref overlays
 (import (builtins.fetchTarball
-    "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz"))
+{
+  url =     "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz";
+  sha256 = "0fcfg835ly29m7m4xzhxb7lvw2ayxcv7cn7pzw4hkj2j1vzx7b2b";
+}))
 #+end_src
 *** COMMENT nyxt
 

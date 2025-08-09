@@ -25,13 +25,17 @@
 
     nixpkgs.overlays = [
       (let
-          # Change this to a rev sha to pin
-          moz-rev = "master";
-          moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";};
-          nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
-        in nightlyOverlay)
+        # Change this to a rev sha to pin
+        moz-rev = "master";
+        moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";
+                                          sha256 = "0fcfg835ly29m7m4xzhxb7lvw2ayxcv7cn7pzw4hkj2j1vzx7b2b"; };
+        nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
+      in nightlyOverlay)
       (import (builtins.fetchTarball
-          "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz"))
+      {
+        url =     "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz";
+        sha256 = "0fcfg835ly29m7m4xzhxb7lvw2ayxcv7cn7pzw4hkj2j1vzx7b2b";
+      }))
       (self: super: {
         yarn = super.unstable.yarn.overrideAttrs (oldAttrs: {
           version = "1.22.19";
@@ -45,9 +49,6 @@
     ];
 
     nixpkgs.config.packageOverrides = pkgs: {
-      nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-        inherit pkgs;
-      };
       unstable = import <nixos-unstable> {
         config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
           "corefonts"
