@@ -1,5 +1,5 @@
-# -*- eval: (add-hook 'after-save-hook 'org-babel-tangle nil 'local) -*-
-#+TITLE: NixOS configuratoin
+# -*- eval: (add-hook 'after-save-hook 'org-babel-tangle nil 'local); compile-command: "nixos-rebuild build"  -*-
+#+TITLE: NixOS configuration
 #+STARTUP: showall
 #+PROPERTY: header-args :tangle no :noweb yes :noweb-ref system-configuration
 
@@ -12,7 +12,9 @@
   {
     imports =
       [ # include the results of the hardware scan.
-        ./hardware-configuration.nix ./secrets.nix ./pia-openvpn.nix
+        ./hardware-configuration.nix
+        # ./pia-openvpn.nix
+        # ./cachix.nix
         <<import-files>>
       ];
 
@@ -24,6 +26,10 @@
       <<overlays>>
     ];
 
+    nixpkgs.config.packageOverrides = pkgs: {
+      <<package-overrides>>
+    };
+
     nixpkgs.config.permittedInsecurePackages = [
       <<insecure-packages>>
     ];
@@ -31,6 +37,9 @@
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
       <<unfree-packages>>
     ];
+
+
+
 
     <<system-configuration>>
 
@@ -48,9 +57,31 @@
 ** Flakes
 
 #+begin_src nix :noweb-ref system-configuration
-nix.extraOptions = ''
-  experimental-features = nix-command flakes
-'';
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
+#+end_src
+
+** Trusted users
+
+#+begin_src nix :noweb-ref system-configuration
+nix.settings.trusted-users = [ "root" "@wheel" ];
+#+end_src
+
+** COMMENT Trusted users
+
+#+begin_src nix :noweb-ref system-configuration
+nix.buildMachines = [ {
+  hostName = "builder";
+  system = "x86_64-linux";
+  # if the builder supports building for multiple architectures, 
+  # replace the previous line by, e.g.,
+  # systems = ["x86_64-linux" "aarch64-linux"];
+  maxJobs = 1;
+  speedFactor = 2;
+  supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+  mandatoryFeatures = [ ];
+}] ;
+nix.distributedBuilds = true;
+nix.settings.builders-use-substitutes = true;
 #+end_src
 
 ** Home Manager
@@ -86,16 +117,33 @@ Configure home environment
 home-manager.useGlobalPkgs = true;
 #+end_src
 
+*** Extra user
+
+#+begin_src nix :noweb-ref system-configuration
+  home-manager.users.er = { pkgs, ... }: {
+    imports = [
+      <<home-import-files>>
+    ];
+
+    home.packages = with pkgs; [
+      <<home-packages>>
+    ];
+
+
+    <<home-configuration>>
+
+    home.stateVersion = "18.09";
+  };
+#+end_src
+
 *** NUR
 
 Enable custom user repositories
 
-#+begin_src nix :noweb-ref home-configuration
-  nixpkgs.config.packageOverrides = pkgs: {
-    nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-      inherit pkgs;
-    };
-  };
+#+begin_src nix :noweb-ref package-overrides
+nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+  inherit pkgs;
+};
 #+end_src
 
 *** Root user
@@ -109,16 +157,29 @@ Give root user git
   };
 #+end_src
 
-** Store optimization
+** COMMENT Store optimization
 
 #+begin_src nix
 nix.settings.auto-optimise-store = true;
 #+end_src
 
-** Unstable channel
+** COMMENT Unstable channel
 
 #+begin_src nix :noweb-ref system-configuration
 nix.package = pkgs.nixUnstable;
+#+end_src
+
+** Unstable packages
+
+#+begin_src nix :noweb-ref package-overrides
+unstable = import <nixos-unstable> {
+  config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    <<unfree-packages>>
+  ];
+  config.permittedInsecurePackages = [
+    <<insecure-packages>>
+  ];
+};
 #+end_src
 
 * System
@@ -130,7 +191,36 @@ nix.package = pkgs.nixUnstable;
   boot.loader.efi.canTouchEfiVariables = true;
 #+end_src
 
-** Time zone
+** Kernel modules
+
+#+begin_src nix
+  boot.kernelModules = [
+    <<kernel-modules>>
+  ];
+#+end_src
+
+** COMMENT Try to fix crash
+
+See https://forums.lenovo.com/t5/Fedora/ThinkPad-X1-Carbon-gen-9-freezes-intermittently-kernel-halt/m-p/5100987?page=1
+
+#+begin_src nix :noweb-ref system-configuration
+  boot.kernelParams = [
+    "intel_idle.max_cstate=1" "i915.enable_dc=0" "ahci.mobile_lpm_policy=1"
+  ];
+#+end_src
+
+Trying older kernel
+
+#+begin_src nix :noweb-ref system-configuration
+  boot.kernelPackages = pkgs.linuxKernel.packages.linux_5_15;
+#+end_src
+
+** Filesystems
+*** NTFS
+#+begin_src nix
+boot.supportedFilesystems = [ "ntfs" ];
+#+end_src
+** COMMENT Time zone
 
 #+begin_src nix
   # Set your time zone.
@@ -143,7 +233,7 @@ nix.package = pkgs.nixUnstable;
   users.users.mpontus = {
     isNormalUser = true;
     hashedPassword = "$6$QrKXg5g6nEHsWbkm$GdlWBtzXoQo7djWCJcMYcAZ/Zypk13Bq6nETchLc49hstumtoZ2q0tKvvrX3CLxqEmnZhDA8/0aw/Sen9mo5L/";
-    extraGroups = [ "wheel" "pcspkr" ];
+    extraGroups = [ "wheel" "pcspkr" "input" ];
   };
 #+end_src
 
@@ -155,6 +245,16 @@ Increase sudo password timeout
   security.sudo.extraConfig = ''
     Defaults        env_reset,timestamp_timeout=30
   '';
+#+end_src
+
+*** Extra user
+
+#+begin_src nix
+  users.users.er = {
+    isNormalUser = true;
+    hashedPassword = "$6$QrKXg5g6nEHsWbkm$GdlWBtzXoQo7djWCJcMYcAZ/Zypk13Bq6nETchLc49hstumtoZ2q0tKvvrX3CLxqEmnZhDA8/0aw/Sen9mo5L/";
+    extraGroups = [ "wheel" "pcspkr" "input" ];
+  };
 #+end_src
 
 *** Enable `$HOME/bin` in $PATH for normal users
@@ -192,8 +292,11 @@ Don't forget to reset a password with ‘passwd’
 #+begin_src nix
   networking.hostName = "nixos"; # Define your hostname.
 #+end_src
-
-*** DHCP
+*** Disable IPV6
+#+begin_src nix
+networking.enableIPv6  = false;
+#+end_src
+*** COMMENT DHCP
 
 Disable DHCP by default to run NixOS in a VM.
 
@@ -202,7 +305,7 @@ Disable DHCP by default to run NixOS in a VM.
   networking.interfaces.wlp2s0.useDHCP = true;
 #+end_src
 
-*** Firewall
+*** COMMENT Firewall
 
 Disabled to allow visiting locally running website from mobile
 
@@ -215,18 +318,27 @@ Disabled to allow visiting locally running website from mobile
 #+end_src
 
 *** VPN
-
+**** VLESS
+#+begin_src nix
+#+end_src
+**** OpenVPN
 #+begin_src nix
 services.openvpn.servers.pia = {
   config = "config ${pkgs.fetchzip {
     url = "https://www.privateinternetaccess.com/openvpn/openvpn.zip";
-    sha256 = "0vxm18gzn7fi7dd85rmj3hnbral568bgczhvgi8cb348lx5i23v4";
+    sha256 = "sha256-ZA8RS6eIjMVQfBt+9hYyhaq8LByy5oJaO9Ed+x8KtW8=";
     stripRoot = false   ;
-  }}/belgium.ovpn";
+  }}/netherlands.ovpn";
 };
 #+end_src
 
-**** Restart VPN after network configuration change
+***** Disable by default
+
+#+begin_src nix :noweb-ref system-configuration
+services.openvpn.servers.pia.autoStart = false;
+#+end_src
+
+**** COMMENT Restart VPN after network configuration change
 
 #+begin_src nix
 # See https://discourse.nixos.org/t/run-script-on-network-interface-down/9167/2
@@ -248,23 +360,90 @@ networking.networkmanager.dispatcherScripts = [
 
 #+end_src
 
-*** Spoof defalt ttl
+**** COMMENT GUI Client
+
+#+begin_src nix :noweb-ref import-files
+./piavpn
+#+end_src
+
+#+begin_src nix :noweb-ref home-packages
+piavpn
+#+end_src
+
+#+begin_src nix :noweb-ref system-configuration
+services.piavpn.enable = true;
+# services.piavpn.package = pkgs.piavpn;
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>P" = {
+  name = "Open PIA VPN";
+  command = "pia-client";
+};
+#+end_src
+
+*** DNS
+
+#+begin_src nix :noweb-ref system-configuration
+networking.resolvconf.dnsExtensionMechanism = false;
+#+end_src
+
+*** COMMENT Paper VPN
+#+begin_src nix :noweb-ref system-packages
+(callPackage ./pkgs/outline.nix { })
+#+end_src
+*** COMMENT Spoof defalt ttl
 
 #+begin_src nix
 boot.kernel.sysctl = {
-  "net.ipv4.ip_default_ttl" = 65;
+  "net.ipv4.ip_default_ttl" = 129;
 };
 
 #+end_src
 
+*** COMMENT Realtek Wifi Card
+
+#+begin_src nix :noweb-ref system-configuration
+boot.extraModulePackages = with config.boot.kernelPackages; [ rtl8821ce rtl8821cu ];
+#+end_src
+
+#+begin_src nix :noweb-ref kernel-modules
+"8821ce"
+#+end_src
+
+*** COMMENT Disable Mac address randomization
+
+#+begin_src nix :noweb-ref system-configuration
+networking.networkmanager.settings."device-mac-randomization"."wifi.scan-rand-mac-address" = "no";
+#+end_src
+
+** SSH
+
+#+begin_src nix :noweb-ref system-configuration
+services.openssh = {
+  enable = true;
+  ports = [ 22 ];
+  settings = {
+    PasswordAuthentication = true;
+    AllowUsers = null; # Allows all users by default. Can be [ "user1" "user2" ]
+    UseDns = true;
+    X11Forwarding = false;
+    PermitRootLogin = "prohibit-password"; # "yes", "without-password", "prohibit-password", "forced-commands-only", "no"
+  };
+};
+#+end_src
+
 ** Virtualization
 #+begin_src nix :noweb-ref system-packages
-  pkgs.virt-manager
+pkgs.virt-manager
 #+end_src
 
 #+begin_src nix :noweb-ref system-configuration
-  boot.kernelModules = ["kvm-intel" "kvm-amd"];
-  virtualisation.libvirtd.enable = true;
+virtualisation.libvirtd.enable = true;
+#+end_src
+
+#+begin_src nix :noweb-ref kernel-modules
+"kvm-intel" "kvm-amd"
 #+end_src
 
 *** Increase default msize
@@ -282,8 +461,9 @@ environment.variables = {
   fonts = {
     enableDefaultFonts = false;
     fonts = with pkgs; [
+      corefonts
       noto-fonts
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
       noto-fonts-emoji
       twitter-color-emoji
       liberation_ttf
@@ -298,6 +478,11 @@ environment.variables = {
     ];
   };
 #+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"corefonts"
+#+end_src
+
 ** Xorg
 
 #+begin_src nix :noweb-ref system-configuration
@@ -338,7 +523,7 @@ Enable the GNOME Desktop Environment
 *** Extensions
 
 #+begin_src nix :noweb-ref system-packages
-gnome.gnome-tweaks
+gnome-tweaks
 #+end_src
 
 *** Auto-login
@@ -346,17 +531,19 @@ gnome.gnome-tweaks
 #+begin_src nix :noweb-ref system-configuration
   systemd.services."getty@tty1".enable = true;
   systemd.services."autovt@tty1".enable = true;
-  # services.xserver.displayManager.autoLogin.enable = true;
-  # services.xserver.displayManager.autoLogin.user = "mpontus";
+  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.user = "mpontus";
 #+end_src
 
-*** DConf
+*** Dconf & keybindings
+
+Install dconf editor
 
 #+begin_src nix :noweb-ref home-packages
-  gnome.dconf-editor
+  dconf-editor
 #+end_src
 
-DConf settings
+Enable literate configuration for dconf settings and keymap
 
 #+begin_src nix :noweb-ref home-configuration
   dconf.settings = {
@@ -382,64 +569,7 @@ DConf settings
   "ca/desrt/dconf-editor" = { show-warning = false; };
 #+end_src
 
-*** Hotkeys
-
-Install run-or-raise
-
-#+begin_src nix :noweb-ref home-packages
-  (callPackage ./pkgs/run-or-raise { })
-#+end_src
-
-Configure gnome keybindings
-
-#+begin_src nix :noweb-ref dconf-keymap
-  "<Super>e" = {
-    name = "Switch to Emacs";
-    command = "launch-or-raise -W Emacs emacs";
-  };
-  "<Shift><Super>e" = {
-    name = "Switch to Element";
-    command = "launch-or-raise -W Element1 element-desktop";
-  };
-  "<Super>w" = {
-    name = "Switch to Firefox";
-    command = "launch-or-raise -W Navigator firefox";
-  };
-  "<Shift><Super>c" = {
-    name = "Switch to Chromium";
-    command = "run-or-raise 'class = \"Chroimum\"' chromium-browser";
-  };
-  "<Super>t" = {
-    name = "Switch to Telegram";
-    command = "run-or-raise 'class = \"TelegramDesktop\"' telegram-desktop";
-  };
-  "<Super>c" = {
-    name = "Tilix";
-    command = "launch-or-raise -W tilix tilix";
-  };
-  "<Super><Return>" = {
-    name = "Tilix (dropdown)";
-    command = "tilix --quake";
-  };
-  "<Shift><Super>c" = {
-    name = "Tilix (preferences)";
-    command = "tilix --preferences";
-  };
-  "<Super>s" = {
-    name = "Switch to Slack";
-    command = "run-or-raise 'class = \"Slack\"' slack";
-  };
-  "<Super>v" = {
-    name = "Switch to VSCode";
-    command = "run-or-raise 'class = \"Code\"' code";
-  };
-  "<Shift><Super>t" = {
-    name = "Switch to TopTracker";
-    command = "launch-or-raise -W TopTracker TopTracker";
-  };
-#+end_src
-
-*** Gestures
+*** COMMENT Gestures
 
 #+begin_src nix :noweb-ref system-packages
 gnomeExtensions.x11-gestures touchegg
@@ -457,10 +587,35 @@ services.xserver.modules = [ pkgs.xf86_input_wacom ];
 services.xserver.wacom.enable = true;
 #+end_src
 
+*** COMMENT gnomecast
+
+#+begin_src nix :noweb-ref home-packages
+gnomecast
+#+end_src
+
+**** Use fork
+
+#+begin_src nix :noweb-ref overlays
+(self: super:
+  with import (fetchTarball {
+    url =
+      "https://github.com/MaeIsBad/nixpkgs/archive/fix-gnomecast.tar.gz";
+    sha256 = "03grfc1xw4lj3k523al2pqbqj2g1nwlwilrr8bczc50ipyvszdz5";
+  }) {inherit pkgs;}; {
+    inherit gnomecast;
+  })
+#+end_src
+
 ** DWM
 
 #+begin_src nix :noweb-ref system-configuration
 services.xserver.windowManager.dwm.enable = true;
+#+end_src
+
+** ly
+
+#+begin_src nix :noweb-ref system-packages
+ly
 #+end_src
 
 ** COMMENT LightDM
@@ -473,7 +628,7 @@ services.xserver.windowManager.xmonad = {
 };
 #+end_src
 
-** Sound
+** COMMENT Sound
 
 #+begin_src nix
   sound.enable = true;
@@ -506,11 +661,12 @@ hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 #+end_src
 
-*** COMMENT Bluetooth audio
+*** Bluetooth audio
 
 #+begin_src nix
   hardware.bluetooth.settings = {
     General = {
+        Enable = "Source,Sink,Media,Socket";
         # Disable = "Headset";
         # Enable = "Source,Sink,Headet,Media,Socket";
         # Disable = "Socket";
@@ -519,63 +675,208 @@ hardware.bluetooth.enable = true;
   };
 #+end_src
 
+** Remote access
+#+begin_src nix :noweb-ref home-packages
+barrier
+#+end_src
 * Apps
 ** Editor
-*** Emacs (system)
+*** Emacs
 
-#+begin_src nix :noweb-ref system-configuration
-services.emacs = {
-  enable = true;
+#+begin_src nix :noweb-ref home-configuration
+  programs.emacs = {
+    enable = true;
+    # package = pkgs.emacs.withPackages (epkgs: with epkgs; [
+    #   <<emacs-packages>>
+    # ]);
+    # package = (pkgs.emacsGit.override {
+    #   withXwidgets = true;
+    # });
+  };
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+  "<Super>e" = {
+    name = "Switch to Emacs";
+    command = "launch-or-raise -W Emacs emacs";
+  };
+#+end_src
+
+**** Everywhere
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>i" = {
+  name = "Emacs Everyhere";
+  command = "emacsclient --eval '(emacs-everywhere)'";
 };
+#+end_src
+
+**** COMMENT XWidgets
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  emacs = super.emacs.overrideAttrs (old: rec { withXwidgets = true; });
+})
+#+end_src
+
+**** COMMENT Pgtk
+
+Import emacs-overlay from nix-community.
+
+#+begin_src nix :noweb-ref overlays
+(import (builtins.fetchTarball {
+  url = "https://github.com/nix-community/emacs-overlay/archive/master.tar.gz";
+}))
+#+end_src
+
+Use latest emacs with natively compiled modules.
+
+#+begin_src nix :noweb-ref home-configuration
+programs.emacs.package = pkgs.emacsPgtk;
+#+end_src
+
+**** VTerm
+
+Enable vterm support.
+
+#+begin_src nix :noweb-ref emacs-packages
+vterm
+#+end_src
+
+**** COMMENT ChatGPT
+
+#+begin_src nix :noweb-ref emacs-packages
+(trivialBuild {
+  pname = "ChatGPT.el";
+  src = pkgs.fetchFromGitHub {
+    owner = "joshcho";
+    repo = "ChatGPT.el";
+    rev = "14aaad60cc4970477f8e7d1486cf84d5b2f6470e";
+    sha256 = "kH5CBlYP6OVf/QSRdjg1gBIFXu/DtkQswYzjeRdrP0g=";
+  };
+
+  packageRequires = [
+    epc
+    (pkgs.python3.withPackages (ps:
+      with ps; [
+        setuptools
+        epc
+
+        (buildPythonPackage rec {
+          pname = "chatgpt-wrapper";
+          version = "0.10.6";
+          format = "setuptools";
+
+          src = pkgs.fetchFromGitHub {
+            owner = "mmabrouk";
+            repo = "chatgpt-wrapper";
+            rev = "2e9e14f689cf970df319c33033b5832a85e128be";
+            sha256 = "ybePcuEZ5zt8FLRXbRxEcR1M/U7e2C8RbUHewU3MpPo=";
+          };
+          propagatedBuildInputs = [
+            alembic
+            # ai21
+            # cohere
+            # email-validator
+            flask
+            huggingface-hub
+            jinja2
+            # langchain
+            names
+            numexpr
+            openai
+            openpyxl
+            # playwright
+            prompt-toolkit
+            # pydantic-computed
+            pyperclip
+            python-frontmatter
+            pyyaml
+            rich
+            sqlalchemy
+            # tiktoken
+          ];
+        })
+      ]))
+  ];
+})
+#+end_src
+
+**** COMMENT Service
+
+#+begin_src nix :noweb-ref home-configuration
+services.emacs.enable = true;
 #+end_src
 
 **** COMMENT Overlay
 
-#+begin_src nix :noweb-ref system-configuration
-  services.emacs.package = pkgs.emacsUnstable.pkgs.withPackages (epkgs: [ epkgs.vterm ]);
-#+end_src
-
-
-#+begin_src nix :noweb-ref overlays
+#+begin_src emacs-lisp :noweb-ref overlays
 (import (builtins.fetchTarball {
     url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
 }))
 #+end_src
 
-**** COMMENT VTerm
-
-#+begin_src nix :noweb-ref system-configuration
-  services.emacs.package = with pkgs; (emacs.pkgs.withPackages (epkgs: [ epkgs.vterm ]));
-#+end_src
-
-**** COMMENT Emacs (overlay)
-
-#+begin_src nix :noweb-ref system-configuration
-  services.emacs.package = with pkgs; (emacsPgtkGcc.emacsWithPackages (epkgs: [ epkgs.vterm ]));
-#+end_src
-
-#+begin_src nix :noweb-ref system-packages
-  emacsPgtkGcc
-#+end_src
+**** COMMENT Doom Emacs
 
 #+begin_src nix :noweb-ref overlays
-    (import (builtins.fetchGit {
-      url = "https://github.com/nix-community/emacs-overlay.git";
-      ref = "master";
-      rev = "bfc8f6edcb7bcf3cf24e4a7199b3f6fed96aaecf"; # change the revision
-    }))
+(self: super:
+  let
+    doom-emacs = (self.callPackage (builtins.fetchTarball {
+      url =
+        "https://github.com/nix-community/nix-doom-emacs/archive/master.tar.gz";
+    }) {
+      # Directory containing your config.el, init.el and packages.el files
+      doomPrivateDir = ./doom.d;
+      bundledPackages = true;
+      emacsPackages = super;
+    });
+  in { emacs = doom-emacs; })
 #+end_src
 
-**** COMMENT Emacs (home-manager)
-#+begin_src nix :noweb-ref home-configuration
-# programs.emacs = {
-#   enable = true;
-# };
-services.emacs = {
-  enable = true;
-  client.enable = true;
-  defaultEditor = true;
-};
+
+*** COMMENT Doom Emacs
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  doom-emacs = (self.callPackage (builtins.fetchTarball {
+    url =
+      "https://github.com/nix-community/nix-doom-emacs/archive/master.tar.gz";
+  }) {
+    # Directory containing your config.el, init.el and packages.el files
+    doomPrivateDir = ./doom.d.new;
+    extraPackages = epkgs: [ epkgs.vterm epkgs.magit self.python3 ];
+    # emacsPackagesOverlay = self: super: {
+    #   magit-delta = super.magit-delta.overrideAttrs
+    #     (esuper: { buildInputs = esuper.buildInputs ++ [ pkgs.git ]; });
+    # };
+  });
+})
+#+end_src
+
+#+begin_src nix :noweb-ref home-packages
+doom-emacs
+#+end_src
+
+**** Overlay
+
+#+begin_src nix :noweb-ref doom-dependency-overrides
+"emacs-overlay" = (builtins.fetchTarball {
+    url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
+});
+#+end_src
+
+**** COMMENT Packages
+
+***** grip
+
+Github-styled markdown previewer.
+
+#+begin_src nix :noweb-ref doom-extra-packages
+   grip
+#+end_src
+
+#+begin_src elisp :noweb-ref doom-extra-config
+  (setq-default grip-binary-path "${pkgs.python3Packages.grip}/bin/grip")
 #+end_src
 
 *** vim
@@ -588,45 +889,60 @@ programs.vim.defaultEditor = true;
 
 #+begin_src nix :noweb-ref home-configuration
 programs.firefox.enable = true;
+# programs.firefox.package = pkgs.unstable.firefox-unwrapped;
+programs.firefox.package = pkgs.firefox-beta-bin.unwrapped;
 #+end_src
 
-**** COMMENT Nightly
-
-#+begin_src nix :noweb-ref overlays
-(import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz))
-#+end_src
-
-#+begin_src nix :noweb-ref home-configuration
-programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
-#+end_src
-
-**** COMMENT Native extensions
-#
-#+begin_src nix :noweb-ref home-configuration
-  programs.firefox.package = pkgs.firefox-unwrapped.override {
-    # See nixpkgs' firefox/wrapper.nix to check which options you can use
-    cfg = {
-      # Gnome shell native connector
-      enableGnomeExtensions = true;
-      # Tridactyl native connector
-      enableTridactylNative = true;
-    };
-  };
-#+end_src
-
-**** Addons
-
-#+begin_src nix :noweb-ref system-configuration
-nixpkgs.config.packageOverrides = pkgs: {
-  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-    inherit pkgs;
-  };
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>w" = {
+  name = "Switch to Firefox";
+  command = "launch-or-raise -W Navigator firefox";
 };
 #+end_src
 
+**** Nightly
+
+#+begin_src nix :noweb-ref overlays
+(let
+    # Change this to a rev sha to pin
+    moz-rev = "master";
+    moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";};
+    nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
+  in nightlyOverlay)
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+# programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
+#+end_src
+
+#+begin_src nix :noweb-ref home-packages
+# latest.firefox-nightly-bin
+#+end_src
+
+**** COMMENT Native extensions
+
+#+begin_src nix :noweb-ref home-configuration
+programs.firefox.enableGnomeExtensions = true;
+#+end_sr
+
+#+begin_src nix :noweb-ref overlays
+# (self: super: {
+#     firefox = super.firefox.override {
+#         enableGnomeExtensions = true;
+#         enableTridactylNative = true;
+#     };
+# })
+#+end_src
+
+#+begin_src nix :noweb-ref system-configuration
+services.gnome.chrome-gnome-shell.enable = true;
+#+end_src
+
+**** COMMENT Addons
+
 #+begin_src nix :noweb-ref home-configuration
   programs.firefox.extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-    https-everywhere
+    # https-everywhere
     privacy-badger
   ];
 #+end_src
@@ -641,26 +957,116 @@ Make firefox use xinput2 for improved touchscreen support
   };
 #+end_src
 
-**** COMMENT Firefox (system)
+**** COMMENT fx_cast
 
+#+begin_src nix :noweb-ref home-packages
+unstable.fx_cast_bridge
+#+end_src
+**** Overlay
+#+begin_src nix :noweb-ref overlays
+(import (builtins.fetchTarball
+    "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz"))
+#+end_src
+*** COMMENT nyxt
+
+#+begin_src nix :noweb-ref home-packages
+nyxt
+#+end_src
+
+*** Tor Browser
+
+#+begin_src nix :noweb-ref home-packages
+unstable.tor-browser-bundle-bin
+#+end_src
+*** COMMENT Chromium
+
+#+begin_src nix :noweb-ref home-packages
+unstable.chromium
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Shift><Super>c" = {
+  name = "Switch to Chromium";
+  command = "launch-or-raise -W Chroimum chromium-browser";
+};
+#+end_src
+
+*** COMMENT Edge
+
+#+begin_src nix :noweb-ref home-packages
+unstable.microsoft-edge
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"microsoft-edge"
+#+end_src
+
+** Docs
+*** Libreoffice
+
+#+begin_src nix :noweb-ref home-packages
+libreoffice-qt
+hunspell
+hunspellDicts.uk_UA
+hunspellDicts.th_TH
+#+end_src
+
+** Books
+
+#+begin_src nix :noweb-ref home-packages
+okular
+#+end_src
+
+** Audacity
+#+begin_src nix :noweb-ref home-packages
+audacity
+#+end_src
 ** Passwords
 *** GNU Pass
 #+begin_src nix :noweb-ref home-packages
 pass
 #+end_src
-** COMMENT Personal finance
-*** Ledger
+*** COMMENT Authy
+
+I also use Authy for 2FA
+
+#+begin_src nix :noweb-ref home-packages
+authy
+#+end_src
+
+Need to enable unfree package
+
+#+begin_src nix :noweb-ref unfree-packages
+"authy"
+#+end_src
+
+And to add electron to insecure packages
+
+#+begin_src nix :noweb-ref insecure-packages
+"electron-9.4.4"
+#+end_src
+
+** Personal finance
+*** COMMENT Ledger
 
 #+begin_src nix :noweb-ref home-packages
 ledger
 #+end_src
+
+*** Monero
+
+#+begin_src nix :noweb-ref home-packages
+monero-gui
+#+end_src
+
 ** Shell
 *** bash
 #+begin_src nix :noweb-ref home-configuration
   programs.bash = {
-    enable = true;
-    historySize = 100000;
-    historyFileSize = 100000;
+    enable = true
+    ;
+    historySize = 1000000000;
+    historyFileSize = 1000000000;
     historyControl = ["ignoredups" "erasedups"];
     initExtra = ''
         export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
@@ -754,6 +1160,21 @@ Source: https://github.com/fish-shell/fish-shell/issues/825#issuecomment-4402860
 tilix
 #+end_src
 
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>c" = {
+  name = "Tilix";
+  command = "launch-or-raise -W tilix tilix";
+};
+"<Super>\\" = {
+  name = "Tilix (dropdown)";
+  command = "tilix --quake";
+};
+#+end_src
+
+*** Guake
+#+begin_src nix :noweb-ref home-packages
+guake
+#+end_src
 *** COMMENT Urxvt
 
 #+begin_src nix :noweb-ref home-configuration
@@ -770,6 +1191,11 @@ programs.urxvt = {
 obsidian
 #+end_src
 
+#+begin_src nix :noweb-ref unfree-packages
+"obsidian"
+#+end_src
+
+
 *** COMMENT Roam Research
 
 #+begin_src nix :noweb-ref home-packages
@@ -782,11 +1208,34 @@ obsidian
 (callPackage ./pkgs/marvin.nix { })
 #+end_src
 
+*** COMMENT Responsively App
+
+#+begin_src nix :noweb-ref home-packages
+(callPackage ./pkgs/responsively-app.nix { })
+#+end_src
+
+*** COMMENT Cursor
+
+Evaluating GPT-4 powered ide
+
+#+begin_src nix :noweb-ref home-packages
+(callPackage ./pkgs/Cursor.nix { })
+#+end_src
+
+
 *** TopTracker
 
 #+begin_src nix :noweb-ref home-packages
 (callPackage ./pkgs/toptracker { })
 #+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Shift><Super>t" = {
+  name = "Switch to TopTracker";
+  command = "launch-or-raise -W TopTracker TopTracker";
+};
+#+end_src
+
 ** Communication
 *** Slack
 
@@ -795,19 +1244,42 @@ obsidian
 #+end_src
 
 #+begin_src nix :noweb-ref home-packages
-slack
+unstable.slack
 #+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>s" = {
+  name = "Switch to Slack";
+  command = "launch-or-raise -W Slack slack";
+};
+#+end_src
+
 
 *** Telegram
 
 #+begin_src nix :noweb-ref home-packages
-tdesktop
+unstable.tdesktop
 #+end_src
 
-*** Element
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>t" = {
+  name = "Switch to Telegram";
+  command = "launch-or-raise -W TelegramDesktop telegram-desktop";
+};
+#+end_src
+
+
+*** COMMENT Element
 
 #+begin_src nix :noweb-ref home-packages
 element-desktop
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Shift><Super>e" = {
+  name = "Switch to Element";
+  command = "launch-or-raise -W Element1 element-desktop";
+};
 #+end_src
 
 *** Discord
@@ -825,6 +1297,15 @@ discord
 (callPackage ./pkgs/bluejeans { })
 #+end_src
 * System tools
+** Beep
+#+begin_src nix :noweb-ref home-packages
+beep
+#+end_src
+
+*** Kernel module
+#+begin_src :nix :noweb-ref kernel-modules
+"pcspkr"
+#+end_src
 ** Diagnostics
 *** htop
 
@@ -881,6 +1362,13 @@ Unzip files.
 #+begin_src nix :noweb-ref home-packages
 unzip
 #+end_src
+
+*** sshfs
+
+#+begin_src nix :noweb-ref home-packages
+sshfs
+#+end_src
+
 ** Searching
 *** ag
 
@@ -926,7 +1414,15 @@ Transform JSON files
 jq
 #+end_src
 
-*** htmlq
+*** xsv
+
+Transform CSV files
+
+#+begin_src RemoveRemovenix :noweb-ref home-packages
+xsv
+#+end_src
+
+*** COMMENT htmlq
 
 Transform XML/HTML files
 
@@ -949,6 +1445,14 @@ imagemagick
   wl-clipboard
 #+end_src
 
+**** xclip
+
+Needed for [emacs-anywhere](https://github.com/zachcurry/emacs-anywhere#try-it).
+
+#+begin_src nix :noweb-ref home-packages
+  xclip
+#+end_src
+
 *** WM controls
 
 #+begin_src nix :noweb-ref home-packages
@@ -956,21 +1460,146 @@ imagemagick
 #+end_src
 
 * Development
-** VSCode
+** NodeJS
+#+begin_src nix :noweb-ref home-packages
+unstable.nodejs
+# unstable.nodejs_16
+yarn
+#+end_src
+
+#+begin_src nix :noweb-ref insecure-packages
+"nodejs-16.20.2"
+#+end_src
+*** Yarn overlay
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  yarn = super.unstable.yarn.overrideAttrs (oldAttrs: {
+    version = "1.22.19";
+    src = super.fetchurl {
+      url = "https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-v1.22.19.tar.gz";
+      hash = "sha256-cyYgusixaQ1QcnTwJfPGz9w2J6hNlkLjigdFLMAODy4=";
+      # sha256 = "1mfzm3k6kpfy45kzmijg9vsrck8y14jjb6rrhba6gaifa4slzdl7";
+    };
+  });
+})
+#+end_src
+*** Pnpm
 
 #+begin_src nix :noweb-ref home-packages
-vscode
+pnpm
+#+end_src
+
+** Python
+#+begin_src nix :noweb-ref home-packages
+(python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py ]))
+#+end_src
+
+** Amazon Q Developer CLI
+
+#+begin_src nix :noweb-ref home-packages
+# (callPackage ./pkgs/amazon-q-cli { })
+unstable.amazon-q-cli
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
-"vscode"
+"amazon-q-cli"
 #+end_src
 
+** Rust toolchain
+#+begin_src nix :noweb-ref home-packages
+unstable.rustc cargo wasm-pack
+#+end_src
+
+*** Needed for ~cargo generate~
+
+#+begin_src nix :noweb-ref system-packages
+pkg-config libssh2 zlib
+#+end_src
+
+#+begin_src nix :noweb-ref system-configuration
+# See https://github.com/sfackler/rust-openssl/issues/1663#issuecomment-1603606249
+environment.variables = {
+  PKG_CONFIG_PATH = [ "${pkgs.openssl.dev}/lib/pkgconfig" "${pkgs.zlib.dev}/lib/pkgconfig" ];
+}   ;
+#+end_src
+
+** VSCode
+
+#+begin_src nix :noweb-ref home-configuration
+programs.vscode = {
+  enable = true;
+  package = pkgs.unstable.vscode;
+  # package = pkgs.vscode-insiders;
+  # extensions = pkgs.vscode-utils.extensionsFromVscodeMarketplace (import ./vscode-extensions.nix).extensions;
+};
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"code" "vscode"
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-keymap
+"<Super>v" = {
+  name = "Switch to VSCode";
+  command = "launch-or-raise -W Code code";
+};
+#+end_src
+
+*** COMMENT Insiders
+#+begin_src nix :noweb-ref overlays
+(final: prev: {                 #
+  vscode-insiders = (prev.vscode.override { isInsiders = true; }).overrideAttrs
+    (oldAttrs: rec {
+      pname = "vscode-insiders";
+      src = (builtins.fetchTarball {
+        url =
+          "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
+        sha256 = "086avfbr7akf06xq1wyr30nklhgc3dmnc6l4dbf0hk002wqpxlf6";
+      });
+      version = "latest";
+    });
+})
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"code-insiders" "vscode-insiders"
+#+end_src
+
+#+begin_src nix :noweb-ref home-packages
+vscode-insiders
+#+end_src
+
+** Cursor
+#+begin_src nix :noweb-ref unfree-packages
+"cursor"
+#+end_src
+** Postman
+#+begin_src nix :noweb-ref system-packages
+unstable.postman
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"postman"
+#+end_src
 ** COMMENT Direnv
 ** Git
 
 #+begin_src nix :noweb-ref system-packages
 git
+#+end_src
+
+*** Config
+
+#+begin_src nix :noweb-ref home-configuration
+programs.git = {
+  enable = true;
+  extraConfig = {
+    user.name = "Michael Pontus";
+    user.email = "m.pontus@gmail.com";
+    rerere.enabled = true;
+  };
+};
 #+end_src
 
 *** COMMENT Git LFS
@@ -984,16 +1613,26 @@ git-lfs
 *** GitHub CLI
 
 #+begin_src nix :noweb-ref home-packages
-hub
+unstable.gh hub
 #+end_src
 
+** GCC
+#+begin_src nix :noweb-ref system-packages
+gnumake gcc binutils cmake
+#+end_src
 ** GPG
 
-#+begin_src nix :noweb-ref home-packages
-  gnupg
+#+begin_src nix :noweb-ref system-configuration
+# programs.gnupg.agent.enable = true;
+programs.gnupg.agent = {
+  enable = true;
+  enableSSHSupport = true;
+  pinentryPackage = pkgs.pinentry-gtk2;
+};
 #+end_src
+  gnupg
 
-*** gpg-agent
+*** COMMENT gpg-agent
 
 ???
 
@@ -1004,13 +1643,26 @@ hub
     enableSshSupport = true;
   };
 #+end_src
-
+** Deno
+#+begin_src nix :noweb-ref home-packages
+deno
+#+end_src
+** Mitmproxy
+#+begin_src nix :noweb-ref home-packages
+mitmproxy
+#+end_src
+** OpenSSL
+#+begin_src nix :noweb-ref system-packages
+openssl
+#+end_src
 ** IPFS
 *** /etc/hosts
 
 #+begin_src nix :noweb-ref system-configuration
 networking.extraHosts = ''
-  127.0.0.1 ipfs.local
+  127.0.0.1 localhost
+  127.0.0.1 ipfs.local ff
+  192.168.1.121 grafana.orangepi argocd.orangepi portainer.orangepi
 '';
 #+end_src
 
@@ -1033,16 +1685,70 @@ See https://discourse.nixos.org/t/docker-hanging-on-reboot/18270
 #+begin_src nix :noweb-ref system-configuration
 virtualisation.docker.liveRestore = false;
 #+end_src
-** COMMENT Virtualbox
 
-#+begin_src nix :noweb-ref nonfree-packages
-  "Oracle_VM_VirtualBox_Extension_Pack"
+*** Docker compose
+
+#+begin_src nix :noweb-ref home-packages
+docker-compose
+#+end_src
+
+** Protobuf
+
+#+begin_src nix :noweb-ref home-packages
+protobuf
+#+end_src
+
+** Temporal CLI
+#+begin_src nix :noweb-ref home-packages
+unstable.temporal-cli
+#+end_src
+
+** Ngrok
+#+begin_src nix :noweb-ref home-packages
+unstable.ngrok
+#+end_src
+#+begin_src nix :noweb-ref unfree-packages
+"ngrok"
+#+end_src
+** COMMENT Minikube
+#+begin_src nix :noweb-ref home-packages
+minikube
+#+end_src
+** K3s
+
+#+begin_src nix
+  networking.firewall.allowedTCPPorts = [ 6443 ];
+  services.k3s = {
+    enable = false;
+    role = "server";
+    package = pkgs.unstable.k3s;
+    # extraFlags =  toString ["--kubelet-arg=v=4"];
+  };
+#+end_src
+
+*** Add user to k3s group
+
+#+begin_src nix :noweb-ref system-configuration
+users.extraGroups.k3s.members = ["mpontus"];
+#+end_src
+*** COMMENT /etc/hosts
+
+#+begin_src nix :noweb-ref system-configuration
+networking.extraHosts = ''
+
+
+#+end_src
+
+** Virtualbox
+
+#+begin_src nix :noweb-ref unfree-packages
+  "Oracle_VirtualBox_Extension_Pack"
 #+end_src
 
 #+begin_src nix :noweb-ref system-configuration
   virtualisation.virtualbox.host.enable = true;
   virtualisation.virtualbox.host.enableExtensionPack = true;
-  users.extraGroups.vboxusers.members = ["mpontus"];
+  users.extraGroups.vboxusers.members = ["mpontus" "er"];
 #+end_src
 
 ** awscli
@@ -1051,6 +1757,16 @@ virtualisation.docker.liveRestore = false;
 awscli2
 #+end_src
 
+** COMMENT aws-sam
+
+#+begin_src nix :noweb-ref home-packages
+unstable.aws-sam-cli
+#+end_src
+
+** Databases
+#+begin_src nix :noweb-ref home-packages
+dbeaver-bin
+#+end_src
 ** NoSQL Workbench
 
 #+begin_src nix :noweb-ref home-packages
@@ -1064,12 +1780,18 @@ awscli2
 })
 #+end_src
 
+** GraphQL
+
+#+begin_src nix :noweb-ref home-packages
+altair
+#+end_src
+
 ** prettier
 
 Format code using prettier
 
 #+begin_src nix :noweb-ref home-packages
-nodePackages."prettier"
+unstable.nodePackages."prettier"
 #+end_src
 
 ** nixfmt
@@ -1080,13 +1802,22 @@ Format Nix files
 nixfmt
 #+end_src
 
+** pandoc
+
+#+begin_src nix :noweb-ref home-packages
+pandoc
+#+end_src
+
 * Entertainment
-** Stremio
+** COMMENT Stremio
 
 #+begin_src nix :noweb-ref home-packages
 (callPackage ./pkgs/stremio.nix { })
 #+end_src
-
+** Spotify
+#+begin_src nix :noweb-ref home-packages
+spotify
+#+end_src
 ** Deluge
 
 #+begin_src nix :noweb-ref home-packages
@@ -1099,7 +1830,15 @@ deluge
 vlc
 #+end_src
 
+** Kodi
+#+begin_src nix :noweb-ref home-packages
+unstable.kodi
+#+end_src
 ** OBS
+
+#+begin_src nix :noweb-ref home-packages
+obs-studio
+#+end_src
 ** Calibre
 
 GTK+ book reader
@@ -1108,17 +1847,28 @@ GTK+ book reader
 calibre
 #+end_src
 
-
+** COMMENT Tremulous
 #+begin_src nix :noweb-ref home-packages
-obs-studio
+tremulous
 #+end_src
 
+#+begin_src nix :noweb-ref system-configuration
+nixpkgs.config.allowBroken = true;
+#+end_src
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  tremulous = super.tremulous.overrideAttrs (old: rec {
+    buildInputs = [self.which];
+  });
+})
+#+end_src
 ** Steam
 
 Whitelist unfree packages
 
 #+begin_src nix :noweb-ref unfree-packages
-  "steam" "steam-original" "steam-runtime"
+  "steam" "steam-unwrapped"
 #+end_src
 
 Install steam
@@ -1136,17 +1886,92 @@ environment.variables = {
 };
 #+end_src
 
+** Spotify
+#+begin_src nix :noweb-ref unfree-packages
+  "spotify" "spotify-unwrapped"
+#+end_src
+#+begin_src nix :noweb-ref home-packages
+spotify
+#+end_src
 ** COMMENT StarSector
 
-#+begin_src nix :noweb-ref system-packages
-starsector                      #
+#+begin_src nix :noweb-ref home-packages
+starsector
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
 "starsector"
 #+end_src
 
-*** COMMENT Overlay
+*** COMMENT Use necauqua's fork
+
+#+begin_src nix :noweb-ref overlays
+(self: super: {
+  inherit (import (fetchTarball {
+    url = "https://github.com/necauqua/nixpkgs/archive/starsector-fixes.tar.gz";
+    sha256 = "1nizf43qsy59vprx2s3h01v0md9a74aww0a5l2k5m5mfvqprhz7r";
+  }) {
+    inherit pkgs;
+    config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+      <<unfree-packages>>
+    ];
+  }) starsector;
+})
+#+end_src
+
+*** COMMENT Use Shados's fork
+
+#+begin_src nix :noweb-ref overlays
+(self: super: with {
+  inherit (import (fetchTarball {
+    url = "https://github.com/Shados/nixpkgs/archive/starsector-package-improvements.tar.gz";
+    sha256 = "16g182421bhp5crdijlnn55v5m5wg64fwj8ld2vfb9jfjpwpwwkd";
+  }) {
+    config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+      <<unfree-packages>>
+    ];
+  }) starsector;
+})
+#+end_src
+
+*** Mods
+
+#+begin_src nix :noweb-ref home-import-files
+./modules/starsector
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+programs.starsector = {
+  enable = true;
+  mods = mods: with mods; [
+    AudioPlus
+    Autosave
+    BetterColonies
+    CombatAlarmSounds
+    CombatChatter
+    DetailedCombatResults
+    FastEngineRendering
+    GraphicsLib
+    HazardMiningCorporation
+    IndustrialEvolution
+    LazyLib
+    MagicLib
+    Nixerelin
+    RealisticCombat
+    SpeedUp
+    SuperweaponsArsenal
+    UnknownSkies
+  ];
+};
+#+end_src
+
+Superweapons mod is distributed as a rar archive.
+
+#+begin_src nix :noweb-ref unfree-packages
+"unrar"
+#+end_src
+
+*** COMMENT Mods
 
 #+begin_src nix :noweb-ref overlays
 (self: super: {
@@ -1154,22 +1979,27 @@ starsector                      #
 })
 #+end_src
 
-
-*** COMMENT Mods
-
 #+begin_src nix :noweb-ref overlays
 (self: super: {
   starsector = super.starsector.withMods (mods:
     with mods; [
-      Autosave
       AudioPlus
+      Autosave
       BetterColonies
-      Nixerelin
-      IndustrialEvolution
-      SuperweaponsArsenal
+      CombatAlarmSounds
+      CombatChatter
+      DetailedCombatResults
+      FastEngineRendering
+      HazardMiningCorporation
       GraphicsLib
+      # RealisticCombat
+      IndustrialEvolution
       LazyLib
       MagicLib
+      Nixerelin
+      SpeedUp
+      SuperweaponsArsenal
+      UnknownSkies
     ]);
 })
 #+end_src
@@ -1195,4 +2025,10 @@ Superweapons mod is distributed as a rar archive.
     '';
   });
 })
+#+end_src
+
+** Joy-Con support
+
+#+begin_src nix :noweb-ref system-configuration
+  services.joycond.enable = true;
 #+end_src
