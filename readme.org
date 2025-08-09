@@ -211,13 +211,15 @@ nix.package = pkgs.nixVersions.git;
 
 ** Unstable packages
 
+#+begin_src nix :noweb-ref inputs
+nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+#+end_src
+
 #+begin_src nix :noweb-ref package-overrides
-unstable = import <nixos-unstable> {
+unstable = import inputs.nixpkgs-unstable {
+  system = "x86_64-linux";
   config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     <<unfree-packages>>
-  ];
-  config.permittedInsecurePackages = [
-    <<insecure-packages>>
   ];
 };
 #+end_src

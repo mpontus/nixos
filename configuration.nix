@@ -49,7 +49,8 @@
     ];
 
     nixpkgs.config.packageOverrides = pkgs: {
-      unstable = import <nixos-unstable> {
+      unstable = import inputs.nixpkgs-unstable {
+        system = "x86_64-linux";
         config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
           "corefonts"
           "slack"
@@ -62,9 +63,6 @@
             "Oracle_VirtualBox_Extension_Pack"
             "steam" "steam-unwrapped"
             "spotify" "spotify-unwrapped"
-        ];
-        config.permittedInsecurePackages = [
-          "nodejs-16.20.2"
         ];
       };
     };
