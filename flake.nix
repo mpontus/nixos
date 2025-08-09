@@ -1,5 +1,6 @@
 {
   description = "NixOS Flake Configuration";
+  inputs.self.submodules = true;
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager = {
