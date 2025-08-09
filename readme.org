@@ -3,9 +3,6 @@
 #+STARTUP: showall
 #+PROPERTY: header-args :tangle no :noweb yes :noweb-ref system-configuration
 
-
-* Nix
-** Configuration file
 #+BEGIN_SRC nix :tangle /etc/nixos/configuration.nix :noweb-ref none
   # edit this configuration file to define what should be installed on
   # your system.  help is available in the configuration.nix(5) man page
@@ -55,35 +52,12 @@
     system.stateVersion = "21.05"; # did you read the comment?
   }
 #+END_SRC
-** Flakes
 
-Flakes is experimental feature and is not enabled by default.
+* Nix
+** Flakes
 
 #+begin_src nix :noweb-ref system-configuration
 nix.settings.experimental-features = [ "nix-command" "flakes" ];
-#+end_src
-
-*** NixOS Configuration with Flakes
-
-Using Flakes for nix configuration offers several benefits over standard configuration:
-- **Reproducibility**: Flake inputs are clearly defined and work independently of nix channels in the current system.
-- **Interoperability**: Other flakes can be used to provide software packages, overlays, and NixOS modules.
-
-To enable flakes for NixOS configuration, we need to create ~/etc/nixos/flake.nix~ file without changing the existing configuration, which is going to be used as a module in our flake NixOS configuration.
-
-#+begin_src nix :tangle /etc/nixos/flake.nix :noweb-ref none
-{
-  description = "NixOS Flake Configuration";
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-  };
-  outputs = { self, nixpkgs, ... }@inputs: {
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [./configuration.nix];
-    };
-  };
-}
 #+end_src
 
 ** Trusted users
