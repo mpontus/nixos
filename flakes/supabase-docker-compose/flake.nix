@@ -76,7 +76,7 @@
               -inputs docker-compose.yml \
               -output docker-compose.nix \
               -root_path "${src}/docker" \
-              -runtime docker \
+              -runtime podman \
               -auto_format \
               -create_root_target \
               -project supabase \
