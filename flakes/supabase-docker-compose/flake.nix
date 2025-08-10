@@ -28,6 +28,8 @@
             SECRET_KEY_BASE=your-super-secret-and-long-secret-key-base
             ANON_KEY=your-anon-key
             SERVICE_ROLE_KEY=your-service-role-key
+            DASHBOARD_USERNAME=supabase
+            DASHBOARD_PASSWORD=this_password_is_insecure_and_should_be_updated
             LOGFLARE_PRIVATE_ACCESS_TOKEN=your-logflare-private-access-token
             LOGFLARE_PUBLIC_ACCESS_TOKEN=your-logflare-public-access-token
             POOLER_TENANT_ID=your-pooler-tenant-id
@@ -37,6 +39,8 @@
             POOLER_DEFAULT_POOL_SIZE=25
             # DOCKER_SOCKET_LOCATION=/var/run/docker.sock
             DOCKER_SOCKET_LOCATION=/var/run/podman/podman.sock
+            KONG_HTTP_PORT=8000
+            KONG_HTTPS_PORT=8443
             SITE_URL=http://localhost:3000
             API_EXTERNAL_URL=http://localhost:8000
             PGRST_DB_SCHEMAS=public,storage,graphql_public
@@ -58,6 +62,10 @@
             MAILER_URLPATHS_INVITE=/auth/v1/verify
             MAILER_URLPATHS_CONFIRMATION=/auth/v1/verify
             MAILER_URLPATHS_RECOVERY=/auth/v1/verify
+            STUDIO_DEFAULT_ORGANIZATION=Default Organization
+            STUDIO_DEFAULT_PROJECT=Default Project
+            SUPABASE_PUBLIC_URL=http://localhost:8000
+            IMGPROXY_ENABLE_WEBP_DETECTION=false
           '';
         in pkgs.stdenv.mkDerivation {
           inherit src;
