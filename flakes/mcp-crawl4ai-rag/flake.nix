@@ -144,7 +144,7 @@
           # Virtual environment with all dependencies
           venv = pythonSet.mkVirtualEnv "mcp-crawl4ai-rag-env"
             workspace.deps.default;
-          
+
           # Create executable package with baked-in browser paths
           package = pkgs.writeShellScriptBin "mcp-crawl4ai-rag" ''
             export PLAYWRIGHT_BROWSERS_PATH="${pkgs.playwright-driver.browsers}"
@@ -155,15 +155,12 @@
           inherit src venv package;
 
           # For development/testing
-          app = flake-utils.lib.mkApp {
-            drv = package;
-          };
+          app = flake-utils.lib.mkApp { drv = package; };
         };
     in (flake-utils.lib.eachDefaultSystem (system:
       let systemPkgs = mkSystemPackages system;
       in {
         packages.default = systemPkgs.package;
-        packages.venv = systemPkgs.venv;  # Keep venv available as a separate package
         apps.default = systemPkgs.app;
       })) // {
         # System-independent NixOS modules
@@ -184,22 +181,17 @@
                 throw
                 "mcp-crawl4ai-rag is only supported on Linux systems due to NVIDIA CUDA dependencies";
             in {
-              ExecStart =
-                "${systemPkgs.venv}/bin/python ${systemPkgs.src}/src/crawl4ai_mcp.py";
-
+              ExecStart = "${systemPkgs.package}/bin/mcp-crawl4ai-rag";
               Restart = "always";
               RestartSec = 5;
               WorkingDirectory = "${systemPkgs.src}";
               Environment = [
-                "SUPABASE_URL=postgresql://postgres:password@localhost:5432/postgres"
                 "NEO4J_URI=bolt://localhost:7687"
                 "USE_CONTEXTUAL_EMBEDDINGS=true"
                 "USE_HYBRID_SEARCH=true"
                 "USE_AGENTIC_RAG=true"
                 "USE_RERANKING=true"
                 "USE_KNOWLEDGE_GRAPH=true"
-                "PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}"
-                "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
               ];
             };
           };
