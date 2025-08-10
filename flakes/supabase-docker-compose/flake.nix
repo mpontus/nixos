@@ -4,9 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
+    compose2nix.url = "github:mpontus/compose2nix";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, compose2nix }:
     let
       supabase-nixos-containers-for = system:
         let
@@ -63,7 +64,8 @@
           name = "supabase-nixos-containers";
           version = "latest";
 
-          buildInputs = [ pkgs.compose2nix pkgs.nixfmt-classic ];
+          buildInputs =
+            [ compose2nix.packages.${system}.default pkgs.nixfmt-classic ];
 
           buildPhase = ''
             cd docker
