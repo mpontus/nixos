@@ -34,7 +34,8 @@
             POOLER_MAX_CLIENT_CONN=100
             POOLER_DB_POOL_SIZE=20
             POOLER_DEFAULT_POOL_SIZE=25
-            DOCKER_SOCKET_LOCATION=/var/run/docker.sock
+            # DOCKER_SOCKET_LOCATION=/var/run/docker.sock
+            DOCKER_SOCKET_LOCATION=/var/run/podman/podman.sock
             SITE_URL=http://localhost:3000
             API_EXTERNAL_URL=http://localhost:8000
             PGRST_DB_SCHEMAS=public,storage,graphql_public
