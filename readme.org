@@ -1714,7 +1714,18 @@ networking.extraHosts = ''
 '';
 #+end_src
 
-** Docker
+** Podman
+#+begin_src nix :noweb-ref system-configuration
+virtualisation.podman = {
+  enable = true;
+  dockerCompat = true;
+  dockerSocket = {
+    enable = true;
+  };
+};
+#+end_src
+
+** COMMENT Docker
 
 #+begin_src nix
   virtualisation.docker.enable = true;
@@ -1867,6 +1878,52 @@ mcp-crawl4ai-rag.url = "github:mpontus/nixos?dir=flakes/mcp-crawl4ai-rag";
 #+begin_src nix :noweb-ref modules
 inputs.mcp-crawl4ai-rag.nixosModules.default
 #+end_src
+*** COMMENT Test
+
+#+begin_src nix :noweb-ref system-configuration
+  virtualisation.oci-containers.containers."test-string-with-quotes" = {
+    image = "nginx:latest";
+    log-driver = "journald";
+    autoStart = true;
+    extraOptions = [
+      # ''--entrypoint="[\"nginx\", \"-g\", \"daemon off;\", \"-c\", \"/etc/config/nginx/conf/nginx.conf\"]"''
+      # "--entrypoint='[\"nginx\", \"-g\", \"daemon off;\", \"-c\", \"/etc/config/nginx/conf/nginx.conf\"]'"
+      # "--entrypoint=[]"
+      # "--entrypoint=[\"bash\", \"-c\", \"echo \\\"Hello World\\\" && ls\"]"
+      "--entrypoint=bash -c echo Hello World && ls"
+      # "--network-alias=string-with-quotes"
+      # "--network=test_default"
+    ];
+  };
+#+end_src
+
+*** Supabase
+
+Add Supabase flake as input:
+
+#+begin_src nix :noweb-ref inputs
+supabase-containers.url = "github:mpontus/nixos?dir=flakes/supabase-docker-compose";
+#+end_src
+
+Import Supabase containers configuration:
+
+#+begin_src nix :noweb-ref modules  
+inputs.supabase-containers.nixosModules.default
+#+end_src
+
+Update the service environment to use Supabase HTTP API:
+
+#+begin_src nix :noweb-ref system-configuration
+systemd.services.mcp-crawl4ai-rag.environment = {
+  SUPABASE_URL = "http://localhost:8000";  # Kong API Gateway
+  SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NTQ3ODA0MDAsImV4cCI6MTkxMjU0NjgwMH0.c2s8EoEsq0AnYNiaB3AcGALO4WPHOxFlALmQUAxjylY";  # From the generated config
+};
+#+end_src
+
+*** Neo4j
+
+TODO
+
 * Entertainment
 ** COMMENT Stremio
 
