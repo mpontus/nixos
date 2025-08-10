@@ -85,6 +85,7 @@
 
             # Fix PostgreSQL data volume to use writable host directory
             sed -i 's|${src}/docker/volumes/db/data|/var/lib/supabase/db/data|g' docker-compose.nix
+            sed -i 's|${src}/docker/volumes/storage|/var/lib/supabase/storage|g' docker-compose.nix
           '';
 
           installPhase = ''
