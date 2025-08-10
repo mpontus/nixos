@@ -23,11 +23,11 @@
             POSTGRES_HOST=db
             POSTGRES_PORT=5432
             POSTGRES_DB=postgres
-            JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+            JWT_SECRET=aFToG7uAV3D6QPtWJhyMzB0trTpcmzx7niUIPw0u
             VAULT_ENC_KEY=your-vault-encryption-key
             SECRET_KEY_BASE=your-super-secret-and-long-secret-key-base
-            ANON_KEY=your-anon-key
-            SERVICE_ROLE_KEY=your-service-role-key
+            ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzU0NzgwNDAwLCJleHAiOjE5MTI1NDY4MDB9.06CmooqAWlDyn-32MJ-NQe3qQpjGqxylVW5UCHZ5If4
+            SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NTQ3ODA0MDAsImV4cCI6MTkxMjU0NjgwMH0.hqQhSW9IfcGDLgQOY7a4j-iVprSjtpCi2iPwZAyKI3s
             DASHBOARD_USERNAME=supabase
             DASHBOARD_PASSWORD=this_password_is_insecure_and_should_be_updated
             LOGFLARE_PRIVATE_ACCESS_TOKEN=your-logflare-private-access-token
