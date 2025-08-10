@@ -591,6 +591,19 @@
       SUPABASE_URL = "http://localhost:8000";  # Kong API Gateway
       SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NTQ3ODA0MDAsImV4cCI6MTkxMjU0NjgwMH0.c2s8EoEsq0AnYNiaB3AcGALO4WPHOxFlALmQUAxjylY";  # From the generated config
     };
+    services.neo4j = {
+      enable = true;
+      bolt = {
+        enable = true;
+        tlsLevel = "DISABLED";
+      };
+      https.enable = false;
+    };
+    systemd.services.mcp-crawl4ai-rag.environment = {
+      NEO4J_URI = "bolt://localhost:7687";
+      NEO4J_USER = "neo4j";
+      NEO4J_PASSWORD = "your_neo4j_password";
+    };
       programs.steam.enable = true;
       services.joycond.enable = true;
 

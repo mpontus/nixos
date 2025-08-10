@@ -1922,7 +1922,30 @@ systemd.services.mcp-crawl4ai-rag.environment = {
 
 *** Neo4j
 
-TODO
+Enable Neo4j service in NixOS. Disable TLS for Bolt protocol and HTTPS, as we will use it locally without encryption.
+
+#+begin_src nix :noweb-ref system-configuration
+services.neo4j = {
+  enable = true;
+  bolt = {
+    enable = true;
+    tlsLevel = "DISABLED";
+  };
+  https.enable = false;
+};
+#+end_src
+
+Inject Neo4j connection parameters into the Crawl4ai service environment.
+
+#+begin_src nix :noweb-ref system-configuration
+systemd.services.mcp-crawl4ai-rag.environment = {
+  NEO4J_URI = "bolt://localhost:7687";
+  NEO4J_USER = "neo4j";
+  NEO4J_PASSWORD = "your_neo4j_password";
+};
+#+end_src
+
+
 
 * Entertainment
 ** COMMENT Stremio
