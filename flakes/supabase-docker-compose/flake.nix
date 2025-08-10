@@ -17,18 +17,7 @@
             rev = "adfc138450c98191ee539c6b9b3e18b87d28ba0b";
             sha256 = "sha256-WoXuFyjpxg6sMFN55Q+m8GSoexsNJd76OJUVOJoo0VQ=";
           };
-        in pkgs.stdenv.mkDerivation {
-          inherit src;
-          name = "supabase-nixos-containers";
-          version = "latest";
-
-          buildInputs = [ pkgs.compose2nix pkgs.nixfmt-classic ];
-
-          buildPhase = ''
-            cd docker
-
-            # Create a minimal .env file with default values
-            cat > .env << 'EOF'
+          envFile = pkgs.writeText ".env" ''
             POSTGRES_PASSWORD=your-super-secret-and-long-postgres-password
             POSTGRES_HOST=db
             POSTGRES_PORT=5432
@@ -67,7 +56,16 @@
             MAILER_URLPATHS_INVITE=/auth/v1/verify
             MAILER_URLPATHS_CONFIRMATION=/auth/v1/verify
             MAILER_URLPATHS_RECOVERY=/auth/v1/verify
-            EOF
+          '';
+        in pkgs.stdenv.mkDerivation {
+          inherit src;
+          name = "supabase-nixos-containers";
+          version = "latest";
+
+          buildInputs = [ pkgs.compose2nix pkgs.nixfmt-classic ];
+
+          buildPhase = ''
+            cd docker
 
             # Fix the Docker socket mount issue by removing the ,z option that compose2nix doesn't understand
             sed -i 's/:ro,z/:ro/g' docker-compose.yml
@@ -75,11 +73,15 @@
             compose2nix \
               -inputs docker-compose.yml \
               -output docker-compose.nix \
+              -root_path "${src}/docker" \
               -runtime docker \
               -auto_format \
               -create_root_target \
               -project supabase \
-              -env_files .env
+              -env_files ${envFile}
+            
+            # Fix PostgreSQL data volume to use writable host directory
+            sed -i 's|${src}/docker/volumes/db/data|/var/lib/supabase/db/data|g' docker-compose.nix
           '';
 
           installPhase = ''
