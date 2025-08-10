@@ -1856,6 +1856,17 @@ nixfmt
 pandoc
 #+end_src
 
+** Crawl4ai
+
+#+begin_src nix :noweb-ref inputs
+mcp-crawl4ai-rag.url = "github:mpontus/nixos?dir=flakes/mcp-crawl4ai-rag";
+#+end_src
+
+*** Service
+
+#+begin_src nix :noweb-ref modules
+inputs.mcp-crawl4ai-rag.nixosModules.default
+#+end_src
 * Entertainment
 ** COMMENT Stremio
 

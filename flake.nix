@@ -8,6 +8,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    mcp-crawl4ai-rag.url = "github:mpontus/nixos?dir=flakes/mcp-crawl4ai-rag";
   };
   outputs = { self, nixpkgs, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
@@ -16,6 +17,7 @@
       modules = [
         ./configuration.nix
         inputs.home-manager.nixosModules.home-manager
+        inputs.mcp-crawl4ai-rag.nixosModules.default
       ];
     };
   };
