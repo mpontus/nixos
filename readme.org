@@ -348,7 +348,7 @@ Disable DHCP by default to run NixOS in a VM.
   networking.interfaces.wlp2s0.useDHCP = true;
 #+end_src
 
-*** COMMENT Firewall
+*** Firewall
 
 Disabled to allow visiting locally running website from mobile
 
@@ -671,25 +671,26 @@ services.xserver.windowManager.xmonad = {
 };
 #+end_src
 
-** COMMENT Sound
-
-#+begin_src nix
-  sound.enable = true;
-#+end_src
-
-*** PulseAudio
+** COMMENT PulseAudio
 
 #+begin_src nix
 hardware.pulseaudio.enable = true;
 #+end_src
 
-**** Bluetooth support for PulseAudio
+*** Bluetooth support for PulseAudio
 
 #+begin_src nix
 hardware.pulseaudio.package = pkgs.pulseaudioFull;
 hardware.pulseaudio.extraConfig = "
   load-module module-switch-on-connect
 ";
+#+end_src
+
+
+** Pavucotnrol
+
+#+begin_src nix :noweb-ref home-packages
+pavucontrol
 #+end_src
 
 ** Bluetooth
@@ -1024,9 +1025,9 @@ nyxt
 *** Tor Browser
 
 #+begin_src nix :noweb-ref home-packages
-unstable.tor-browser-bundle-bin
+unstable.tor-browser
 #+end_src
-*** COMMENT Chromium
+*** Chromium
 
 #+begin_src nix :noweb-ref home-packages
 unstable.chromium
@@ -1219,10 +1220,16 @@ tilix
 };
 #+end_src
 
+*** Ghostty
+#+begin_src nix :noweb-ref home-packages
+ghostty
+#+end_src
+
 *** Guake
 #+begin_src nix :noweb-ref home-packages
 guake
 #+end_src
+
 *** COMMENT Urxvt
 
 #+begin_src nix :noweb-ref home-configuration
@@ -1306,7 +1313,7 @@ unstable.slack
 *** Telegram
 
 #+begin_src nix :noweb-ref home-packages
-unstable.tdesktop
+unstable.telegram-desktop
 #+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap
@@ -1538,9 +1545,21 @@ yarn
 pnpm
 #+end_src
 
-** Python
+** COMMENT Python
 #+begin_src nix :noweb-ref home-packages
-(python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py ]))
+(python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py numpy uv ]))
+#+end_src
+
+** Python via UV
+
+#+begin_src nix :noweb-ref system-packages
+unstable.uv
+#+end_src
+
+uv will install binaries in ~~/.local/bin~, so you need to add it to your PATH.
+
+#+begin_src nix :noweb-ref system-configuration
+environment.localBinInPath = true;
 #+end_src
 
 ** Amazon Q Developer CLI
@@ -1714,18 +1733,7 @@ networking.extraHosts = ''
 '';
 #+end_src
 
-** Podman
-#+begin_src nix :noweb-ref system-configuration
-virtualisation.podman = {
-  enable = true;
-  dockerCompat = true;
-  dockerSocket = {
-    enable = true;
-  };
-};
-#+end_src
-
-** COMMENT Docker
+** Docker
 
 #+begin_src nix
   virtualisation.docker.enable = true;
@@ -1749,6 +1757,17 @@ virtualisation.docker.liveRestore = false;
 
 #+begin_src nix :noweb-ref home-packages
 docker-compose
+#+end_src
+
+** COMMENT Podman
+#+begin_src nix :noweb-ref system-configuration
+virtualisation.podman = {
+  enable = true;
+  dockerCompat = true;
+  dockerSocket = {
+    enable = true;
+  };
+};
 #+end_src
 
 ** Protobuf
@@ -1867,7 +1886,7 @@ nixfmt
 pandoc
 #+end_src
 
-** Crawl4ai
+** COMMENT Crawl4ai
 
 #+begin_src nix :noweb-ref inputs
 mcp-crawl4ai-rag.url = "github:mpontus/nixos?dir=flakes/mcp-crawl4ai-rag";
@@ -1877,24 +1896,6 @@ mcp-crawl4ai-rag.url = "github:mpontus/nixos?dir=flakes/mcp-crawl4ai-rag";
 
 #+begin_src nix :noweb-ref modules
 inputs.mcp-crawl4ai-rag.nixosModules.default
-#+end_src
-*** COMMENT Test
-
-#+begin_src nix :noweb-ref system-configuration
-  virtualisation.oci-containers.containers."test-string-with-quotes" = {
-    image = "nginx:latest";
-    log-driver = "journald";
-    autoStart = true;
-    extraOptions = [
-      # ''--entrypoint="[\"nginx\", \"-g\", \"daemon off;\", \"-c\", \"/etc/config/nginx/conf/nginx.conf\"]"''
-      # "--entrypoint='[\"nginx\", \"-g\", \"daemon off;\", \"-c\", \"/etc/config/nginx/conf/nginx.conf\"]'"
-      # "--entrypoint=[]"
-      # "--entrypoint=[\"bash\", \"-c\", \"echo \\\"Hello World\\\" && ls\"]"
-      "--entrypoint=bash -c echo Hello World && ls"
-      # "--network-alias=string-with-quotes"
-      # "--network=test_default"
-    ];
-  };
 #+end_src
 
 *** Supabase
@@ -1946,6 +1947,12 @@ systemd.services.mcp-crawl4ai-rag.environment = {
 #+end_src
 
 
+
+** devenv
+
+#+begin_src nix :noweb-ref home-packages
+unstable.devenv
+#+end_src
 
 * Entertainment
 ** COMMENT Stremio

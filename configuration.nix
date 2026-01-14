@@ -16,6 +16,7 @@
       pkgs.virt-manager
       gnome-tweaks
       ly
+      unstable.uv
       pkg-config libssh2 zlib
       unstable.postman
       git
@@ -97,9 +98,11 @@
     
         home.packages = with pkgs; [
             dconf-editor
+          pavucontrol
           barrier
           # latest.firefox-nightly-bin
-          unstable.tor-browser-bundle-bin
+          unstable.tor-browser
+          unstable.chromium
           libreoffice-qt
           hunspell
           hunspellDicts.uk_UA
@@ -109,10 +112,11 @@
           pass
           monero-gui
           tilix
+          ghostty
           guake
           (callPackage ./pkgs/toptracker { })
           unstable.slack
-          unstable.tdesktop
+          unstable.telegram-desktop
           discord
           beep
           htop
@@ -136,13 +140,13 @@
           # unstable.nodejs_16
           yarn
           pnpm
-          (python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py ]))
           # (callPackage ./pkgs/amazon-q-cli { })
           unstable.amazon-q-cli
           unstable.rustc cargo wasm-pack
           unstable.gh hub
           deno
           mitmproxy
+          docker-compose
           protobuf
           unstable.temporal-cli
           unstable.ngrok
@@ -160,6 +164,7 @@
           unstable.nodePackages."prettier"
           nixfmt
           pandoc
+          unstable.devenv
           spotify
           deluge
           vlc
@@ -184,6 +189,10 @@
             "<Super>w" = {
               name = "Switch to Firefox";
               command = "launch-or-raise -W Navigator firefox";
+            };
+            "<Shift><Super>c" = {
+              name = "Switch to Chromium";
+              command = "launch-or-raise -W Chroimum chromium-browser";
             };
             "<Super>c" = {
               name = "Tilix";
@@ -269,9 +278,11 @@
     
         home.packages = with pkgs; [
             dconf-editor
+          pavucontrol
           barrier
           # latest.firefox-nightly-bin
-          unstable.tor-browser-bundle-bin
+          unstable.tor-browser
+          unstable.chromium
           libreoffice-qt
           hunspell
           hunspellDicts.uk_UA
@@ -281,10 +292,11 @@
           pass
           monero-gui
           tilix
+          ghostty
           guake
           (callPackage ./pkgs/toptracker { })
           unstable.slack
-          unstable.tdesktop
+          unstable.telegram-desktop
           discord
           beep
           htop
@@ -308,13 +320,13 @@
           # unstable.nodejs_16
           yarn
           pnpm
-          (python3.withPackages ( ps: with ps; [ pip setuptools epc nats-py ]))
           # (callPackage ./pkgs/amazon-q-cli { })
           unstable.amazon-q-cli
           unstable.rustc cargo wasm-pack
           unstable.gh hub
           deno
           mitmproxy
+          docker-compose
           protobuf
           unstable.temporal-cli
           unstable.ngrok
@@ -332,6 +344,7 @@
           unstable.nodePackages."prettier"
           nixfmt
           pandoc
+          unstable.devenv
           spotify
           deluge
           vlc
@@ -356,6 +369,10 @@
             "<Super>w" = {
               name = "Switch to Firefox";
               command = "launch-or-raise -W Navigator firefox";
+            };
+            "<Shift><Super>c" = {
+              name = "Switch to Chromium";
+              command = "launch-or-raise -W Chroimum chromium-browser";
             };
             "<Super>c" = {
               name = "Tilix";
@@ -472,6 +489,11 @@
       };
       networking.hostName = "nixos"; # Define your hostname.
     networking.enableIPv6  = false;
+      # Open ports in the firewall.
+      # networking.firewall.allowedTCPPorts = [ ... ];
+      # networking.firewall.allowedUDPPorts = [ ... ];
+      # Or disable the firewall altogether.
+      networking.firewall.enable = false;
     
     services.openvpn.servers.pia = {
       config = "config ${pkgs.fetchzip {
@@ -554,6 +576,7 @@
         localuser = null;
         interval = "1h";
       };
+    environment.localBinInPath = true;
     # See https://github.com/sfackler/rust-openssl/issues/1663#issuecomment-1603606249
     environment.variables = {
       PKG_CONFIG_PATH = [ "${pkgs.openssl.dev}/lib/pkgconfig" "${pkgs.zlib.dev}/lib/pkgconfig" ];
@@ -569,13 +592,9 @@
       127.0.0.1 ipfs.local ff
       192.168.1.121 grafana.orangepi argocd.orangepi portainer.orangepi
     '';
-    virtualisation.podman = {
-      enable = true;
-      dockerCompat = true;
-      dockerSocket = {
-        enable = true;
-      };
-    };
+      virtualisation.docker.enable = true;
+      users.extraGroups.docker.members = ["mpontus"];
+    virtualisation.docker.liveRestore = false;
       networking.firewall.allowedTCPPorts = [ 6443 ];
       services.k3s = {
         enable = false;
@@ -587,23 +606,6 @@
       virtualisation.virtualbox.host.enable = true;
       virtualisation.virtualbox.host.enableExtensionPack = true;
       users.extraGroups.vboxusers.members = ["mpontus" "er"];
-    systemd.services.mcp-crawl4ai-rag.environment = {
-      SUPABASE_URL = "http://localhost:8000";  # Kong API Gateway
-      SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NTQ3ODA0MDAsImV4cCI6MTkxMjU0NjgwMH0.c2s8EoEsq0AnYNiaB3AcGALO4WPHOxFlALmQUAxjylY";  # From the generated config
-    };
-    services.neo4j = {
-      enable = true;
-      bolt = {
-        enable = true;
-        tlsLevel = "DISABLED";
-      };
-      https.enable = false;
-    };
-    systemd.services.mcp-crawl4ai-rag.environment = {
-      NEO4J_URI = "bolt://localhost:7687";
-      NEO4J_USER = "neo4j";
-      NEO4J_PASSWORD = "your_neo4j_password";
-    };
       programs.steam.enable = true;
       services.joycond.enable = true;
 
