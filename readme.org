@@ -649,6 +649,12 @@ gnomecast
   })
 #+end_src
 
+** Synergy
+
+#+begin_src nix :noweb-ref home-packages
+unstable.synergy
+#+end_src
+
 ** DWM
 
 #+begin_src nix :noweb-ref system-configuration
@@ -1424,6 +1430,11 @@ unzip
 sshfs
 #+end_src
 
+*** rclone
+#+begin_src nix :noweb-ref home-packages
+unstable.rclone
+#+end_src
+
 ** Searching
 *** ag
 
@@ -1571,6 +1582,12 @@ unstable.amazon-q-cli
 
 #+begin_src nix :noweb-ref unfree-packages
 "amazon-q-cli"
+#+end_src
+
+** Opencode
+
+#+begin_src nix :noweb-ref home-packages
+unstable.opencode
 #+end_src
 
 ** Rust toolchain
