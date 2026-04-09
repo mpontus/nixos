@@ -127,6 +127,7 @@
           ncdu
           unzip
           sshfs
+          unstable.rclone
           silver-searcher
           ripgrep
           fd
@@ -136,12 +137,12 @@
             wl-clipboard
             xclip
             wmctrl xdotool xorg.xprop xorg.xwininfo
-          unstable.nodejs
-          # unstable.nodejs_16
+          # unstable.nodejs
           yarn
           pnpm
           # (callPackage ./pkgs/amazon-q-cli { })
           unstable.amazon-q-cli
+          unstable.opencode
           unstable.rustc cargo wasm-pack
           unstable.gh hub
           deno
@@ -253,6 +254,10 @@
             '';
             enableVteIntegration = true;
           };
+        programs.direnv = {
+          enable = true;
+          nix-direnv.enable = true;
+        };
         programs.vscode = {
           enable = true;
           package = pkgs.unstable.vscode;
@@ -264,7 +269,7 @@
           extraConfig = {
             user.name = "Michael Pontus";
             user.email = "m.pontus@gmail.com";
-            rerere.enabled = true;
+            rerere.enabled = false;
           };
         };
     
@@ -276,177 +281,7 @@
           
         ];
     
-        home.packages = with pkgs; [
-            dconf-editor
-          pavucontrol
-          barrier
-          # latest.firefox-nightly-bin
-          unstable.tor-browser
-          unstable.chromium
-          libreoffice-qt
-          hunspell
-          hunspellDicts.uk_UA
-          hunspellDicts.th_TH
-          okular
-          audacity
-          pass
-          monero-gui
-          tilix
-          ghostty
-          guake
-          (callPackage ./pkgs/toptracker { })
-          unstable.slack
-          unstable.telegram-desktop
-          discord
-          beep
-          htop
-          lsof
-          inetutils
-          file
-          tree
-          ncdu
-          unzip
-          sshfs
-          silver-searcher
-          ripgrep
-          fd
-          jq
-          xsv
-          imagemagick
-            wl-clipboard
-            xclip
-            wmctrl xdotool xorg.xprop xorg.xwininfo
-          unstable.nodejs
-          # unstable.nodejs_16
-          yarn
-          pnpm
-          # (callPackage ./pkgs/amazon-q-cli { })
-          unstable.amazon-q-cli
-          unstable.rustc cargo wasm-pack
-          unstable.gh hub
-          deno
-          mitmproxy
-          docker-compose
-          protobuf
-          unstable.temporal-cli
-          unstable.ngrok
-          awscli2
-          dbeaver-bin
-          (pkgs.appimageTools.wrapType2 {
-            name = "nosql-workbench";
-            src = pkgs.fetchurl {
-              url =
-                "https://s3.amazonaws.com/nosql-workbench/NoSQL%20Workbench-linux-x86_64-3.3.0.AppImage";
-              hash = "sha256-15C4R1gUEQjkENdlEep6l88+QcCx8LYHM2bBKpoPcig=";
-            };
-          })
-          altair
-          unstable.nodePackages."prettier"
-          nixfmt
-          pandoc
-          unstable.devenv
-          spotify
-          deluge
-          vlc
-          unstable.kodi
-          obs-studio
-          calibre
-          spotify
-        ];
-    
-    
-          dconf.settings = {
-              "ca/desrt/dconf-editor" = { show-warning = false; };
-          } // (lib.trivial.pipe {
-              "<Super>e" = {
-                name = "Switch to Emacs";
-                command = "launch-or-raise -W Emacs emacs";
-              };
-            "<Super>i" = {
-              name = "Emacs Everyhere";
-              command = "emacsclient --eval '(emacs-everywhere)'";
-            };
-            "<Super>w" = {
-              name = "Switch to Firefox";
-              command = "launch-or-raise -W Navigator firefox";
-            };
-            "<Shift><Super>c" = {
-              name = "Switch to Chromium";
-              command = "launch-or-raise -W Chroimum chromium-browser";
-            };
-            "<Super>c" = {
-              name = "Tilix";
-              command = "launch-or-raise -W tilix tilix";
-            };
-            "<Super>\\" = {
-              name = "Tilix (dropdown)";
-              command = "tilix --quake";
-            };
-            "<Shift><Super>t" = {
-              name = "Switch to TopTracker";
-              command = "launch-or-raise -W TopTracker TopTracker";
-            };
-            "<Super>s" = {
-              name = "Switch to Slack";
-              command = "launch-or-raise -W Slack slack";
-            };
-            "<Super>t" = {
-              name = "Switch to Telegram";
-              command = "launch-or-raise -W TelegramDesktop telegram-desktop";
-            };
-            "<Super>v" = {
-              name = "Switch to VSCode";
-              command = "launch-or-raise -W Code code";
-            };
-          } [
-            (lib.attrsets.mapAttrsToList (binding: { name, command }: {
-              inherit binding name command;
-            }))
-            (lib.lists.imap0 (i: value: {
-              name = "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom${toString(i)}";
-              inherit value;
-            }))
-            lib.attrsets.listToAttrs
-          ]
-          );
-          programs.emacs = {
-            enable = true;
-            # package = pkgs.emacs.withPackages (epkgs: with epkgs; [
-            #   vterm
-            # ]);
-            # package = (pkgs.emacsGit.override {
-            #   withXwidgets = true;
-            # });
-          };
-        programs.firefox.enable = true;
-        # programs.firefox.package = pkgs.unstable.firefox-unwrapped;
-        programs.firefox.package = pkgs.firefox-beta-bin.unwrapped;
-        # programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
-          programs.bash = {
-            enable = true
-            ;
-            historySize = 1000000000;
-            historyFileSize = 1000000000;
-            historyControl = ["ignoredups" "erasedups"];
-            initExtra = ''
-                export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
-            '';
-            enableVteIntegration = true;
-          };
-        programs.vscode = {
-          enable = true;
-          package = pkgs.unstable.vscode;
-          # package = pkgs.vscode-insiders;
-          # extensions = pkgs.vscode-utils.extensionsFromVscodeMarketplace (import ./vscode-extensions.nix).extensions;
-        };
-        programs.git = {
-          enable = true;
-          extraConfig = {
-            user.name = "Michael Pontus";
-            user.email = "m.pontus@gmail.com";
-            rerere.enabled = true;
-          };
-        };
+        home.packages = with pkgs; [];
     
         home.stateVersion = "18.09";
       };
@@ -576,6 +411,15 @@
         localuser = null;
         interval = "1h";
       };
+    programs.npm = {
+            enable = true;
+            package = pkgs.unstable.nodejs;
+            npmrc = ''
+              prefix = ''${HOME}/.npm
+              min-release-age=7 # days
+              ignore-scripts=true
+            '';
+    };
     environment.localBinInPath = true;
     # See https://github.com/sfackler/rust-openssl/issues/1663#issuecomment-1603606249
     environment.variables = {

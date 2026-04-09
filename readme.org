@@ -166,12 +166,7 @@ home-manager.useGlobalPkgs = true;
       <<home-import-files>>
     ];
 
-    home.packages = with pkgs; [
-      <<home-packages>>
-    ];
-
-
-    <<home-configuration>>
+    home.packages = with pkgs; [];
 
     home.stateVersion = "18.09";
   };
@@ -649,7 +644,7 @@ gnomecast
   })
 #+end_src
 
-** Synergy
+** COMMENT Synergy
 
 #+begin_src nix :noweb-ref home-packages
 unstable.synergy
@@ -1526,16 +1521,42 @@ Needed for [emacs-anywhere](https://github.com/zachcurry/emacs-anywhere#try-it).
 #+end_src
 
 * Development
+** Direnv
+
+Enable direnv via Home Manager so project `.envrc` files load automatically.
+
+#+begin_src nix :noweb-ref home-configuration
+programs.direnv = {
+  enable = true;
+  nix-direnv.enable = true;
+};
+#+end_src
+
 ** NodeJS
-#+begin_src nix :noweb-ref home-packages
-unstable.nodejs
-# unstable.nodejs_16
-yarn
+
+#+begin_src nix :noweb-ref system-configuration
+programs.npm = {
+        enable = true;
+        package = pkgs.unstable.nodejs;
+        npmrc = ''
+          prefix = ''${HOME}/.npm
+          min-release-age=7 # days
+          ignore-scripts=true
+        '';
+};
 #+end_src
 
 #+begin_src nix :noweb-ref insecure-packages
 "nodejs-16.20.2"
 #+end_src
+
+*** Yarn
+
+#+begin_src nix :noweb-ref home-packages
+# unstable.nodejs
+yarn
+#+end_src
+
 *** Yarn overlay
 
 #+begin_src nix :noweb-ref overlays
@@ -1681,7 +1702,7 @@ programs.git = {
   extraConfig = {
     user.name = "Michael Pontus";
     user.email = "m.pontus@gmail.com";
-    rerere.enabled = true;
+    rerere.enabled = false;
   };
 };
 #+end_src
