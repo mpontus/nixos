@@ -54,6 +54,7 @@
         system = "x86_64-linux";
         config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
           "corefonts"
+          "upwork"
           "slack"
           "discord"
           "amazon-q-cli"
@@ -74,6 +75,7 @@
 
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
       "corefonts"
+      "upwork"
       "slack"
       "discord"
       "amazon-q-cli"
@@ -114,6 +116,7 @@
           tilix
           ghostty
           guake
+          unstable.upwork
           (callPackage ./pkgs/toptracker { })
           unstable.slack
           unstable.telegram-desktop

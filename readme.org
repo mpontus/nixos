@@ -1279,6 +1279,16 @@ Evaluating GPT-4 powered ide
 #+end_src
 
 
+*** Upwork
+
+#+begin_src nix :noweb-ref home-packages
+unstable.upwork
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"upwork"
+#+end_src
+
 *** TopTracker
 
 #+begin_src nix :noweb-ref home-packages
