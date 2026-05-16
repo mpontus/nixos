@@ -9,7 +9,7 @@ Use this skill when a task depends on current, external, version-specific, commu
 
 ## When to search
 
-Use web/research tools proactively for:
+Consider using search/research tools when a quick lookup would ground the answer in reality, especially for:
 
 - current facts, releases, package status, or API behavior,
 - recommendations and comparisons,
@@ -23,6 +23,7 @@ Do not guess when a quick authoritative lookup would reduce risk.
 ## Tool choice
 
 - For quick lookup: use available web search/fetch tools.
+- For recent news/events: prefer a news-oriented or timestamped source/tool when available.
 - For recommendations, comparisons, package choices, best practices, or higher-stakes factual claims: prefer `pi-research` when available.
 - For code/library documentation: prefer primary docs, repositories, changelogs, and release notes.
 - For Pi package/config recommendations: inspect current setup first with `pi list` and relevant config files.
