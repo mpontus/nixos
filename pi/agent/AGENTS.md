@@ -1,5 +1,11 @@
 # Global Pi instructions
 
+## Working style
+
+Prefer the smallest durable change that satisfies the request. Avoid broad rewrites, new frameworks, or extra tooling unless the user asks for them or repeated failures show they are needed.
+
+When intent is ambiguous, resolve ambiguity before acting: ask a concise clarifying question, state a minimal assumption, or propose a small reversible patch.
+
 ## Research and web use
 
 Use search/research tools proactively when a quick lookup would ground the answer in current, external, version-specific, security-sensitive, or disputed information.
