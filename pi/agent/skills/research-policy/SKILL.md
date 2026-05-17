@@ -24,7 +24,9 @@ Do not guess when a quick authoritative lookup would reduce risk.
 
 - For quick lookup: use available web search/fetch tools.
 - For recent news/events: prefer a news-oriented or timestamped source/tool when available.
-- For recommendations, comparisons, package choices, best practices, or higher-stakes factual claims: prefer `pi-research` when available.
+- For recommendations, comparisons, package choices, best practices, or higher-stakes factual claims: prefer `gemini_research` when Gemini ACP is ready.
+- For source discovery or lighter current lookup: use `gemini_search`, then verify important claims with primary sources or direct fetches.
+- If Gemini-backed tools fail or appear unauthenticated, run `gemini_status` and report the blocker; fall back to available web search/fetch tools when useful.
 - For code/library documentation: prefer primary docs, repositories, changelogs, and release notes.
 - For Pi package/config recommendations: inspect current setup first with `pi list` and relevant config files.
 
@@ -37,6 +39,8 @@ Prefer:
 3. maintainer posts or package pages,
 4. reputable community discussions,
 5. secondary articles only as supporting context.
+
+Gemini ACP is useful for discovery and synthesis, but its source picks can be noisy or indirect. For security, package, incident, legal, pricing, or other high-stakes claims, verify Gemini findings against primary/vendor writeups, advisories, repositories, or direct fetched pages before acting.
 
 For disputed topics, gather multiple sources and describe disagreements.
 
