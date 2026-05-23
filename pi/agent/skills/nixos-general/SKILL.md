@@ -36,6 +36,14 @@ git status --short
 git diff -- flake.nix configuration.nix home.nix modules readme.org README.md
 ```
 
+If tracked or relevant untracked changes already exist, preserve them before starting new work:
+
+- Review the diff enough to understand what belongs together.
+- Commit existing changes as one or more atomic commits before editing.
+- Never mix pre-existing work with the new requested change.
+- If existing changes are ambiguous, risky, secret-looking, or not ready to commit, ask the user before proceeding.
+- Leave clearly unrelated untracked secrets, caches, logs, or artifacts uncommitted unless the user explicitly asks.
+
 Report unrelated pre-existing changes separately from task changes.
 
 ## Editing guidance
@@ -74,6 +82,17 @@ home-manager switch
 
 It is fine to suggest the exact apply command after validation, clearly labeled as something for the user to run.
 
+## Commit workflow
+
+After making changes:
+
+1. Run appropriate validation first.
+2. Commit successful work as atomic commits.
+3. Commit source-of-truth edits and their generated outputs together when they represent the same logical change.
+4. Keep unrelated changes out of the task commit. Use pathspecs or interactive staging when needed.
+5. Do not commit if validation fails, unless the user explicitly asks to save a failing checkpoint.
+6. Do not amend, rebase, reset, or rewrite existing commits unless explicitly requested.
+
 ## Summary checklist
 
 When done, summarize:
@@ -81,5 +100,6 @@ When done, summarize:
 - Files changed.
 - Whether source files or generated files were edited.
 - Validation commands run and results.
-- Any unrelated pre-existing diffs.
+- Commit hash(es) created.
+- Any unrelated remaining diffs.
 - Suggested apply command, only if appropriate.
