@@ -58,6 +58,7 @@
           "slack"
           "discord"
           "amazon-q-cli"
+          "claude-code"
           "code" "vscode"
           "cursor"
           "postman"
@@ -79,6 +80,7 @@
       "slack"
       "discord"
       "amazon-q-cli"
+      "claude-code"
       "code" "vscode"
       "cursor"
       "postman"
@@ -115,6 +117,8 @@
           monero-gui
           tilix
           ghostty
+          kitty
+          wezterm
           guake
           unstable.upwork
           (callPackage ./pkgs/toptracker { })
@@ -146,6 +150,9 @@
           # (callPackage ./pkgs/amazon-q-cli { })
           unstable.amazon-q-cli
           unstable.opencode
+          unstable.gemini-cli
+          unstable.claude-code
+          (callPackage ./pkgs/pi-coding-agent-latest { })
           unstable.rustc cargo wasm-pack
           unstable.gh hub
           deno
@@ -165,7 +172,7 @@
             };
           })
           altair
-          unstable.nodePackages."prettier"
+          unstable.prettier
           nixfmt
           pandoc
           unstable.devenv

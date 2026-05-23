@@ -1226,6 +1226,16 @@ tilix
 ghostty
 #+end_src
 
+*** Kitty
+#+begin_src nix :noweb-ref home-packages
+kitty
+#+end_src
+
+*** WezTerm
+#+begin_src nix :noweb-ref home-packages
+wezterm
+#+end_src
+
 *** Guake
 #+begin_src nix :noweb-ref home-packages
 guake
@@ -1621,6 +1631,28 @@ unstable.amazon-q-cli
 unstable.opencode
 #+end_src
 
+** Gemini CLI
+
+#+begin_src nix :noweb-ref home-packages
+unstable.gemini-cli
+#+end_src
+
+** Claude
+
+#+begin_src nix :noweb-ref home-packages
+unstable.claude-code
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+"claude-code"
+#+end_src
+
+** PI
+
+#+begin_src nix :noweb-ref home-packages
+(callPackage ./pkgs/pi-coding-agent-latest { })
+#+end_src
+
 ** Rust toolchain
 #+begin_src nix :noweb-ref home-packages
 unstable.rustc cargo wasm-pack
@@ -1917,7 +1949,7 @@ altair
 Format code using prettier
 
 #+begin_src nix :noweb-ref home-packages
-unstable.nodePackages."prettier"
+unstable.prettier
 #+end_src
 
 ** nixfmt
