@@ -74,7 +74,7 @@ To enable flakes for NixOS configuration, we need to create ~/etc/nixos/flake.ni
   description = "NixOS Flake Configuration";
   inputs.self.submodules = true;
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     <<inputs>>
   };
   outputs = { self, nixpkgs, ... }@inputs: {
@@ -128,7 +128,7 @@ Add home-manager as Nix flake input
 
 #+begin_src nix :noweb-ref inputs
 home-manager = {
-  url = "github:nix-community/home-manager/release-24.11";
+  url = "github:nix-community/home-manager/master";
   inputs.nixpkgs.follows = "nixpkgs";
 };
 #+end_src
@@ -215,6 +215,26 @@ nix.package = pkgs.nixVersions.git;
 
 #+begin_src nix :noweb-ref inputs
 nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+#+end_src
+
+** sops-nix
+
+Use sops-nix for runtime secrets that must not enter the Nix store.
+
+#+begin_src nix :noweb-ref inputs
+sops-nix = {
+  url = "github:Mic92/sops-nix";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
+#+end_src
+
+#+begin_src nix :noweb-ref modules
+inputs.sops-nix.nixosModules.sops
+#+end_src
+
+#+begin_src nix :noweb-ref system-configuration
+sops.defaultSopsFile = ./secrets/ynab.yaml;
+sops.age.keyFile = "/home/mpontus/.config/sops/age/keys.txt";
 #+end_src
 
 #+begin_src nix :noweb-ref package-overrides
@@ -508,7 +528,7 @@ environment.variables = {
       corefonts
       noto-fonts
       noto-fonts-cjk-sans
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       twitter-color-emoji
       liberation_ttf
       fira-code
@@ -518,7 +538,8 @@ environment.variables = {
       proggyfonts
       source-code-pro
       gentium
-      (nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+      nerd-fonts.fira-code
+nerd-fonts.droid-sans-mono
     ];
   };
 #+end_src
@@ -554,7 +575,6 @@ EndSection
 
 #+begin_src nix :noweb-ref system-configuration
   services.xserver.displayManager.gdm.enable = true;
-  services.xserver.displayManager.gdm.wayland = false;
 #+end_src
 
 ** Gnome
@@ -728,7 +748,7 @@ hardware.bluetooth.enable = true;
 
 ** Remote access
 #+begin_src nix :noweb-ref home-packages
-barrier
+input-leap
 #+end_src
 * Apps
 ** Editor
@@ -934,6 +954,7 @@ Github-styled markdown previewer.
 *** vim
 **** Default editor
 #+begin_src nix :noweb-ref system-configuration
+programs.vim.enable = true;
 programs.vim.defaultEditor = true;
 #+end_src
 ** Browser
@@ -942,7 +963,7 @@ programs.vim.defaultEditor = true;
 #+begin_src nix :noweb-ref home-configuration
 programs.firefox.enable = true;
 # programs.firefox.package = pkgs.unstable.firefox-unwrapped;
-programs.firefox.package = pkgs.firefox-beta-bin.unwrapped;
+programs.firefox.package = pkgs.firefox-beta.unwrapped;
 #+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap
@@ -1070,7 +1091,7 @@ hunspellDicts.th_TH
 ** Books
 
 #+begin_src nix :noweb-ref home-packages
-okular
+kdePackages.okular
 #+end_src
 
 ** Audacity
@@ -1081,6 +1102,8 @@ audacity
 *** GNU Pass
 #+begin_src nix :noweb-ref home-packages
 pass
+sops
+age
 #+end_src
 *** COMMENT Authy
 
@@ -1487,7 +1510,6 @@ Use `locate` to find files globally
   services.locate = {
     enable = true;
     locate = pkgs.mlocate;
-    localuser = null;
     interval = "1h";
   };
 #+end_src
@@ -1506,7 +1528,7 @@ jq
 Transform CSV files
 
 #+begin_src RemoveRemovenix :noweb-ref home-packages
-xsv
+# xsv removed from current nixpkgs; add replacement when needed.
 #+end_src
 
 *** COMMENT htmlq
@@ -1655,8 +1677,19 @@ unstable.claude-code
 
 ** PI
 
+#+begin_src nix :noweb-ref system-configuration
+sops.secrets.ynab_access_token = {
+  owner = "mpontus";
+  mode = "0400";
+};
+#+end_src
+
 #+begin_src nix :noweb-ref home-packages
 (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
+(pkgs.writeShellScriptBin "pi-ynab" ''
+  export YNAB_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/ynab_access_token)"
+  exec ${unstable.callPackage ./pkgs/pi-coding-agent-latest { }}/bin/pi "$@"
+'')
 #+end_src
 
 ** Rust toolchain
@@ -1939,7 +1972,7 @@ networking.extraHosts = ''
 ** Virtualbox
 
 #+begin_src nix :noweb-ref unfree-packages
-  "Oracle_VirtualBox_Extension_Pack"
+  "Oracle_VirtualBox_Extension_Pack" "virtualbox-extpack"
 #+end_src
 
 #+begin_src nix :noweb-ref system-configuration
@@ -1968,7 +2001,8 @@ dbeaver-bin
 
 #+begin_src nix :noweb-ref home-packages
 (pkgs.appimageTools.wrapType2 {
-  name = "nosql-workbench";
+  pname = "nosql-workbench";
+  version = "3.3.0";
   src = pkgs.fetchurl {
     url =
       "https://s3.amazonaws.com/nosql-workbench/NoSQL%20Workbench-linux-x86_64-3.3.0.AppImage";
