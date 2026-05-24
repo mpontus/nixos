@@ -163,7 +163,11 @@
       unstable.claude-code
       (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
       (pkgs.writeShellScriptBin "pi-ynab" ''
-        export YNAB_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/ynab_access_token)"
+        mkdir -p "$HOME/.config/pi-ynab"
+        cat > "$HOME/.config/pi-ynab/config.json" <<'JSON'
+        { "tokenCommand": "cat /run/secrets/ynab_access_token" }
+      JSON
+        chmod 600 "$HOME/.config/pi-ynab/config.json"
         exec ${unstable.callPackage ./pkgs/pi-coding-agent-latest { }}/bin/pi "$@"
       '')
       unstable.rustc cargo wasm-pack
