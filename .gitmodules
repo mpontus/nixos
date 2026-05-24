@@ -1,4 +1,4 @@
 [submodule "pkgs"]
 	path = pkgs
-	url = https://github.com/mpontus/nixpkgs.git
+	url = https://github.com/mpontus/nixos.git
 	branch = packages
