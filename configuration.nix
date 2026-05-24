@@ -93,8 +93,15 @@
 
 
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
-    nix.settings.trusted-users = [ "root" "@wheel" ];
+    nix.settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      trusted-users = [ "root" ];
+      allowed-users = [ "mpontus" ];
+      sandbox = true;
+      sandbox-fallback = false;
+      require-sigs = true;
+      substituters = [ "https://cache.nixos.org/" ];
+    };
       home-manager.users.mpontus = { pkgs, ... }: {
         imports = [
           
@@ -152,7 +159,7 @@
           unstable.opencode
           unstable.gemini-cli
           unstable.claude-code
-          (callPackage ./pkgs/pi-coding-agent-latest { })
+          (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
           unstable.rustc cargo wasm-pack
           unstable.gh hub
           deno
@@ -436,6 +443,28 @@
       PKG_CONFIG_PATH = [ "${pkgs.openssl.dev}/lib/pkgconfig" "${pkgs.zlib.dev}/lib/pkgconfig" ];
     }   ;
     # programs.gnupg.agent.enable = true;
+    programs.firejail = {
+      enable = true;
+      wrappedBinaries = {
+        code-untrusted = {
+          executable = "${lib.getBin pkgs.unstable.vscode}/bin/code";
+          extraArgs = [
+            "--name=code-untrusted"
+            "--private-cache"
+            "--private-tmp"
+            "--blacklist=/home/mpontus/.aws"
+            "--blacklist=/home/mpontus/.docker"
+            "--blacklist=/home/mpontus/.gnupg"
+            "--blacklist=/home/mpontus/.mcp-auth"
+            "--blacklist=/home/mpontus/.netrc"
+            "--blacklist=/home/mpontus/.npmrc"
+            "--blacklist=/home/mpontus/.password-store"
+            "--blacklist=/home/mpontus/.ssh"
+            "--blacklist=/home/mpontus/new-password-store"
+          ];
+        };
+      };
+    };
     programs.gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
