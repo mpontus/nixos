@@ -133,6 +133,7 @@
       wezterm
       guake
       unstable.upwork
+      (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
       (callPackage ./pkgs/toptracker { })
       unstable.slack
       unstable.telegram-desktop

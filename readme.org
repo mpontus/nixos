@@ -1351,6 +1351,7 @@ Evaluating GPT-4 powered ide
 
 #+begin_src nix :noweb-ref home-packages
 unstable.upwork
+(callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
