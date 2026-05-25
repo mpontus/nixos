@@ -1523,12 +1523,12 @@ Transform JSON files
 jq
 #+end_src
 
-*** xsv
+*** qsv
 
-Transform CSV files
+Transform CSV files. Maintained fork/superset of xsv.
 
-#+begin_src RemoveRemovenix :noweb-ref home-packages
-# xsv removed from current nixpkgs; add replacement when needed.
+#+begin_src nix :noweb-ref home-packages
+qsv
 #+end_src
 
 *** COMMENT htmlq

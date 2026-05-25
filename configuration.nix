@@ -148,7 +148,7 @@
       ripgrep
       fd
       jq
-      # xsv removed from current nixpkgs; add replacement when needed.
+      qsv
       imagemagick
       wl-clipboard
       xclip
