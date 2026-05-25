@@ -44,6 +44,8 @@ unset WAYLAND_DISPLAY
 export LD_PRELOAD="$out/lib/upwork-wayland/gdk-screenshotter.so''${LD_PRELOAD:+ $LD_PRELOAD}"
 exec ${upwork}/bin/upwork "$@"
 EOF
+    substituteInPlace $out/bin/upwork-wayland \
+      --replace-fail '$out' "$out"
 
     runHook postInstall
   '';
