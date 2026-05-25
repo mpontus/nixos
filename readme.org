@@ -575,6 +575,7 @@ EndSection
 
 #+begin_src nix :noweb-ref system-configuration
   services.xserver.displayManager.gdm.enable = true;
+  services.displayManager.gdm.settings.daemon.WaylandEnable = lib.mkForce false;
 #+end_src
 
 ** Gnome
@@ -583,6 +584,7 @@ Enable the GNOME Desktop Environment
 
 #+begin_src nix :noweb-ref system-configuration
   services.xserver.desktopManager.gnome.enable = true;
+  services.displayManager.defaultSession = "gnome";
 #+end_src
 *** Extensions
 
@@ -595,7 +597,7 @@ gnome-tweaks
 #+begin_src nix :noweb-ref system-configuration
   systemd.services."getty@tty1".enable = true;
   systemd.services."autovt@tty1".enable = true;
-  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.enable = false;
   services.xserver.displayManager.autoLogin.user = "mpontus";
 #+end_src
 
