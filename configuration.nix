@@ -16,6 +16,8 @@
     pkgs.virt-manager
     gnome-tweaks
     gnomeExtensions.appindicator
+    dmenu
+    st
     ly
     unstable.uv
     pkg-config libssh2 zlib

@@ -706,6 +706,11 @@ unstable.synergy
 services.xserver.windowManager.dwm.enable = true;
 #+end_src
 
+#+begin_src nix :noweb-ref system-packages
+dmenu
+st
+#+end_src
+
 ** ly
 
 #+begin_src nix :noweb-ref system-packages
