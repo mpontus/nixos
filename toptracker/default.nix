@@ -30,7 +30,7 @@ in qt5.mkDerivation rec {
     ldpath=${lib.makeLibraryPath deps}:$out/lib
     patchelf --set-interpreter $interpreter --set-rpath $ldpath $out/bin/TopTracker
     sed -e "s!/opt/toptracker!$out!" -i $out/share/applications/toptracker.desktop
-    ln -s $out/{TopTracker,toptracker}
+    ln -s $out/bin/TopTracker $out/toptracker
   '';
   
   dontStrip = true;
