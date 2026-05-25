@@ -29,10 +29,19 @@ in qt5.mkDerivation rec {
     interpreter=$(patchelf --print-interpreter $(readlink -f $(which patchelf)))
     ldpath=${lib.makeLibraryPath deps}:$out/lib
     patchelf --set-interpreter $interpreter --set-rpath $ldpath $out/bin/TopTracker
-    sed -e "s!/opt/toptracker!$out!" -i $out/share/applications/toptracker.desktop
-    ln -s $out/bin/TopTracker $out/toptracker
+    sed \
+      -e "s!/opt/toptracker!$out!" \
+      -e "s!/usr/bin/toptracker!$out/bin/toptracker!" \
+      -i $out/share/applications/toptracker.desktop
+    ln -s TopTracker $out/bin/toptracker
+    ln -s bin/toptracker $out/toptracker
   '';
   
+  qtWrapperArgs = [
+    "--set" "QT_QPA_PLATFORM" "xcb"
+    "--unset" "XDG_SESSION_TYPE"
+  ];
+
   dontStrip = true;
   dontPatchELF = true;
 }
