@@ -96,7 +96,7 @@
     nix.settings = {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "root" ];
-      allowed-users = [ "mpontus" ];
+      allowed-users = [ "mpontus" "er" ];
       sandbox = true;
       sandbox-fallback = false;
       require-sigs = true;
