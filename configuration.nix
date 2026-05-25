@@ -494,8 +494,8 @@
     # extraFlags =  toString ["--kubelet-arg=v=4"];
   };
   users.extraGroups.k3s.members = ["mpontus"];
-  virtualisation.virtualbox.host.enable = true;
-  virtualisation.virtualbox.host.enableExtensionPack = true;
+  virtualisation.virtualbox.host.enable = false;
+  virtualisation.virtualbox.host.enableExtensionPack = false;
   users.extraGroups.vboxusers.members = ["mpontus" "er"];
   programs.steam.enable = true;
   services.joycond.enable = true;

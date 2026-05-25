@@ -1971,8 +1971,8 @@ networking.extraHosts = ''
 #+end_src
 
 #+begin_src nix :noweb-ref system-configuration
-  virtualisation.virtualbox.host.enable = true;
-  virtualisation.virtualbox.host.enableExtensionPack = true;
+  virtualisation.virtualbox.host.enable = false;
+  virtualisation.virtualbox.host.enableExtensionPack = false;
   users.extraGroups.vboxusers.members = ["mpontus" "er"];
 #+end_src
 
