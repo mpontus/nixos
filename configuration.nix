@@ -279,7 +279,7 @@
       nix-direnv.enable = true;
     };
     programs.vscode = {
-      enable = true;
+      enable = false;
       package = pkgs.unstable.vscode;
       # package = pkgs.vscode-insiders;
       # extensions = pkgs.vscode-utils.extensionsFromVscodeMarketplace (import ./vscode-extensions.nix).extensions;
@@ -454,12 +454,11 @@
   programs.firejail = {
     enable = true;
     wrappedBinaries = {
-      code-untrusted = {
+      code = {
         executable = "${lib.getBin pkgs.unstable.vscode}/bin/code";
+        profile = "${pkgs.firejail}/etc/firejail/code.profile";
         extraArgs = [
-          "--name=code-untrusted"
-          "--private-cache"
-          "--private-tmp"
+          "--name=code"
           "--blacklist=/home/mpontus/.aws"
           "--blacklist=/home/mpontus/.docker"
           "--blacklist=/home/mpontus/.gnupg"

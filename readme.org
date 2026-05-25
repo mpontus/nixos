@@ -1710,7 +1710,7 @@ environment.variables = {
 
 #+begin_src nix :noweb-ref home-configuration
 programs.vscode = {
-  enable = true;
+  enable = false;
   package = pkgs.unstable.vscode;
   # package = pkgs.vscode-insiders;
   # extensions = pkgs.vscode-utils.extensionsFromVscodeMarketplace (import ./vscode-extensions.nix).extensions;
@@ -1718,12 +1718,11 @@ programs.vscode = {
 #+end_src
 
 #+begin_src nix :noweb-ref firejail-wrapped-binaries
-code-untrusted = {
+code = {
   executable = "${lib.getBin pkgs.unstable.vscode}/bin/code";
+  profile = "${pkgs.firejail}/etc/firejail/code.profile";
   extraArgs = [
-    "--name=code-untrusted"
-    "--private-cache"
-    "--private-tmp"
+    "--name=code"
     "--blacklist=/home/mpontus/.aws"
     "--blacklist=/home/mpontus/.docker"
     "--blacklist=/home/mpontus/.gnupg"
@@ -1796,7 +1795,7 @@ programs.firejail = {
 };
 #+end_src
 
-Target packages register sandboxed commands in their own sections using the ~firejail-wrapped-binaries~ noweb ref.
+Target packages register sandboxed commands in their own sections using the ~firejail-wrapped-binaries~ noweb ref. Wrapped binaries replace the normal command name when the target app should always run sandboxed.
 
 ** Git
 
