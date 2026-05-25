@@ -15,6 +15,7 @@
     environment.systemPackages = with pkgs; [
       pkgs.virt-manager
       gnome-tweaks
+      gnomeExtensions.appindicator
       ly
       unstable.uv
       pkg-config libssh2 zlib
@@ -198,6 +199,17 @@
     
           dconf.settings = {
               "ca/desrt/dconf-editor" = { show-warning = false; };
+              "org/gnome/shell" = {
+                enabled-extensions = [
+                  "places-menu@gnome-shell-extensions.gcampax.github.com"
+                  "native-window-placement@gnome-shell-extensions.gcampax.github.com"
+                  "status-icons@gnome-shell-extensions.gcampax.github.com"
+                  "appindicatorsupport@rgcjonas.gmail.com"
+                ];
+                disabled-extensions = [
+                  "system-monitor@gnome-shell-extensions.gcampax.github.com"
+                ];
+              };
           } // (lib.trivial.pipe {
               "<Super>e" = {
                 name = "Switch to Emacs";

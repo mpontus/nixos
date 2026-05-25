@@ -633,6 +633,28 @@ Enable literate configuration for dconf settings and keymap
   "ca/desrt/dconf-editor" = { show-warning = false; };
 #+end_src
 
+*** AppIndicator tray icons
+
+TopTracker uses AppIndicator for its status/tray icon. GNOME needs an extension to show it.
+
+#+begin_src nix :noweb-ref system-packages
+gnomeExtensions.appindicator
+#+end_src
+
+#+begin_src nix :noweb-ref dconf-settings
+  "org/gnome/shell" = {
+    enabled-extensions = [
+      "places-menu@gnome-shell-extensions.gcampax.github.com"
+      "native-window-placement@gnome-shell-extensions.gcampax.github.com"
+      "status-icons@gnome-shell-extensions.gcampax.github.com"
+      "appindicatorsupport@rgcjonas.gmail.com"
+    ];
+    disabled-extensions = [
+      "system-monitor@gnome-shell-extensions.gcampax.github.com"
+    ];
+  };
+#+end_src
+
 *** COMMENT Gestures
 
 #+begin_src nix :noweb-ref system-packages
