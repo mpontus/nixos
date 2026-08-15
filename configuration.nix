@@ -29,16 +29,15 @@
 
   nixpkgs.overlays = [
     (let
-      # Change this to a rev sha to pin
-      moz-rev = "master";
+      moz-rev = "16ab32eeb8390de633eb336eb4910efbbe0091e6";
       moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";
-                                        sha256 = "0fcfg835ly29m7m4xzhxb7lvw2ayxcv7cn7pzw4hkj2j1vzx7b2b"; };
+                                        sha256 = "0j7b6wdzs6v65rx53zsyw7nhgc7sg7rljnijkbyyba0qva8qawar"; };
       nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
     in nightlyOverlay)
     (import (builtins.fetchTarball
     {
-      url =     "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz";
-      sha256 = "0fcfg835ly29m7m4xzhxb7lvw2ayxcv7cn7pzw4hkj2j1vzx7b2b";
+      url =     "https://github.com/mozilla/nixpkgs-mozilla/archive/16ab32eeb8390de633eb336eb4910efbbe0091e6.tar.gz";
+      sha256 = "0j7b6wdzs6v65rx53zsyw7nhgc7sg7rljnijkbyyba0qva8qawar";
     }))
     (self: super: {
       yarn = super.unstable.yarn.overrideAttrs (oldAttrs: {
@@ -391,26 +390,29 @@
   environment.variables = {
       QEMU_OPTS = "-m 4096 -smp 4 -enable-kvm";
   };
-    fonts = {
-      enableDefaultFonts = false;
-      fonts = with pkgs; [
-        corefonts
-        noto-fonts
-        noto-fonts-cjk-sans
-        noto-fonts-color-emoji
-        twitter-color-emoji
-        liberation_ttf
-        fira-code
-        fira-code-symbols
-        # mplus-outline-fonts
-        dina-font
-        proggyfonts
-        source-code-pro
-        gentium
-        nerd-fonts.fira-code
-  nerd-fonts.droid-sans-mono
-      ];
-    };
+  fonts = {
+    enableDefaultFonts = false;
+    fonts = with pkgs; [
+      corefonts
+      noto-fonts
+      noto-fonts-cjk-sans
+      noto-fonts-color-emoji
+      twitter-color-emoji
+      liberation_ttf
+      fira-code
+      fira-code-symbols
+      # mplus-outline-fonts
+      dina-font
+      proggyfonts
+      source-code-pro
+      gentium
+    ] ++ (if pkgs ? nerd-fonts then [
+      pkgs.nerd-fonts.fira-code
+      pkgs.nerd-fonts.droid-sans-mono
+    ] else [
+      (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+    ]);
+  };
   services.xserver.enable = true;
   services.xserver.config = ''
   Section "Device"
@@ -423,7 +425,7 @@
   EndSection
   '';
   services.xserver.displayManager.gdm.enable = true;
-  services.displayManager.gdm.settings.daemon.WaylandEnable = lib.mkForce false;
+  services.xserver.displayManager.gdm.settings.daemon.WaylandEnable = lib.mkForce false;
   services.xserver.desktopManager.gnome.enable = true;
   services.displayManager.defaultSession = "gnome";
   systemd.services."getty@tty1".enable = true;
@@ -431,6 +433,64 @@
   services.xserver.displayManager.autoLogin.enable = false;
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.xserver.windowManager.dwm.enable = true;
+  virtualisation.vmVariant = { lib, pkgs, ... }: {
+    services.xserver.desktopManager.xfce = {
+      enable = true;
+      enableXfwm = false;
+    };
+  
+    services.xserver.windowManager.i3 = {
+      enable = true;
+      configFile = pkgs.writeText "i3-xfce-config" ''
+        set $mod Mod4
+        font pango:monospace 10
+        floating_modifier $mod
+        focus_follows_mouse no
+  
+        bindsym $mod+Return exec xfce4-terminal
+        bindsym $mod+d exec dmenu_run
+        bindsym $mod+Shift+q kill
+        bindsym $mod+Shift+r restart
+        bindsym $mod+Shift+e exec "i3-msg exit"
+  
+        bindsym $mod+h focus left
+        bindsym $mod+j focus down
+        bindsym $mod+k focus up
+        bindsym $mod+l focus right
+        bindsym $mod+Shift+h move left
+        bindsym $mod+Shift+j move down
+        bindsym $mod+Shift+k move up
+        bindsym $mod+Shift+l move right
+        bindsym $mod+f fullscreen toggle
+        bindsym $mod+Shift+space floating toggle
+  
+        bindsym $mod+1 workspace number 1
+        bindsym $mod+2 workspace number 2
+        bindsym $mod+3 workspace number 3
+        bindsym $mod+4 workspace number 4
+        bindsym $mod+5 workspace number 5
+        bindsym $mod+Shift+1 move container to workspace number 1
+        bindsym $mod+Shift+2 move container to workspace number 2
+        bindsym $mod+Shift+3 move container to workspace number 3
+        bindsym $mod+Shift+4 move container to workspace number 4
+        bindsym $mod+Shift+5 move container to workspace number 5
+  
+        bindsym $mod+n exec nm-connection-editor
+        bindsym $mod+b exec blueman-manager
+        bindsym $mod+p exec xfce4-panel --preferences
+      '';
+    };
+  
+    networking.networkmanager.enable = true;
+    programs.nm-applet.enable = true;
+  
+    hardware.bluetooth.enable = true;
+    services.blueman.enable = true;
+  
+    services.displayManager.defaultSession = lib.mkForce "xfce+i3";
+    services.xserver.displayManager.autoLogin.enable = lib.mkForce true;
+    services.xserver.displayManager.autoLogin.user = "mpontus";
+  };
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
     General = {
