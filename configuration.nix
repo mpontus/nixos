@@ -516,6 +516,13 @@
     services.xserver.displayManager.autoLogin.user = "mpontus";
     services.displayManager.autoLogin.enable = lib.mkForce true;
     services.displayManager.autoLogin.user = "mpontus";
+  
+    users.mutableUsers = lib.mkForce false;
+    users.users.mpontus.hashedPassword = lib.mkForce "";
+    security.pam.services.login.allowNullPassword = true;
+    security.pam.services.lightdm.allowNullPassword = true;
+    security.pam.services.i3lock.allowNullPassword = true;
+    security.pam.services.xfce4-screensaver.allowNullPassword = true;
   };
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
