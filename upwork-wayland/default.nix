@@ -4,8 +4,10 @@
 , pkg-config
 , glib
 , gdk-pixbuf
-, libx11
-, libxscrnsaver
+, libX11 ? null
+, libx11 ? libX11
+, libXScrnSaver ? null
+, libxscrnsaver ? libXScrnSaver
 , flameshot
 , upwork
 }:
