@@ -438,6 +438,7 @@
   
     services.xserver.desktopManager.xfce = {
       enable = true;
+      noDesktop = true;
       enableXfwm = false;
     };
   
@@ -502,6 +503,7 @@
       dmenu
       i3status
       xorg.xsetroot
+      xfce.xfce4-panel
       xfce.xfce4-terminal
     ];
   
