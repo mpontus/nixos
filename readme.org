@@ -719,34 +719,80 @@ st
 This VM-only variant keeps the installed system on GNOME while making =nixos-rebuild build-vm= boot straight into an Xorg XFCE session with i3 as the window manager.
 
 #+begin_src nix :noweb-ref system-configuration
-virtualisation.vmVariant = { lib, pkgs, ... }: {
+virtualisation.vmVariant = { lib, pkgs, ... }:
+let
+  i3CinnamonSession = pkgs.runCommand "i3-cinnamon-session" {
+    passthru.providedSessions = [ "i3-cinnamon" ];
+  } ''
+    mkdir -p $out/bin $out/share/applications $out/share/cinnamon-session/sessions $out/share/xsessions
+
+    install -Dm755 ${pkgs.writeShellScript "cinnamon-session-i3" ''
+      exec ${pkgs.cinnamon-session}/bin/cinnamon-session --session i3-cinnamon "$@"
+    ''} $out/bin/cinnamon-session-i3
+
+    install -Dm755 ${pkgs.writeShellScript "i3-cinnamon" ''
+      if [ -n "$DESKTOP_AUTOSTART_ID" ]; then
+        ${pkgs.dbus}/bin/dbus-send --print-reply --session --dest=org.gnome.SessionManager \
+          /org/gnome/SessionManager org.gnome.SessionManager.RegisterClient \
+          string:i3-cinnamon string:"$DESKTOP_AUTOSTART_ID" || true
+      fi
+      [ -e "$HOME/.Xresources" ] && ${pkgs.xorg.xrdb}/bin/xrdb -merge "$HOME/.Xresources"
+      exec ${pkgs.i3}/bin/i3 -c /etc/i3/config
+    ''} $out/bin/i3-cinnamon
+
+    install -Dm644 ${pkgs.writeText "i3-cinnamon.desktop" ''
+      [Desktop Entry]
+      Type=Application
+      Name=i3-cinnamon
+      NoDisplay=true
+      Comment=i3 window manager with Cinnamon session services
+      Exec=$out/bin/i3-cinnamon
+      X-GNOME-WMName=i3-cinnamon
+      X-GNOME-Autostart-Phase=WindowManager
+      X-GNOME-Provides=windowmanager
+      X-GNOME-Autostart-Notify=false
+    ''} $out/share/applications/i3-cinnamon.desktop
+
+    install -Dm644 ${pkgs.writeText "i3-cinnamon.session" ''
+      [Cinnamon Session]
+      Name=i3-cinnamon
+      RequiredComponents=i3-cinnamon;org.cinnamon.ScreenSaver;nm-applet;cinnamon-killer-daemon;polkit-gnome-authentication-agent-1;
+      DesktopName=X-Cinnamon
+    ''} $out/share/cinnamon-session/sessions/i3-cinnamon.session
+
+    install -Dm644 ${pkgs.writeText "i3-cinnamon-xsession.desktop" ''
+      [Desktop Entry]
+      Name=Cinnamon + i3
+      Comment=This session logs you into Cinnamon with i3 as the window manager
+      Exec=$out/bin/cinnamon-session-i3
+      TryExec=$out/bin/i3-cinnamon
+      Type=Application
+    ''} $out/share/xsessions/i3-cinnamon.desktop
+
+    substituteInPlace $out/share/applications/i3-cinnamon.desktop --replace-fail '$out' "$out"
+    substituteInPlace $out/share/xsessions/i3-cinnamon.desktop --replace-fail '$out' "$out"
+  '';
+in {
   virtualisation.diskSize = 8192;
 
-  services.xserver.desktopManager.xfce = {
-    enable = true;
-    noDesktop = true;
-    enableXfwm = false;
-  };
+  services.xserver.desktopManager.cinnamon.enable = true;
 
   services.xserver.windowManager.i3 = {
     enable = true;
-    configFile = pkgs.writeText "i3-xfce-config" ''
+    configFile = pkgs.writeText "i3-cinnamon-config" ''
       set $mod Mod4
       font pango:monospace 10
       floating_modifier $mod
       focus_follows_mouse no
 
       exec --no-startup-id xsetroot -solid '#2e3440'
-      exec --no-startup-id xfce4-panel --disable-wm-check
-      exec --no-startup-id nm-applet
-      exec --no-startup-id blueman-applet
-      exec --no-startup-id xfce4-terminal --title 'XFCE+i3 VM' --command 'bash -lc "echo XFCE+i3 VM session is running.; echo Super+Enter opens a terminal.; exec bash"'
+      exec --no-startup-id xfce4-terminal --title 'Cinnamon+i3 VM' --command 'bash -lc "echo Cinnamon+i3 VM session is running.; echo Super+Enter opens a terminal.; exec bash"'
 
       bindsym $mod+Return exec xfce4-terminal
       bindsym $mod+d exec dmenu_run
       bindsym $mod+Shift+q kill
       bindsym $mod+Shift+r restart
-      bindsym $mod+Shift+e exec "i3-msg exit"
+      bindsym $mod+Shift+e exec "cinnamon-session-quit --logout --no-prompt"
 
       bindsym $mod+h focus left
       bindsym $mod+j focus down
@@ -772,7 +818,7 @@ virtualisation.vmVariant = { lib, pkgs, ... }: {
 
       bindsym $mod+n exec nm-connection-editor
       bindsym $mod+b exec blueman-manager
-      bindsym $mod+p exec xfce4-panel --preferences
+      bindsym $mod+p exec cinnamon-settings
 
       bar {
         status_command i3status
@@ -784,13 +830,14 @@ virtualisation.vmVariant = { lib, pkgs, ... }: {
   services.xserver.desktopManager.gnome.enable = lib.mkForce false;
   services.xserver.displayManager.gdm.enable = lib.mkForce false;
   services.xserver.displayManager.lightdm.enable = lib.mkForce true;
+  services.displayManager.sessionPackages = [ i3CinnamonSession ];
 
   environment.systemPackages = with pkgs; [
     dmenu
     i3status
     xorg.xsetroot
-    xfce.xfce4-panel
     xfce.xfce4-terminal
+    i3CinnamonSession
     unstable.upwork
     (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
     (callPackage ./pkgs/toptracker { })
@@ -802,7 +849,7 @@ virtualisation.vmVariant = { lib, pkgs, ... }: {
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
-  services.displayManager.defaultSession = lib.mkForce "xfce+i3";
+  services.displayManager.defaultSession = lib.mkForce "i3-cinnamon";
   services.xserver.displayManager.autoLogin.enable = lib.mkForce true;
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.displayManager.autoLogin.enable = lib.mkForce true;
@@ -814,6 +861,7 @@ virtualisation.vmVariant = { lib, pkgs, ... }: {
   security.pam.services.lightdm.allowNullPassword = true;
   security.pam.services.i3lock.allowNullPassword = true;
   security.pam.services.xfce4-screensaver.allowNullPassword = true;
+  security.pam.services.cinnamon-screensaver.allowNullPassword = true;
 };
 #+end_src
 
