@@ -454,28 +454,35 @@
         import XMonad
         import XMonad.Config.Xfce
         import XMonad.Hooks.EwmhDesktops
+        import XMonad.Hooks.ManageDocks
         import XMonad.Hooks.SetWMName
         import XMonad.Layout.Spacing
         import XMonad.Util.EZConfig
   
         main :: IO ()
-        main = xmonad $ ewmhFullscreen $ ewmh $ xfceConfig
+        main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
           { terminal = "xfce4-terminal"
           , modMask = mod4Mask
-          , borderWidth = 4
-          , normalBorderColor = "#3b4252"
-          , focusedBorderColor = "#88c0d0"
-          , layoutHook = smartSpacingWithEdge 10 $ layoutHook xfceConfig
+          , borderWidth = 3
+          , normalBorderColor = "#243044"
+          , focusedBorderColor = "#89dceb"
+          , layoutHook = avoidStruts $ smartSpacingWithEdge 14 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
-              spawn "xsetroot -solid '#2e3440'"
-              spawn "xfce4-panel --disable-wm-check"
-              spawn "xfce4-terminal --title 'XFCE+xmonad VM' --command 'bash -lc \"echo XFCE+xmonad VM session is running.; echo Super+Enter opens a terminal.; exec bash\"'"
+              spawn "hsetroot -add '#07111f' -add '#102a44' -add '#075985' -gradient 225"
+              spawn "polybar-msg cmd quit || true"
+              spawn "polybar -q -c /etc/polybar-xmonad/config.ini workspaces"
+              spawn "polybar -q -c /etc/polybar-xmonad/config.ini clock"
+              spawn "polybar -q -c /etc/polybar-xmonad/config.ini tray"
+              spawn "nm-applet"
+              spawn "blueman-applet"
+              spawn "xfce4-power-manager"
+              spawn "xfce4-terminal --title 'XFCE+xmonad VM' --command 'bash -lc \"echo XFCE+xmonad VM session is running.; echo Super+Enter opens a terminal.; echo Super+d opens rofi.; exec bash\"'"
               setWMName "LG3D"
           }
           `additionalKeysP`
           [ ("M-<Return>", spawn "xfce4-terminal")
-          , ("M-d", spawn "dmenu_run")
+          , ("M-d", spawn "rofi -show drun -theme /etc/rofi-xmonad/theme.rasi")
           , ("M-n", spawn "nm-connection-editor")
           , ("M-b", spawn "blueman-manager")
           , ("M-p", spawn "xfce4-settings-manager")
@@ -487,6 +494,170 @@
     services.xserver.desktopManager.gnome.enable = lib.mkForce false;
     services.xserver.displayManager.gdm.enable = lib.mkForce false;
     services.xserver.displayManager.lightdm.enable = lib.mkForce true;
+  
+    environment.etc."polybar-xmonad/config.ini".text = ''
+      [colors]
+      bg = #bb111827
+      bg-alt = #dd1f2a44
+      fg = #e5e7eb
+      muted = #8191b2
+      accent = #8bd5ff
+      warm = #f5c2e7
+  
+      [bar/base]
+      monitor =
+      fixed-center = true
+      override-redirect = false
+      wm-restack = generic
+      bottom = false
+      height = 28
+      radius = 9
+      background = ''${colors.bg}
+      foreground = ''${colors.fg}
+      border-size = 1
+      border-color = #b4befe
+      padding-left = 2
+      padding-right = 2
+      module-margin = 2
+      font-0 = monospace:size=10;2
+      font-1 = Symbols Nerd Font:size=10;2
+  
+      [bar/workspaces]
+      inherit = bar/base
+      width = 18%
+      offset-x = 8
+      offset-y = 8
+      modules-center = xworkspaces
+  
+      [bar/clock]
+      inherit = bar/base
+      width = 15%
+      offset-x = 42.5%
+      offset-y = 8
+      modules-center = date
+  
+      [bar/tray]
+      inherit = bar/base
+      width = 20%
+      offset-x = 79%
+      offset-y = 8
+      modules-center = pulseaudio memory tray
+  
+      [module/xworkspaces]
+      type = internal/xworkspaces
+      label-active = %name%
+      label-active-foreground = ''${colors.accent}
+      label-active-background = ''${colors.bg-alt}
+      label-active-padding = 2
+      label-occupied = %name%
+      label-occupied-foreground = ''${colors.fg}
+      label-occupied-padding = 2
+      label-empty = %name%
+      label-empty-foreground = ''${colors.muted}
+      label-empty-padding = 2
+  
+      [module/date]
+      type = internal/date
+      interval = 1
+      date = %a %d %b | %I:%M %p
+      label = %date%
+  
+      [module/pulseaudio]
+      type = internal/pulseaudio
+      format-volume = <label-volume>
+      label-volume = vol %percentage%%
+      label-muted = muted
+      label-muted-foreground = ''${colors.warm}
+  
+      [module/memory]
+      type = internal/memory
+      interval = 3
+      label = ram %percentage_used%%
+  
+      [module/tray]
+      type = internal/tray
+      format-margin = 1
+      tray-spacing = 8px
+      tray-size = 70%
+    '';
+  
+    environment.etc."rofi-xmonad/theme.rasi".text = ''
+      * {
+        bg: #111827ee;
+        bg-alt: #1f2a44ee;
+        fg: #e5e7eb;
+        muted: #93a4c7;
+        accent: #b4befe;
+        border: #b4befe;
+      }
+  
+      window {
+        width: 52%;
+        location: center;
+        anchor: center;
+        border: 2px;
+        border-color: @border;
+        border-radius: 14px;
+        background-color: @bg;
+        padding: 14px;
+      }
+  
+      mainbox {
+        spacing: 12px;
+        background-color: transparent;
+      }
+  
+      inputbar {
+        children: [prompt, entry];
+        background-color: @bg-alt;
+        border-radius: 10px;
+        padding: 10px 12px;
+        spacing: 8px;
+      }
+  
+      prompt {
+        text-color: @accent;
+        background-color: transparent;
+      }
+      entry {
+        text-color: @fg;
+        placeholder: "Search apps";
+        background-color: transparent;
+      }
+  
+      listview {
+        columns: 2;
+        lines: 8;
+        spacing: 6px;
+        fixed-height: true;
+        background-color: transparent;
+      }
+  
+      element {
+        padding: 9px 10px;
+        border-radius: 9px;
+        background-color: transparent;
+        text-color: @fg;
+      }
+  
+      element selected {
+        background-color: @accent;
+        text-color: #111827;
+      }
+  
+      element-icon {
+        size: 26px;
+        margin: 0 10px 0 0;
+        background-color: transparent;
+      }
+      element-text {
+        vertical-align: 0.5;
+        background-color: transparent;
+        text-color: inherit;
+      }
+  
+      scrollbar { handle-color: @accent; background-color: transparent; }
+    '';
   
     services.picom = {
       enable = true;
@@ -508,9 +679,11 @@
     environment.systemPackages = with pkgs; [
       dmenu
       i3status
+      polybar
+      rofi
+      pavucontrol
+      hsetroot
       xorg.xsetroot
-      xfce.xfce4-panel
-      xfce.xfce4-whiskermenu-plugin
       xfce.xfce4-terminal
       unstable.upwork
       (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
