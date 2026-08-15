@@ -455,12 +455,17 @@
         import XMonad.Config.Xfce
         import XMonad.Hooks.EwmhDesktops
         import XMonad.Hooks.SetWMName
+        import XMonad.Layout.Spacing
         import XMonad.Util.EZConfig
   
         main :: IO ()
         main = xmonad $ ewmhFullscreen $ ewmh $ xfceConfig
           { terminal = "xfce4-terminal"
           , modMask = mod4Mask
+          , borderWidth = 4
+          , normalBorderColor = "#3b4252"
+          , focusedBorderColor = "#88c0d0"
+          , layoutHook = smartSpacingWithEdge 10 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
               spawn "xsetroot -solid '#2e3440'"
@@ -482,6 +487,23 @@
     services.xserver.desktopManager.gnome.enable = lib.mkForce false;
     services.xserver.displayManager.gdm.enable = lib.mkForce false;
     services.xserver.displayManager.lightdm.enable = lib.mkForce true;
+  
+    services.picom = {
+      enable = true;
+      backend = "glx";
+      fade = true;
+      fadeDelta = 4;
+      shadow = true;
+      shadowOffsets = [ (-7) (-7) ];
+      shadowOpacity = 0.35;
+      settings = {
+        corner-radius = 12;
+        rounded-corners-exclude = [
+          "window_type = 'dock'"
+          "window_type = 'desktop'"
+        ];
+      };
+    };
   
     environment.systemPackages = with pkgs; [
       dmenu
