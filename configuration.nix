@@ -434,6 +434,8 @@
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.xserver.windowManager.dwm.enable = true;
   virtualisation.vmVariant = { lib, pkgs, ... }: {
+    virtualisation.diskSize = 8192;
+  
     services.xserver.desktopManager.xfce = {
       enable = true;
       enableXfwm = false;
@@ -446,6 +448,12 @@
         font pango:monospace 10
         floating_modifier $mod
         focus_follows_mouse no
+  
+        exec --no-startup-id xsetroot -solid '#2e3440'
+        exec --no-startup-id xfce4-panel --disable-wm-check
+        exec --no-startup-id nm-applet
+        exec --no-startup-id blueman-applet
+        exec --no-startup-id xfce4-terminal --title 'XFCE+i3 VM' --command 'bash -lc "echo XFCE+i3 VM session is running.; echo Super+Enter opens a terminal.; exec bash"'
   
         bindsym $mod+Return exec xfce4-terminal
         bindsym $mod+d exec dmenu_run
@@ -478,8 +486,24 @@
         bindsym $mod+n exec nm-connection-editor
         bindsym $mod+b exec blueman-manager
         bindsym $mod+p exec xfce4-panel --preferences
+  
+        bar {
+          status_command i3status
+          tray_output primary
+        }
       '';
     };
+  
+    services.xserver.desktopManager.gnome.enable = lib.mkForce false;
+    services.xserver.displayManager.gdm.enable = lib.mkForce false;
+    services.xserver.displayManager.lightdm.enable = lib.mkForce true;
+  
+    environment.systemPackages = with pkgs; [
+      dmenu
+      i3status
+      xorg.xsetroot
+      xfce.xfce4-terminal
+    ];
   
     networking.networkmanager.enable = true;
     programs.nm-applet.enable = true;
@@ -490,6 +514,8 @@
     services.displayManager.defaultSession = lib.mkForce "xfce+i3";
     services.xserver.displayManager.autoLogin.enable = lib.mkForce true;
     services.xserver.displayManager.autoLogin.user = "mpontus";
+    services.displayManager.autoLogin.enable = lib.mkForce true;
+    services.displayManager.autoLogin.user = "mpontus";
   };
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
