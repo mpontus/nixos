@@ -505,6 +505,9 @@
       xorg.xsetroot
       xfce.xfce4-panel
       xfce.xfce4-terminal
+      unstable.upwork
+      (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
+      (callPackage ./pkgs/toptracker { })
     ];
   
     networking.networkmanager.enable = true;
