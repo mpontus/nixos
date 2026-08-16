@@ -1102,21 +1102,36 @@ in {
       </channel>
     '';
     "gtk-3.0/gtk.css".text = ''
-      .xfce4-panel.background {
+      .panel-1.background, .panel-2.background, .panel-3.background {
         background-color: rgba(15, 23, 42, 0.88);
         border: 2px solid #3b5274;
         border-radius: 14px;
         color: #e5e7eb;
       }
-      .xfce4-panel.background button {
-        background: transparent;
-        color: #e5e7eb;
+      #XfcePanelWindowWrapper {
+        background-color: transparent;
+        background-image: none;
         border: 0;
-        border-radius: 10px;
-        padding: 2px 6px;
+        border-radius: 0;
+        box-shadow: none;
       }
-      .xfce4-panel.background button:hover { background-color: #253754; }
-      wnck-pager:selected { background-color: #b4befe; color: #0f172a; border-radius: 10px; }
+      #whiskermenu-button, #sn-button, #pulseaudio-button,
+      #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button,
+      .-vala-panel-appmenu-private, .-vala-panel-appmenu-private > menuitem {
+        background-color: transparent;
+        background-image: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        color: #e5e7eb;
+        padding: 2px 5px;
+      }
+      #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
+      #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
+      #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
+        background-color: #253754;
+        border-radius: 8px;
+      }
     '';
   };
   networking.networkmanager.enable = true;
