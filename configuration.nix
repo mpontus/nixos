@@ -483,7 +483,7 @@
           , modMask = mod4Mask
           , borderWidth = 2
           , normalBorderColor = "#3b5274"
-          , focusedBorderColor = "#c4b5fd"
+          , focusedBorderColor = "#b4befe"
           , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
@@ -533,7 +533,7 @@
       background = ''${colors.bg}
       foreground = ''${colors.fg}
       border-size = 2
-      border-color = #a5b4fc
+      border-color = #3b5274
       padding-left = 4
       padding-right = 4
       module-margin = 3
@@ -543,7 +543,7 @@
       [bar/workspaces]
       inherit = bar/base
       width = 28%
-      offset-x = 8
+      offset-x = 20
       offset-y = 8
       modules-center = xworkspaces
   
@@ -557,7 +557,7 @@
       [bar/tray]
       inherit = bar/base
       width = 26%
-      offset-x = 73%
+      offset-x = 72%
       offset-y = 8
       modules-center = network tray
   
@@ -615,7 +615,7 @@
         fg: #e5e7eb;
         muted: #93a4c7;
         accent: #b4befe;
-        border: #a5b4fc;
+        border: #3b5274;
       }
   
       window {
@@ -624,7 +624,7 @@
         anchor: center;
         border: 2px;
         border-color: @border;
-        border-radius: 16px;
+        border-radius: 14px;
         background-color: @bg;
         padding: 14px;
       }
@@ -697,8 +697,10 @@
       shadowOffsets = [ (-7) (-7) ];
       shadowOpacity = 0.4;
       settings = {
-        corner-radius = 16;
+        corner-radius = 14;
+        round-borders = 1;
         shadow-radius = 12;
+        use-damage = false;
         rounded-corners-exclude = [
           "window_type = 'dock'"
           "window_type = 'desktop'"
