@@ -525,7 +525,7 @@
       import XMonad.Layout.Spacing
       import XMonad.Util.EZConfig
       myConfig = ewmhFullscreen $ ewmh $ docks def
-        { terminal = "xfce4-terminal"
+        { terminal = "${pkgs.kitty}/bin/kitty"
         , modMask = mod4Mask
         , borderWidth = 1
         , normalBorderColor = "#8b5cf6"
@@ -535,7 +535,7 @@
         , startupHook = setWMName "LG3D"
         }
         `additionalKeysP`
-        [ ("M-<Return>", spawn "xfce4-terminal")
+        [ ("M-<Return>", spawn "${pkgs.kitty}/bin/kitty")
         , ("M-d", spawn "qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu")
         , ("M-S-e", spawn "qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1")
         ]
