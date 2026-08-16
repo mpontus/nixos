@@ -437,19 +437,6 @@
   services.xserver.windowManager.dwm.enable = true;
   virtualisation.vmVariant = { lib, pkgs, ... }:
   let
-    picomJonaburg = pkgs.picom.overrideAttrs (old: {
-      pname = "picom-jonaburg";
-      version = "v7-jonaburg-2024-08-29";
-      src = pkgs.fetchFromGitHub {
-        owner = "jonaburg";
-        repo = "picom";
-        rev = "65ad706ab8e1d1a8f302624039431950f6d4fb89";
-        hash = "sha256-UKqMHUP6X3exG7obhuRPgXWPmwBeaGaqNYNtcBcimNQ=";
-      };
-      buildInputs = (builtins.filter (p: p != pkgs.pcre2) old.buildInputs) ++ [ pkgs.pcre ];
-      mesonFlags = [ "-Dwith_docs=false" ];
-      doInstallCheck = false;
-    });
     appmenuXfce = pkgs.stdenv.mkDerivation {
       pname = "vala-panel-appmenu-xfce";
       version = "2026-08-16";
@@ -514,6 +501,46 @@
         done
       '';
     };
+    plasmaIslands = pkgs.writeShellScript "plasma-islands" ''
+      set -eu
+      evaluate() {
+        /run/current-system/sw/bin/qdbus org.kde.plasmashell \
+          /PlasmaShell org.kde.PlasmaShell.evaluateScript "$1"
+      }
+      for attempt in $(seq 1 60); do
+        [ "$(evaluate 'print(panels().length)' 2>/dev/null || true)" = 1 ] && break
+        sleep 1
+      done
+      [ "$(evaluate 'print(panels().length)')" = 1 ]
+      evaluate '
+        const left = panels()[0];
+        for (const widget of left.widgets()) widget.remove();
+        left.location = "top";
+        left.alignment = "left";
+        left.lengthMode = "fit";
+        left.height = 28;
+        left.hiding = "none";
+        left.addWidget("org.kde.plasma.kickoff");
+        left.addWidget("org.kde.plasma.appmenu");
+        const center = new Panel;
+        center.location = "top";
+        center.alignment = "center";
+        center.lengthMode = "fit";
+        center.minimumLength = 180;
+        center.height = 28;
+        const clock = center.addWidget("org.kde.plasma.digitalclock");
+        clock.writeConfig("showDate", true);
+        clock.writeConfig("showSeconds", 0);
+        clock.writeConfig("dateFormat", "shortDate");
+        const right = new Panel;
+        right.location = "top";
+        right.alignment = "right";
+        right.lengthMode = "fit";
+        right.height = 28;
+        right.addWidget("org.kde.plasma.systemtray");
+      '
+      [ "$(evaluate 'print(panels().length)')" = 3 ]
+    '';
     plasmaXmonad = pkgs.writers.writeHaskellBin "plasma-xmonad" {
       ghc = pkgs.haskellPackages.ghc;
       libraries = with pkgs.haskellPackages; [ xmonad xmonad-contrib ];
@@ -765,8 +792,8 @@
     '';
   
     services.picom = {
-      enable = false;
-      package = picomJonaburg;
+      enable = true;
+      package = pkgs.picom;
       backend = "xrender";
       vSync = false;
       fade = false;
@@ -792,6 +819,17 @@
       ExecStart = lib.mkForce "${plasmaXmonad}/bin/plasma-xmonad";
       Type = lib.mkForce "simple";
       BusName = lib.mkForce "";
+    };
+    systemd.user.services.picom.after = [ "plasma-plasmashell.service" ];
+    systemd.user.services.plasma-islands = {
+      description = "Configure Plasma top islands";
+      wantedBy = [ "graphical-session.target" ];
+      after = [ "picom.service" "plasma-plasmashell.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = plasmaIslands;
+      };
     };
     environment.sessionVariables = {
       GTK_MODULES = "appmenu-gtk-module";
