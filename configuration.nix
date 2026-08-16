@@ -438,6 +438,19 @@
   virtualisation.vmVariant = { lib, pkgs, ... }:
   let
     wallpaper = pkgs.nixos-artwork.wallpapers.moonscape;
+    picomJonaburg = pkgs.picom.overrideAttrs (old: {
+      pname = "picom-jonaburg";
+      version = "v7-jonaburg-2024-08-29";
+      src = pkgs.fetchFromGitHub {
+        owner = "jonaburg";
+        repo = "picom";
+        rev = "65ad706ab8e1d1a8f302624039431950f6d4fb89";
+        hash = "sha256-UKqMHUP6X3exG7obhuRPgXWPmwBeaGaqNYNtcBcimNQ=";
+      };
+      buildInputs = (builtins.filter (p: p != pkgs.pcre2) old.buildInputs) ++ [ pkgs.pcre ];
+      mesonFlags = [ "-Dwith_docs=false" ];
+      doInstallCheck = false;
+    });
   in {
     virtualisation.diskSize = 8192;
   
@@ -674,9 +687,9 @@
       scrollbar { handle-color: @accent; background-color: transparent; }
     '';
   
-    # picom suppresses terminal repaints in this QEMU/Xorg VM.
     services.picom = {
-      enable = false;
+      enable = true;
+      package = picomJonaburg;
       backend = "glx";
       fade = true;
       fadeDelta = 4;
