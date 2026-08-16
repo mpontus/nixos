@@ -528,7 +528,7 @@
               startupHook xfceConfig
               spawn "feh --no-fehbg --bg-fill ${wallpaper}/share/backgrounds/nixos/nix-wallpaper-moonscape.png"
               spawn "pkill -x polybar || true"
-              spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 5; systemctl --user restart picom.service"
+              spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 8; systemctl --user restart picom.service"
               spawn "snixembed"
               spawn "nm-applet"
               spawn "blueman-applet"
@@ -785,27 +785,26 @@
             <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/>
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
-              <property name="position" type="string" value="p=0;x=123;y=23"/>
-              <property name="length" type="uint" value="20"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
+              <property name="position" type="string" value="p=0;x=256;y=23"/>
+              <property name="length" type="uint" value="46"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
-              <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="4"/></property>
+              <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
             </property>
             <property name="panel-2" type="empty">
-              <property name="position" type="string" value="p=0;x=468;y=23"/>
-              <property name="length" type="uint" value="47"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
+              <property name="position" type="string" value="p=0;x=595;y=23"/>
+              <property name="length" type="uint" value="18"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
-              <property name="plugin-ids" type="array"><value type="int" value="7"/></property>
+              <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
             </property>
             <property name="panel-3" type="empty">
-              <property name="position" type="string" value="p=0;x=861;y=23"/>
-              <property name="length" type="uint" value="28"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
+              <property name="position" type="string" value="p=0;x=848;y=23"/>
+              <property name="length" type="uint" value="29"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
-              <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="12"/><value type="int" value="14"/></property>
+              <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="14"/></property>
             </property>
           </property>
           <property name="plugins" type="empty">
             <property name="plugin-1" type="string" value="whiskermenu"/>
-            <property name="plugin-4" type="string" value="pager"/>
             <property name="plugin-6" type="string" value="systray"><property name="square-icons" type="bool" value="true"/></property>
             <property name="plugin-7" type="string" value="appmenu"/>
             <property name="plugin-8" type="string" value="pulseaudio"/>
