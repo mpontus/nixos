@@ -451,6 +451,44 @@
       mesonFlags = [ "-Dwith_docs=false" ];
       doInstallCheck = false;
     });
+    appmenuXfce = pkgs.stdenv.mkDerivation {
+      pname = "vala-panel-appmenu-xfce";
+      version = "2026-08-16";
+      src = pkgs.fetchFromGitHub {
+        owner = "rilian-la-te";
+        repo = "vala-panel-appmenu";
+        rev = "468ea01ec770378e7ce15fdb86a39972fe5064b4";
+        hash = "sha256-950fojQck84qEpylVHqxbtkplHB77sGHz5BsrIsrmwU=";
+      };
+      nativeBuildInputs = with pkgs; [ meson ninja pkg-config vala gettext cmake gobject-introspection ];
+      buildInputs = with pkgs; [
+        glib gtk3 libwnck gobject-introspection xfce.xfce4-panel xfce.xfconf
+      ];
+      postPatch = ''
+        substituteInPlace subprojects/appmenu-gtk-module/src/gtk-2.0/meson.build \
+          --replace-fail "gtk2.get_variable(pkgconfig:'libdir')" "get_option('libdir')"
+        substituteInPlace subprojects/appmenu-gtk-module/src/gtk-3.0/meson.build \
+          --replace-fail "gtk3.get_variable(pkgconfig:'libdir')" "get_option('libdir')"
+        substituteInPlace applets/meson.build \
+          --replace-fail "xp.get_variable(pkgconfig:'libdir')" "get_option('libdir')"
+        substituteInPlace data/meson.build \
+          --replace-fail "xp.get_variable(pkgconfig:'prefix')" "get_option('prefix')"
+      '';
+      postFixup = ''
+        mkdir -p $out/share/appmenu-schemas
+        cp "$src"/subprojects/appmenu-gtk-module/data/org.appmenu.gtk-module.gschema.xml \
+          $out/share/appmenu-schemas/
+        ${pkgs.glib.dev}/bin/glib-compile-schemas $out/share/appmenu-schemas
+      '';
+      mesonFlags = [
+        "-Dxfce=enabled"
+        "-Dvalapanel=disabled"
+        "-Dmate=disabled"
+        "-Dbudgie=disabled"
+        "-Djayatana=disabled"
+        "-Dappmenu-gtk-module:gtk=3"
+      ];
+    };
   in {
     virtualisation.diskSize = 8192;
   
@@ -475,6 +513,7 @@
         import XMonad.Hooks.ManageDocks
         import XMonad.Hooks.SetWMName
         import XMonad.Layout.Spacing
+        import XMonad.Layout.Gaps
         import XMonad.Util.EZConfig
   
         main :: IO ()
@@ -484,14 +523,12 @@
           , borderWidth = 2
           , normalBorderColor = "#3b5274"
           , focusedBorderColor = "#b4befe"
-          , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook xfceConfig
+          , layoutHook = avoidStruts $ gaps [(U, 28)] $ spacingWithEdge 10 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
               spawn "feh --no-fehbg --bg-fill ${wallpaper}/share/backgrounds/nixos/nix-wallpaper-moonscape.png"
-              spawn "polybar-msg cmd quit || true"
-              spawn "polybar -q -c /etc/polybar-xmonad/config.ini workspaces"
-              spawn "polybar -q -c /etc/polybar-xmonad/config.ini clock"
-              spawn "polybar -q -c /etc/polybar-xmonad/config.ini tray"
+              spawn "pkill -x polybar || true"
+              spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 5; systemctl --user restart picom.service"
               spawn "snixembed"
               spawn "nm-applet"
               spawn "blueman-applet"
@@ -690,16 +727,10 @@
     services.picom = {
       enable = true;
       package = picomJonaburg;
-      backend = "glx";
-      fade = true;
-      fadeDelta = 4;
-      shadow = true;
-      shadowExclude = [
-        "window_type = 'dock'"
-        "window_type = 'desktop'"
-      ];
-      shadowOffsets = [ (-7) (-7) ];
-      shadowOpacity = 0.4;
+      backend = "xrender";
+      vSync = false;
+      fade = false;
+      shadow = false;
       settings = {
         corner-radius = 14;
         round-borders = 1;
@@ -707,7 +738,6 @@
           "window_type = 'dock'"
           "window_type = 'desktop'"
         ];
-        shadow-radius = 12;
         use-damage = false;
         rounded-corners-exclude = [
           "window_type = 'dock'"
@@ -716,7 +746,17 @@
       };
     };
   
+    environment.sessionVariables = {
+      GTK_MODULES = "appmenu-gtk-module";
+      GTK_PATH = "${appmenuXfce}/lib";
+      GSETTINGS_SCHEMA_DIR = "${appmenuXfce}/share/appmenu-schemas";
+      UBUNTU_MENUPROXY = "1";
+    };
     environment.systemPackages = with pkgs; [
+      appmenuXfce
+      xfce.xfce4-panel
+      xfce.xfce4-whiskermenu-plugin
+      xfce.xfce4-pulseaudio-plugin
       dmenu
       i3status
       st
@@ -736,6 +776,64 @@
       (callPackage ./pkgs/toptracker { })
     ];
   
+    home-manager.users.mpontus.xdg.configFile = {
+      "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".text = ''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <channel name="xfce4-panel" version="1.0">
+          <property name="configver" type="int" value="2"/>
+          <property name="panels" type="array">
+            <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/>
+            <property name="dark-mode" type="bool" value="true"/>
+            <property name="panel-1" type="empty">
+              <property name="position" type="string" value="p=0;x=123;y=23"/>
+              <property name="length" type="uint" value="20"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
+              <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
+              <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="4"/></property>
+            </property>
+            <property name="panel-2" type="empty">
+              <property name="position" type="string" value="p=0;x=468;y=23"/>
+              <property name="length" type="uint" value="47"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
+              <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
+              <property name="plugin-ids" type="array"><value type="int" value="7"/></property>
+            </property>
+            <property name="panel-3" type="empty">
+              <property name="position" type="string" value="p=0;x=861;y=23"/>
+              <property name="length" type="uint" value="28"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="30"/>
+              <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
+              <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="12"/><value type="int" value="14"/></property>
+            </property>
+          </property>
+          <property name="plugins" type="empty">
+            <property name="plugin-1" type="string" value="whiskermenu"/>
+            <property name="plugin-4" type="string" value="pager"/>
+            <property name="plugin-6" type="string" value="systray"><property name="square-icons" type="bool" value="true"/></property>
+            <property name="plugin-7" type="string" value="appmenu"/>
+            <property name="plugin-8" type="string" value="pulseaudio"/>
+            <property name="plugin-9" type="string" value="power-manager-plugin"/>
+            <property name="plugin-10" type="string" value="notification-plugin"/>
+            <property name="plugin-12" type="string" value="clock"/>
+            <property name="plugin-14" type="string" value="actions"/>
+          </property>
+        </channel>
+      '';
+      "gtk-3.0/gtk.css".text = ''
+        .xfce4-panel.background {
+          background-color: rgba(15, 23, 42, 0.88);
+          border: 2px solid #3b5274;
+          border-radius: 14px;
+          color: #e5e7eb;
+        }
+        .xfce4-panel.background button {
+          background: transparent;
+          color: #e5e7eb;
+          border: 0;
+          border-radius: 10px;
+          padding: 2px 6px;
+        }
+        .xfce4-panel.background button:hover { background-color: #253754; }
+        wnck-pager:selected { background-color: #b4befe; color: #0f172a; border-radius: 10px; }
+      '';
+    };
     networking.networkmanager.enable = true;
     programs.nm-applet.enable = true;
   
