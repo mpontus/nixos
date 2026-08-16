@@ -816,23 +816,33 @@
         </channel>
       '';
       "gtk-3.0/gtk.css".text = ''
+        /* One opaque paint color: XEmbed plugin windows cannot alpha-blend with panel. */
         .xfce4-panel.background {
-          background-color: rgba(15, 23, 42, 0.88);
-          border: 2px solid #3b5274;
+          background-color: #000000;
+          border: 0;
+          box-shadow: 0 0 0 2px #3b5274;
           border-radius: 14px;
           color: #e5e7eb;
         }
-        #XfcePanelWindowWrapper.xfce4-panel.background {
-          background-color: transparent;
+        #XfcePanelWindowWrapper.xfce4-panel.background,
+        #XfcePanelWindowWrapper,
+        #XfcePanelWindowWrapper *,
+        #sn-button-box,
+        #sn-button-box *,
+        .-vala-panel-appmenu-core,
+        .-vala-panel-appmenu-core scrolledwindow,
+        menubar.-vala-panel-appmenu-private,
+        .-vala-panel-appmenu-private,
+        .-vala-panel-appmenu-private > menuitem {
+          background-color: #000000;
           background-image: none;
           border: 0;
           border-radius: 0;
           box-shadow: none;
         }
         #whiskermenu-button, #sn-button, #pulseaudio-button,
-        #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button,
-        .-vala-panel-appmenu-private, .-vala-panel-appmenu-private > menuitem {
-          background-color: transparent;
+        #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
+          background-color: #000000;
           background-image: none;
           border: 0;
           border-radius: 0;
