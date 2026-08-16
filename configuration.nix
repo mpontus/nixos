@@ -520,9 +520,9 @@
         main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
           { terminal = "st"
           , modMask = mod4Mask
-          , borderWidth = 2
-          , normalBorderColor = "#3b5274"
-          , focusedBorderColor = "#b4befe"
+          , borderWidth = 1
+          , normalBorderColor = "#8b5cf6"
+          , focusedBorderColor = "#f25aa6"
           , layoutHook = avoidStruts $ gaps [(U, 28)] $ spacingWithEdge 10 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
@@ -732,7 +732,7 @@
       fade = false;
       shadow = false;
       settings = {
-        corner-radius = 14;
+        corner-radius = 8;
         round-borders = 1;
         round-borders-exclude = [
           "window_type = 'dock'"
@@ -820,9 +820,9 @@
         .xfce4-panel.background {
           background-color: #000000;
           border: 0;
-          box-shadow: 0 0 0 2px #3b5274;
-          border-radius: 14px;
-          color: #e5e7eb;
+          box-shadow: 0 0 0 1px #f25aa6;
+          border-radius: 8px;
+          color: #f4effa;
         }
         #XfcePanelWindowWrapper.xfce4-panel.background,
         #XfcePanelWindowWrapper,
@@ -853,8 +853,12 @@
         #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
         #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
         #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
-          background-color: #253754;
+          background-color: #6d28d9;
           border-radius: 8px;
+        }
+        .xfce4-panel.background {
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 10px;
         }
       '';
     };
