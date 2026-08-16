@@ -437,7 +437,6 @@
   services.xserver.windowManager.dwm.enable = true;
   virtualisation.vmVariant = { lib, pkgs, ... }:
   let
-    wallpaper = pkgs.nixos-artwork.wallpapers.moonscape;
     picomJonaburg = pkgs.picom.overrideAttrs (old: {
       pname = "picom-jonaburg";
       version = "v7-jonaburg-2024-08-29";
@@ -489,6 +488,32 @@
         "-Dappmenu-gtk-module:gtk=3"
       ];
     };
+    xfceIslandInset = pkgs.writeShellApplication {
+      name = "xfce-island-inset";
+      runtimeInputs = with pkgs; [ util-linux xdotool ];
+      text = ''
+        exec 9>/tmp/xfce-island-inset.lock
+        flock -n 9 || exit 0
+        while sleep 0.25; do
+          read -r screen_width _ < <(xdotool getdisplaygeometry)
+          left_third=$((screen_width / 3))
+          right_third=$((screen_width * 2 / 3))
+          while read -r id; do
+            eval "$(xdotool getwindowgeometry --shell "$id" 2>/dev/null)" || continue
+            (( WIDTH > 20 && HEIGHT > 20 )) || continue
+            center=$((X + WIDTH / 2))
+            if (( center < left_third )); then
+              target_x=8
+            elif (( center > right_third )); then
+              target_x=$((screen_width - WIDTH - 8))
+            else
+              target_x=$(((screen_width - WIDTH) / 2))
+            fi
+            (( X == target_x && Y == 8 )) || xdotool windowmove "$id" "$target_x" 8
+          done < <(xdotool search --name '^xfce4-panel$' 2>/dev/null)
+        done
+      '';
+    };
   in {
     virtualisation.diskSize = 8192;
   
@@ -518,17 +543,18 @@
   
         main :: IO ()
         main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
-          { terminal = "st"
+          { terminal = "xfce4-terminal"
           , modMask = mod4Mask
           , borderWidth = 1
           , normalBorderColor = "#8b5cf6"
           , focusedBorderColor = "#f25aa6"
-          , layoutHook = avoidStruts $ gaps [(U, 28)] $ spacingWithEdge 10 $ layoutHook xfceConfig
+          , layoutHook = avoidStruts $ gaps [(U, 23)] $ spacingWithEdge 10 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
-              spawn "feh --no-fehbg --bg-fill ${wallpaper}/share/backgrounds/nixos/nix-wallpaper-moonscape.png"
+              spawn "hsetroot -solid '#0b1020'"
               spawn "pkill -x polybar || true"
-              spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 8; systemctl --user restart picom.service"
+              spawn "${xfceIslandInset}/bin/xfce-island-inset"
+              spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 8; systemctl --user restart picom.service; sleep 8; systemctl --user restart picom.service"
               spawn "snixembed"
               spawn "nm-applet"
               spawn "blueman-applet"
@@ -536,7 +562,7 @@
               setWMName "LG3D"
           }
           `additionalKeysP`
-          [ ("M-<Return>", spawn "st -f 'JetBrainsMono Nerd Font:size=11'")
+          [ ("M-<Return>", spawn "xfce4-terminal")
           , ("M-d", spawn "rofi -show drun -show-icons -p Search -theme /etc/rofi-xmonad/theme.rasi")
           , ("M-n", spawn "nm-connection-editor")
           , ("M-b", spawn "blueman-manager")
@@ -754,6 +780,7 @@
     };
     environment.systemPackages = with pkgs; [
       appmenuXfce
+      xfceIslandInset
       xfce.xfce4-panel
       xfce.xfce4-whiskermenu-plugin
       xfce.xfce4-pulseaudio-plugin
@@ -786,19 +813,19 @@
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
               <property name="position" type="string" value="p=6;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="30"/>
+              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="26"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
             </property>
             <property name="panel-2" type="empty">
               <property name="position" type="string" value="p=9;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="30"/>
+              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="26"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
             </property>
             <property name="panel-3" type="empty">
               <property name="position" type="string" value="p=2;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="30"/>
+              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="26"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="14"/></property>
             </property>
@@ -810,19 +837,25 @@
             <property name="plugin-8" type="string" value="pulseaudio"/>
             <property name="plugin-9" type="string" value="power-manager-plugin"/>
             <property name="plugin-10" type="string" value="notification-plugin"/>
-            <property name="plugin-12" type="string" value="clock"/>
+            <property name="plugin-12" type="string" value="clock">
+              <property name="mode" type="uint" value="2"/>
+              <property name="digital-layout" type="uint" value="2"/>
+              <property name="digital-date-format" type="string" value="%a %d %b  |  %I:%M %p"/>
+            </property>
             <property name="plugin-14" type="string" value="actions"/>
           </property>
         </channel>
       '';
       "gtk-3.0/gtk.css".text = ''
-        /* One opaque paint color: XEmbed plugin windows cannot alpha-blend with panel. */
         .xfce4-panel.background {
-          background-color: #000000;
-          border: 0;
-          box-shadow: 0 0 0 1px #f25aa6;
-          border-radius: 8px;
+          background-color: #101625;
+          border: 1px solid #f05a9d;
+          border-radius: 7px;
+          box-shadow: none;
           color: #f4effa;
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 11px;
+          padding: 1px 7px;
         }
         #XfcePanelWindowWrapper.xfce4-panel.background,
         #XfcePanelWindowWrapper,
@@ -834,7 +867,7 @@
         menubar.-vala-panel-appmenu-private,
         .-vala-panel-appmenu-private,
         .-vala-panel-appmenu-private > menuitem {
-          background-color: #000000;
+          background-color: #101625;
           background-image: none;
           border: 0;
           border-radius: 0;
@@ -842,24 +875,30 @@
         }
         #whiskermenu-button, #sn-button, #pulseaudio-button,
         #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
-          background-color: #000000;
+          background-color: #101625;
           background-image: none;
           border: 0;
           border-radius: 0;
           box-shadow: none;
-          color: #e5e7eb;
+          color: #f4effa;
           padding: 2px 5px;
         }
         #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
         #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
         #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
           background-color: #6d28d9;
-          border-radius: 8px;
+          border-radius: 5px;
         }
-        .xfce4-panel.background {
-          font-family: "JetBrainsMono Nerd Font";
-          font-size: 10px;
-        }
+      '';
+      "xfce4/terminal/terminalrc".text = ''
+        [Configuration]
+        ColorBackground=#101625
+        ColorForeground=#f4effa
+        FontName=JetBrainsMono Nerd Font 11
+        MiscMenubarDefault=TRUE
+        MiscToolbarDefault=FALSE
+        MiscBordersDefault=FALSE
+        ScrollingBar=TERMINAL_SCROLLBAR_NONE
       '';
     };
     networking.networkmanager.enable = true;
