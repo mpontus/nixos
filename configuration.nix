@@ -785,19 +785,19 @@
             <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/>
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
-              <property name="position" type="string" value="p=0;x=256;y=23"/>
+              <property name="position" type="string" value="p=6;x=0;y=0"/>
               <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="30"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
             </property>
             <property name="panel-2" type="empty">
-              <property name="position" type="string" value="p=0;x=595;y=23"/>
+              <property name="position" type="string" value="p=9;x=0;y=0"/>
               <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="30"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
             </property>
             <property name="panel-3" type="empty">
-              <property name="position" type="string" value="p=0;x=848;y=23"/>
+              <property name="position" type="string" value="p=2;x=0;y=0"/>
               <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="30"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="14"/></property>
