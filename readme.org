@@ -800,17 +800,45 @@ let
       done
     '';
   };
+  plasmaXmonad = pkgs.writers.writeHaskellBin "plasma-xmonad" {
+    ghc = pkgs.haskellPackages.ghc;
+    libraries = with pkgs.haskellPackages; [ xmonad xmonad-contrib ];
+  } ''
+    import XMonad
+    import XMonad.Hooks.EwmhDesktops
+    import XMonad.Hooks.ManageDocks
+    import XMonad.Hooks.SetWMName
+    import XMonad.Layout.Spacing
+    import XMonad.Util.EZConfig
+    myConfig = ewmhFullscreen $ ewmh $ docks def
+      { terminal = "xfce4-terminal"
+      , modMask = mod4Mask
+      , borderWidth = 1
+      , normalBorderColor = "#8b5cf6"
+      , focusedBorderColor = "#f25aa6"
+      , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook def
+      , manageHook = manageDocks <+> manageHook def
+      , startupHook = setWMName "LG3D"
+      }
+      `additionalKeysP`
+      [ ("M-<Return>", spawn "xfce4-terminal")
+      , ("M-d", spawn "qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu")
+      , ("M-S-e", spawn "qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1")
+      ]
+    main :: IO ()
+    main = getDirectories >>= launch myConfig
+  '';
 in {
   virtualisation.diskSize = 8192;
 
   services.xserver.desktopManager.xfce = {
-    enable = true;
+    enable = false;
     noDesktop = true;
     enableXfwm = false;
   };
 
   services.xserver.windowManager.xmonad = {
-    enable = true;
+    enable = false;
     enableContribAndExtras = true;
     extraPackages = hp: [
       hp.xmonad
@@ -819,41 +847,27 @@ in {
     ];
     config = ''
       import XMonad
-      import XMonad.Config.Xfce
       import XMonad.Hooks.EwmhDesktops
       import XMonad.Hooks.ManageDocks
       import XMonad.Hooks.SetWMName
       import XMonad.Layout.Spacing
-      import XMonad.Layout.Gaps
       import XMonad.Util.EZConfig
 
       main :: IO ()
-      main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
+      main = xmonad $ ewmhFullscreen $ ewmh $ docks def
         { terminal = "xfce4-terminal"
         , modMask = mod4Mask
         , borderWidth = 1
         , normalBorderColor = "#8b5cf6"
         , focusedBorderColor = "#f25aa6"
-        , layoutHook = avoidStruts $ gaps [(U, 41)] $ spacingWithEdge 5 $ layoutHook xfceConfig
-        , startupHook = do
-            startupHook xfceConfig
-            spawn "hsetroot -solid '#131c2b'"
-            spawn "pkill -x polybar || true"
-            spawn "${xfceIslandInset}/bin/xfce-island-inset"
-            spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 8; systemctl --user restart picom.service; sleep 8; systemctl --user restart picom.service"
-            spawn "snixembed"
-            spawn "nm-applet"
-            spawn "blueman-applet"
-            spawn "xfce4-power-manager"
-            setWMName "LG3D"
+        , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook def
+        , manageHook = manageDocks <+> manageHook def
+        , startupHook = setWMName "LG3D"
         }
         `additionalKeysP`
         [ ("M-<Return>", spawn "xfce4-terminal")
-        , ("M-d", spawn "rofi -show drun -show-icons -p Search -theme /etc/rofi-xmonad/theme.rasi")
-        , ("M-n", spawn "nm-connection-editor")
-        , ("M-b", spawn "blueman-manager")
-        , ("M-p", spawn "xfce4-settings-manager")
-        , ("M-S-e", spawn "xfce4-session-logout")
+        , ("M-d", spawn "qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu")
+        , ("M-S-e", spawn "qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1")
         ]
     '';
   };
@@ -1037,7 +1051,7 @@ in {
   '';
 
   services.picom = {
-    enable = true;
+    enable = false;
     package = picomJonaburg;
     backend = "xrender";
     vSync = false;
@@ -1058,6 +1072,13 @@ in {
     };
   };
 
+  # Plasma spike: native panel shell, X11 session, XMonad as the WM.
+  services.desktopManager.plasma6.enable = true;
+  systemd.user.services.plasma-kwin_x11.serviceConfig = {
+    ExecStart = lib.mkForce "${plasmaXmonad}/bin/plasma-xmonad";
+    Type = lib.mkForce "simple";
+    BusName = lib.mkForce "";
+  };
   environment.sessionVariables = {
     GTK_MODULES = "appmenu-gtk-module";
     GTK_PATH = "${appmenuXfce}/lib";
@@ -1252,7 +1273,7 @@ in {
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
-  services.displayManager.defaultSession = lib.mkForce "xfce+xmonad";
+  services.displayManager.defaultSession = lib.mkForce "plasmax11";
   services.xserver.displayManager.autoLogin.enable = lib.mkForce true;
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.displayManager.autoLogin.enable = lib.mkForce true;
