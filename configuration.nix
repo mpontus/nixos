@@ -694,11 +694,19 @@
       fade = true;
       fadeDelta = 4;
       shadow = true;
+      shadowExclude = [
+        "window_type = 'dock'"
+        "window_type = 'desktop'"
+      ];
       shadowOffsets = [ (-7) (-7) ];
       shadowOpacity = 0.4;
       settings = {
         corner-radius = 14;
         round-borders = 1;
+        round-borders-exclude = [
+          "window_type = 'dock'"
+          "window_type = 'desktop'"
+        ];
         shadow-radius = 12;
         use-damage = false;
         rounded-corners-exclude = [
