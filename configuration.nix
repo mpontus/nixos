@@ -503,13 +503,13 @@
             (( WIDTH > 20 && HEIGHT > 20 )) || continue
             center=$((X + WIDTH / 2))
             if (( center < left_third )); then
-              target_x=8
+              target_x=10
             elif (( center > right_third )); then
-              target_x=$((screen_width - WIDTH - 8))
+              target_x=$((screen_width - WIDTH - 10))
             else
               target_x=$(((screen_width - WIDTH) / 2))
             fi
-            (( X == target_x && Y == 8 )) || xdotool windowmove "$id" "$target_x" 8
+            (( X == target_x && Y == 16 )) || xdotool windowmove "$id" "$target_x" 16
           done < <(xdotool search --name '^xfce4-panel$' 2>/dev/null)
         done
       '';
@@ -548,10 +548,10 @@
           , borderWidth = 1
           , normalBorderColor = "#8b5cf6"
           , focusedBorderColor = "#f25aa6"
-          , layoutHook = avoidStruts $ gaps [(U, 23)] $ spacingWithEdge 10 $ layoutHook xfceConfig
+          , layoutHook = avoidStruts $ gaps [(U, 41)] $ spacingWithEdge 5 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
-              spawn "hsetroot -solid '#0b1020'"
+              spawn "hsetroot -solid '#131c2b'"
               spawn "pkill -x polybar || true"
               spawn "${xfceIslandInset}/bin/xfce-island-inset"
               spawn "sleep 1; if pgrep -x xfce4-panel >/dev/null; then xfce4-panel -r; else xfce4-panel --disable-wm-check & fi; sleep 8; systemctl --user restart picom.service; sleep 8; systemctl --user restart picom.service"
@@ -758,7 +758,7 @@
       fade = false;
       shadow = false;
       settings = {
-        corner-radius = 8;
+        corner-radius = 7;
         round-borders = 1;
         round-borders-exclude = [
           "window_type = 'dock'"
@@ -813,25 +813,29 @@
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
               <property name="position" type="string" value="p=6;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="26"/>
+              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="24"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
             </property>
             <property name="panel-2" type="empty">
               <property name="position" type="string" value="p=9;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="26"/>
+              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="24"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
             </property>
             <property name="panel-3" type="empty">
               <property name="position" type="string" value="p=2;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="26"/>
+              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="24"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="14"/></property>
             </property>
           </property>
           <property name="plugins" type="empty">
-            <property name="plugin-1" type="string" value="whiskermenu"/>
+            <property name="plugin-1" type="string" value="whiskermenu">
+              <property name="menu-width" type="int" value="360"/>
+              <property name="menu-height" type="int" value="400"/>
+              <property name="launcher-show-description" type="bool" value="false"/>
+            </property>
             <property name="plugin-6" type="string" value="systray"><property name="square-icons" type="bool" value="true"/></property>
             <property name="plugin-7" type="string" value="appmenu"/>
             <property name="plugin-8" type="string" value="pulseaudio"/>
@@ -848,14 +852,18 @@
       '';
       "gtk-3.0/gtk.css".text = ''
         .xfce4-panel.background {
-          background-color: #101625;
+          background-color: #0e1624;
           border: 1px solid #f05a9d;
           border-radius: 7px;
           box-shadow: none;
           color: #f4effa;
           font-family: "JetBrainsMono Nerd Font";
-          font-size: 11px;
+          font-size: 10px;
           padding: 1px 7px;
+        }
+        #clock-button {
+          padding-left: 20px;
+          padding-right: 20px;
         }
         #XfcePanelWindowWrapper.xfce4-panel.background,
         #XfcePanelWindowWrapper,
@@ -867,7 +875,7 @@
         menubar.-vala-panel-appmenu-private,
         .-vala-panel-appmenu-private,
         .-vala-panel-appmenu-private > menuitem {
-          background-color: #101625;
+          background-color: #0e1624;
           background-image: none;
           border: 0;
           border-radius: 0;
@@ -875,7 +883,7 @@
         }
         #whiskermenu-button, #sn-button, #pulseaudio-button,
         #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
-          background-color: #101625;
+          background-color: #0e1624;
           background-image: none;
           border: 0;
           border-radius: 0;
@@ -889,10 +897,61 @@
           background-color: #6d28d9;
           border-radius: 5px;
         }
+        #XfcePanelWindowWrapper.xfce4-panel.background {
+          border-top: 1px solid #f05a9d;
+          border-bottom: 1px solid #f05a9d;
+          padding-top: 0;
+          padding-bottom: 0;
+        }
+        #whiskermenu-button, #sn-button-box {
+          border-left: 1px solid #f05a9d;
+          border-radius: 7px 0 0 7px;
+        }
+        .-vala-panel-appmenu-core, #actions-button {
+          border-right: 1px solid #f05a9d;
+          border-radius: 0 7px 7px 0;
+        }
+        .whiskermenu,
+        .whiskermenu frame,
+        .whiskermenu box,
+        .whiskermenu scrolledwindow,
+        .whiskermenu viewport,
+        .whiskermenu treeview,
+        .whiskermenu treeview.view {
+          background-color: #0e1826;
+          background-image: none;
+          color: #f4effa;
+          border-color: #26344f;
+        }
+        .whiskermenu {
+          border: 1px solid #f05a9d;
+          border-radius: 7px;
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 10px;
+        }
+        .whiskermenu entry {
+          background-color: #131c2b;
+          color: #f4effa;
+          border: 1px solid #8b5cf6;
+          border-radius: 5px;
+          box-shadow: none;
+        }
+        .whiskermenu button {
+          background-color: transparent;
+          background-image: none;
+          color: #f4effa;
+          border: 0;
+          box-shadow: none;
+        }
+        .whiskermenu button:hover,
+        .whiskermenu treeview:selected {
+          background-color: #6d28d9;
+          color: #ffffff;
+        }
       '';
       "xfce4/terminal/terminalrc".text = ''
         [Configuration]
-        ColorBackground=#101625
+        ColorBackground=#0e1826
         ColorForeground=#f4effa
         FontName=JetBrainsMono Nerd Font 11
         MiscMenubarDefault=TRUE
