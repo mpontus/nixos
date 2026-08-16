@@ -481,10 +481,10 @@
         main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
           { terminal = "st"
           , modMask = mod4Mask
-          , borderWidth = 1
-          , normalBorderColor = "#1f2a44"
-          , focusedBorderColor = "#a5b4fc"
-          , layoutHook = avoidStruts $ spacingWithEdge 14 $ layoutHook xfceConfig
+          , borderWidth = 2
+          , normalBorderColor = "#3b5274"
+          , focusedBorderColor = "#c4b5fd"
+          , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
               spawn "feh --no-fehbg --bg-fill ${wallpaper}/share/backgrounds/nixos/nix-wallpaper-moonscape.png"
@@ -529,14 +529,14 @@
       wm-restack = generic
       bottom = false
       height = 30
-      radius = 10
+      radius = 14
       background = ''${colors.bg}
       foreground = ''${colors.fg}
-      border-size = 1
+      border-size = 2
       border-color = #a5b4fc
-      padding-left = 2
-      padding-right = 2
-      module-margin = 2
+      padding-left = 4
+      padding-right = 4
+      module-margin = 3
       font-0 = JetBrainsMono Nerd Font:size=10;2
       font-1 = Symbols Nerd Font:size=11;2
   
@@ -622,9 +622,9 @@
         width: 58%;
         location: center;
         anchor: center;
-        border: 1px;
+        border: 2px;
         border-color: @border;
-        border-radius: 12px;
+        border-radius: 16px;
         background-color: @bg;
         padding: 14px;
       }
@@ -637,7 +637,7 @@
       inputbar {
         children: [entry];
         background-color: @bg-alt;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 10px 12px;
         spacing: 8px;
       }
@@ -663,7 +663,7 @@
       element {
         children: [element-icon, element-text];
         padding: 9px 10px;
-        border-radius: 9px;
+        border-radius: 10px;
         background-color: transparent;
         text-color: @fg;
       }
@@ -695,9 +695,10 @@
       fadeDelta = 4;
       shadow = true;
       shadowOffsets = [ (-7) (-7) ];
-      shadowOpacity = 0.35;
+      shadowOpacity = 0.4;
       settings = {
-        corner-radius = 12;
+        corner-radius = 16;
+        shadow-radius = 12;
         rounded-corners-exclude = [
           "window_type = 'dock'"
           "window_type = 'desktop'"
