@@ -674,8 +674,9 @@
       scrollbar { handle-color: @accent; background-color: transparent; }
     '';
   
+    # picom suppresses terminal repaints in this QEMU/Xorg VM.
     services.picom = {
-      enable = true;
+      enable = false;
       backend = "glx";
       fade = true;
       fadeDelta = 4;
