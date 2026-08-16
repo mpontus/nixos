@@ -816,13 +816,13 @@
         </channel>
       '';
       "gtk-3.0/gtk.css".text = ''
-        .panel-1.background, .panel-2.background, .panel-3.background {
+        .xfce4-panel.background {
           background-color: rgba(15, 23, 42, 0.88);
           border: 2px solid #3b5274;
           border-radius: 14px;
           color: #e5e7eb;
         }
-        #XfcePanelWindowWrapper {
+        #XfcePanelWindowWrapper.xfce4-panel.background {
           background-color: transparent;
           background-image: none;
           border: 0;
