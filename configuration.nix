@@ -435,7 +435,10 @@
   services.xserver.displayManager.autoLogin.enable = false;
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.xserver.windowManager.dwm.enable = true;
-  virtualisation.vmVariant = { lib, pkgs, ... }: {
+  virtualisation.vmVariant = { lib, pkgs, ... }:
+  let
+    wallpaper = pkgs.nixos-artwork.wallpapers.moonscape;
+  in {
     virtualisation.diskSize = 8192;
   
     services.xserver.desktopManager.xfce = {
@@ -471,15 +474,15 @@
           , layoutHook = avoidStruts $ spacingWithEdge 14 $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
-              spawn "hsetroot -add '#07111f' -add '#102a44' -add '#075985' -gradient 225"
+              spawn "feh --no-fehbg --bg-fill ${wallpaper}/share/backgrounds/nixos/nix-wallpaper-moonscape.png"
               spawn "polybar-msg cmd quit || true"
               spawn "polybar -q -c /etc/polybar-xmonad/config.ini workspaces"
               spawn "polybar -q -c /etc/polybar-xmonad/config.ini clock"
               spawn "polybar -q -c /etc/polybar-xmonad/config.ini tray"
+              spawn "snixembed"
               spawn "nm-applet"
               spawn "blueman-applet"
               spawn "xfce4-power-manager"
-              spawn "st -t 'XFCE+xmonad VM' -f 'JetBrainsMono Nerd Font:size=11' -e sh -lc 'echo XFCE+xmonad VM session is running.; echo Super+Enter opens terminal.; echo Super+d opens rofi.; exec bash'"
               setWMName "LG3D"
           }
           `additionalKeysP`
@@ -526,45 +529,50 @@
   
       [bar/workspaces]
       inherit = bar/base
-      width = 22%
+      width = 28%
       offset-x = 8
       offset-y = 8
       modules-center = xworkspaces
   
       [bar/clock]
       inherit = bar/base
-      width = 18%
-      offset-x = 41%
+      width = 24%
+      offset-x = 38%
       offset-y = 8
       modules-center = date
   
       [bar/tray]
       inherit = bar/base
-      width = 24%
-      offset-x = 75%
+      width = 26%
+      offset-x = 73%
       offset-y = 8
-      modules-center = network pulseaudio memory tray
+      modules-center = network tray
   
       [module/xworkspaces]
       type = internal/xworkspaces
-      label-active = 󰮯 %name%
-      label-active-foreground = ''${colors.accent}
-      label-active-background = ''${colors.bg-alt}
+      group-by-monitor = false
+      format = <label-state>
+      label-active = %name%
+      label-active-foreground = #ff111827
+      label-active-background = #ffb4befe
       label-active-padding = 2
       label-occupied = %name%
-      label-occupied-foreground = ''${colors.fg}
+      label-occupied-foreground = #ffe5e7eb
       label-occupied-padding = 2
       label-empty = %name%
-      label-empty-foreground = ''${colors.muted}
+      label-empty-foreground = #ffe5e7eb
       label-empty-padding = 2
   
       [module/network]
       type = internal/network
       interface = eth0
       interval = 5
-      label-connected = 󰤨 net
+      format-connected = <label-connected>
+      label-connected = 󰈀 wired
+      format-disconnected = <label-disconnected>
       label-disconnected = 󰤭 off
       label-disconnected-foreground = ''${colors.warm}
+      click-left = nm-connection-editor
   
       [module/date]
       type = internal/date
@@ -572,18 +580,6 @@
       date = %a %d %b
       time = %I:%M %p
       label = %date% | %time%
-  
-      [module/pulseaudio]
-      type = internal/pulseaudio
-      format-volume = <label-volume>
-      label-volume = 󰕾 %percentage%%
-      label-muted = 󰝟 muted
-      label-muted-foreground = ''${colors.warm}
-  
-      [module/memory]
-      type = internal/memory
-      interval = 3
-      label = 󰍛 %percentage_used%%
   
       [module/tray]
       type = internal/tray
@@ -597,7 +593,7 @@
         show-icons: true;
         icon-theme: "Papirus-Dark";
         drun-display-format: "{name}";
-        font: "JetBrainsMono Nerd Font 12";
+        font: "Noto Sans 11";
       }
   
       * {
@@ -610,7 +606,7 @@
       }
   
       window {
-        width: 38%;
+        width: 58%;
         location: center;
         anchor: center;
         border: 1px;
@@ -644,8 +640,8 @@
       }
   
       listview {
-        columns: 1;
-        lines: 9;
+        columns: 2;
+        lines: 6;
         spacing: 6px;
         fixed-height: true;
         background-color: transparent;
@@ -701,9 +697,11 @@
       st
       polybar
       rofi
+      snixembed
       pavucontrol
       hsetroot
       papirus-icon-theme
+      feh
       material-icons
       font-awesome
       xorg.xsetroot
@@ -726,11 +724,18 @@
     services.displayManager.autoLogin.user = "mpontus";
   
     users.mutableUsers = lib.mkForce false;
-    users.users.mpontus.hashedPassword = lib.mkForce "";
+    users.users.mpontus = {
+      hashedPassword = lib.mkForce "";
+      # VM-only key for SSH-driven UI iteration through loopback forwarding.
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzyhZA4hmSFf9vhRM4QBEgVuTKkZXCQw0VMByKnGLtc m.pontus@gmail.com"
+      ];
+    };
     security.pam.services.login.allowNullPassword = true;
     security.pam.services.lightdm.allowNullPassword = true;
     security.pam.services.i3lock.allowNullPassword = true;
     security.pam.services.xfce4-screensaver.allowNullPassword = true;
+    services.openssh.settings.PermitEmptyPasswords = lib.mkForce true;
   };
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
