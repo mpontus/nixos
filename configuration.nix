@@ -501,6 +501,107 @@
         done
       '';
     };
+    plasmaClock = pkgs.stdenvNoCC.mkDerivation {
+      pname = "plasma-reference-clock";
+      version = "1";
+      dontUnpack = true;
+      installPhase = ''
+        applet=$out/share/plasma/plasmoids/org.mpontus.referenceclock
+        mkdir -p "$applet/contents/ui"
+        cat > "$applet/metadata.json" <<'EOF'
+        { "KPlugin": { "Id": "org.mpontus.referenceclock", "Name": "Reference Clock", "Version": "1" }, "KPackageStructure": "Plasma/Applet", "X-Plasma-API": "declarativeappletscript", "X-Plasma-API-Min-Version": "6.0", "X-Plasma-MainScript": "ui/main.qml" }
+        EOF
+        cat > "$applet/contents/ui/main.qml" <<'EOF'
+        import QtQuick
+        import QtQuick.Layouts
+        import org.kde.plasma.plasmoid
+        PlasmoidItem {
+            id: root
+            property string now: ""
+            function tick() { root.now = Qt.formatDateTime(new Date(), "ddd d MMM | hh:mm") }
+            Component.onCompleted: tick()
+            Timer { interval: 1000; running: true; repeat: true; onTriggered: root.tick() }
+            preferredRepresentation: fullRepresentation
+            compactRepresentation: Item {
+                Layout.preferredWidth: 190; Layout.preferredHeight: 28
+                implicitWidth: 190; implicitHeight: 28
+                Text { anchors.centerIn: parent; text: root.now; color: "#f5f0f7"; font.family: "Noto Sans"; font.pixelSize: 11; font.weight: Font.Medium }
+            }
+            fullRepresentation: Item {
+                Layout.preferredWidth: 190; Layout.preferredHeight: 28
+                implicitWidth: 190; implicitHeight: 28
+                Text { anchors.centerIn: parent; text: root.now; color: "#f5f0f7"; font.family: "Noto Sans"; font.pixelSize: 11; font.weight: Font.Medium }
+            }
+        }
+        EOF
+      '';
+    };
+    plasmaTheme = pkgs.stdenvNoCC.mkDerivation {
+      pname = "plasma-theme-mpontus-reference";
+      version = "1";
+      dontUnpack = true;
+      installPhase = ''
+        theme=$out/share/plasma/desktoptheme/mpontus-reference
+        mkdir -p "$theme/widgets"
+        printf '{ "KPlugin": { "Id": "mpontus-reference", "Name": "MPontus Reference", "Version": "1" } }' > "$theme/metadata.json"
+        cat > "$theme/widgets/panel-background.svg" <<'SVGEOF'
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="28" viewBox="0 0 64 28">
+        <g>
+        <rect id="north-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
+        <path id="north-topleft-fill" d="M0.5 7 A6.5 6.5 0 0 1 7 0.5 L7 7 Z" fill="#0e1624"/>
+        <path id="north-topleft" d="M0.5 7 A6.5 6.5 0 0 1 7 0.5 L0 0 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="north-top" x="7" y="0" width="50" height="1" fill="#f05a9d"/>
+        <path id="north-topright-fill" d="M57 0.5 A6.5 6.5 0 0 1 63.5 7 L57 7 Z" fill="#0e1624"/>
+        <path id="north-topright" d="M57 0.5 A6.5 6.5 0 0 1 63.5 7 L64 0 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="north-left" x="0" y="7" width="1" height="14" fill="#f05a9d"/>
+        <rect id="north-center" x="7" y="7" width="50" height="14" fill="#0e1624"/>
+        <rect id="north-right" x="63" y="7" width="1" height="14" fill="#f05a9d"/>
+        <path id="north-bottomleft-fill" d="M0.5 21 A6.5 6.5 0 0 0 7 27.5 L7 21 Z" fill="#0e1624"/>
+        <path id="north-bottomleft" d="M7 27.5 A6.5 6.5 0 0 1 0.5 21 L0 28 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="north-bottom" x="7" y="27" width="50" height="1" fill="#f05a9d"/>
+        <path id="north-bottomright-fill" d="M57 27.5 A6.5 6.5 0 0 0 63.5 21 L57 21 Z" fill="#0e1624"/>
+        <path id="north-bottomright" d="M57 27.5 A6.5 6.5 0 0 0 63.5 21 L64 28 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        </g>
+        <g>
+        <rect id="floating-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
+        <path id="floating-topleft-fill" d="M0.5 7 A6.5 6.5 0 0 1 7 0.5 L7 7 Z" fill="#0e1624"/>
+        <path id="floating-topleft" d="M0.5 7 A6.5 6.5 0 0 1 7 0.5 L0 0 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="floating-top" x="7" y="0" width="50" height="1" fill="#f05a9d"/>
+        <path id="floating-topright-fill" d="M57 0.5 A6.5 6.5 0 0 1 63.5 7 L57 7 Z" fill="#0e1624"/>
+        <path id="floating-topright" d="M57 0.5 A6.5 6.5 0 0 1 63.5 7 L64 0 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="floating-left" x="0" y="7" width="1" height="14" fill="#f05a9d"/>
+        <rect id="floating-center" x="7" y="7" width="50" height="14" fill="#0e1624"/>
+        <rect id="floating-right" x="63" y="7" width="1" height="14" fill="#f05a9d"/>
+        <path id="floating-bottomleft-fill" d="M0.5 21 A6.5 6.5 0 0 0 7 27.5 L7 21 Z" fill="#0e1624"/>
+        <path id="floating-bottomleft" d="M7 27.5 A6.5 6.5 0 0 1 0.5 21 L0 28 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="floating-bottom" x="7" y="27" width="50" height="1" fill="#f05a9d"/>
+        <path id="floating-bottomright-fill" d="M57 27.5 A6.5 6.5 0 0 0 63.5 21 L57 21 Z" fill="#0e1624"/>
+        <path id="floating-bottomright" d="M57 27.5 A6.5 6.5 0 0 0 63.5 21 L64 28 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        </g>
+        <g>
+        <rect id="translucent-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
+        <path id="translucent-topleft-fill" d="M0.5 7 A6.5 6.5 0 0 1 7 0.5 L7 7 Z" fill="#0e1624"/>
+        <path id="translucent-topleft" d="M0.5 7 A6.5 6.5 0 0 1 7 0.5 L0 0 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="translucent-top" x="7" y="0" width="50" height="1" fill="#f05a9d"/>
+        <path id="translucent-topright-fill" d="M57 0.5 A6.5 6.5 0 0 1 63.5 7 L57 7 Z" fill="#0e1624"/>
+        <path id="translucent-topright" d="M57 0.5 A6.5 6.5 0 0 1 63.5 7 L64 0 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="translucent-left" x="0" y="7" width="1" height="14" fill="#f05a9d"/>
+        <rect id="translucent-center" x="7" y="7" width="50" height="14" fill="#0e1624"/>
+        <rect id="translucent-right" x="63" y="7" width="1" height="14" fill="#f05a9d"/>
+        <path id="translucent-bottomleft-fill" d="M0.5 21 A6.5 6.5 0 0 0 7 27.5 L7 21 Z" fill="#0e1624"/>
+        <path id="translucent-bottomleft" d="M7 27.5 A6.5 6.5 0 0 1 0.5 21 L0 28 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        <rect id="translucent-bottom" x="7" y="27" width="50" height="1" fill="#f05a9d"/>
+        <path id="translucent-bottomright-fill" d="M57 27.5 A6.5 6.5 0 0 0 63.5 21 L57 21 Z" fill="#0e1624"/>
+        <path id="translucent-bottomright" d="M57 27.5 A6.5 6.5 0 0 0 63.5 21 L64 28 Z" fill="none" stroke="#f05a9d" stroke-width="1"/>
+        </g>
+        <rect id="floating-hint-top-margin" x="0" y="0" width="8" height="16" fill="none"/>
+        <rect id="floating-hint-left-margin" x="0" y="0" width="10" height="8" fill="none"/>
+        <rect id="floating-hint-right-margin" x="54" y="0" width="10" height="8" fill="none"/>
+        <rect id="floating-hint-bottom-margin" x="0" y="20" width="8" height="8" fill="none"/>
+        </svg>
+  SVGEOF
+      '';
+    };
     plasmaIslands = pkgs.writeShellScript "plasma-islands" ''
       set -eu
       evaluate() {
@@ -508,13 +609,19 @@
           /PlasmaShell org.kde.PlasmaShell.evaluateScript "$1"
       }
       for attempt in $(seq 1 60); do
-        [ "$(evaluate 'print(panels().length)' 2>/dev/null || true)" = 1 ] && break
+        [ "$(evaluate 'print(panels().length)' 2>/dev/null || true)" -ge 1 ] && break
         sleep 1
       done
-      [ "$(evaluate 'print(panels().length)')" = 1 ]
       evaluate '
-        const left = panels()[0];
-        for (const widget of left.widgets()) widget.remove();
+        for (const desktop of desktops()) {
+          desktop.wallpaperPlugin = "org.kde.color";
+          desktop.currentConfigGroup = Array("Wallpaper", "org.kde.color", "General");
+          desktop.writeConfig("Color", "#131c2b");
+        }
+        for (const panel of panels()) panel.remove();
+      '
+      evaluate '
+        const left = new Panel;
         left.location = "top";
         left.alignment = "left";
         left.lengthMode = "fit";
@@ -526,12 +633,8 @@
         center.location = "top";
         center.alignment = "center";
         center.lengthMode = "fit";
-        center.minimumLength = 180;
         center.height = 28;
-        const clock = center.addWidget("org.kde.plasma.digitalclock");
-        clock.writeConfig("showDate", true);
-        clock.writeConfig("showSeconds", 0);
-        clock.writeConfig("dateFormat", "shortDate");
+        center.addWidget("org.mpontus.referenceclock");
         const right = new Panel;
         right.location = "top";
         right.alignment = "right";
@@ -539,6 +642,8 @@
         right.height = 28;
         right.addWidget("org.kde.plasma.systemtray");
       '
+      /run/current-system/sw/bin/plasma-apply-desktoptheme mpontus-reference || true
+      /run/current-system/sw/bin/plasma-apply-colorscheme BreezeDark || true
       [ "$(evaluate 'print(panels().length)')" = 3 ]
     '';
     plasmaXmonad = pkgs.writers.writeHaskellBin "plasma-xmonad" {
@@ -839,6 +944,11 @@
     };
     environment.systemPackages = with pkgs; [
       appmenuXfce
+      plasmaClock
+      plasmaTheme
+      xdotool
+      xorg.xwininfo
+      xorg.xprop
       xfceIslandInset
       xfce.xfce4-panel
       xfce.xfce4-whiskermenu-plugin
