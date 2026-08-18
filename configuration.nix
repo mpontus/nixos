@@ -1070,9 +1070,8 @@
         </channel>
       '';
       "gtk-3.0/gtk.css".text = ''
-        .xfce4-panel.background,
-        #XfcePanelWindowWrapper.xfce4-panel.background {
-          background-color: ${xfceIslands.fill};
+        #XfcePanelWindow {
+          background: ${xfceIslands.fill};
           border: ${toString xfceIslands.outline}px solid ${xfceIslands.outlineColor};
           border-radius: ${toString xfceIslands.radius}px;
           box-shadow: none;
@@ -1080,35 +1079,35 @@
           font-family: "JetBrainsMono Nerd Font";
           font-size: 11px;
           margin: 0;
-          padding: ${toString xfceIslands.outline}px;
+          padding: 0;
         }
         #clock-button {
           padding-left: 22px;
           padding-right: 22px;
         }
-        /* Parent paints the outline. Plugin wrappers stay inside its padding. */
-        #XfcePanelWindowWrapper > *,
-        #XfcePanelWindowWrapper > * *,
+        /* External GtkPlug wrappers have ARGB visuals. Keep every wrapper pixel
+           transparent so parent panel chrome remains visible and clickable. */
+        #XfcePanelWindowWrapper,
+        #XfcePanelWindowWrapper *,
         #sn-button-box,
         #sn-button-box *,
         .-vala-panel-appmenu-core,
-        .-vala-panel-appmenu-core scrolledwindow,
+        .-vala-panel-appmenu-core *,
         menubar.-vala-panel-appmenu-private,
-        .-vala-panel-appmenu-private,
-        .-vala-panel-appmenu-private > menuitem {
-          background-color: transparent;
+        menubar.-vala-panel-appmenu-private * {
+          background: transparent;
           background-image: none;
           border: 0;
           border-radius: 0;
           box-shadow: none;
         }
+        #XfcePanelWindowWrapper {
+          color: #f4effa;
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 11px;
+        }
         #whiskermenu-button, #sn-button, #pulseaudio-button,
         #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
-          background-color: #0e1624;
-          background-image: none;
-          border: 0;
-          border-radius: 0;
-          box-shadow: none;
           color: #f4effa;
           padding: 2px 6px;
         }
@@ -1119,8 +1118,7 @@
         #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
         #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
         #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
-          background-color: #8a466d;
-          border-radius: 7px;
+          color: #ffffff;
         }
         .whiskermenu,
         .whiskermenu frame,
