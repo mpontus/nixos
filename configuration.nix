@@ -450,9 +450,9 @@
       outlineColor = "#b75681";
       fill = "#0e1624";
       left = { lengthPercent = 36; centerX = 195; };
-      center = { lengthPercent = 22; centerX = viewportWidth / 2; };
-      right = { lengthPercent = 18; centerX = 843; };
-      power = { lengthPercent = 6; centerX = 980; };
+      center = { lengthPercent = 19; centerX = viewportWidth / 2; };
+      right = { lengthPercent = 14; centerX = 823; };
+      power = { lengthPercent = 4; centerX = 990; };
       outerGap = 6;
       visibleWindowGap = 13;
       # spacingWithEdge contributes outerGap twice to the terminal's top edge.
@@ -744,6 +744,7 @@
         import XMonad.Config.Xfce
         import XMonad.Hooks.EwmhDesktops
         import XMonad.Hooks.ManageDocks
+        import XMonad.Hooks.ManageHelpers (isInProperty)
         import XMonad.Hooks.SetWMName
         import XMonad.Layout.Gaps
         import XMonad.Layout.Spacing
@@ -757,6 +758,10 @@
           , normalBorderColor = "${xfceIslands.outlineColor}"
           , focusedBorderColor = "${xfceIslands.outlineColor}"
           , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
+          , manageHook =
+              (className =? "Wrapper-2.0" <&&>
+               isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_MENU") --> doIgnore
+              <+> manageDocks <+> manageHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
               spawn "hsetroot -solid '#131c2b'"
@@ -1056,6 +1061,14 @@
           </property>
         </channel>
       '';
+      "xfce4/xfconf/xfce-perchannel-xml/xsettings.xml".text = ''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <channel name="xsettings" version="1.0">
+          <property name="Net" type="empty">
+            <property name="ThemeName" type="string" value="Adwaita-dark"/>
+          </property>
+        </channel>
+      '';
       "gtk-3.0/gtk.css".text = ''
         .xfce4-panel.background,
         #XfcePanelWindowWrapper.xfce4-panel.background {
@@ -1145,6 +1158,14 @@
         .whiskermenu treeview:selected {
           background-color: #6d28d9;
           color: #ffffff;
+        }
+        tooltip, tooltip.background {
+          background-color: #0e1624;
+          color: #f4effa;
+          border: 2px solid #b75681;
+          border-radius: 9px;
+          box-shadow: none;
+          padding: 4px 7px;
         }
       '';
       "kitty/kitty.conf".text = ''
