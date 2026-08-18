@@ -1222,6 +1222,9 @@ in {
     shadow = false;
     settings = {
       corner-radius = 7;
+      # Plasma keeps a 2px surface inset inside dock windows; compensate so
+      # visible islands retain the reference's ~6px corner radius.
+      corner-radius-rules = [ "12:window_type = 'dock'" ];
       round-borders = 1;
       round-borders-exclude = [ "window_type = 'desktop'" ];
       use-damage = false;
