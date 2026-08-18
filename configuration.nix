@@ -543,72 +543,8 @@
       installPhase = ''
         theme=$out/share/plasma/desktoptheme/mpontus-reference
         mkdir -p "$theme"
-        printf '{ "KPlugin": { "Id": "mpontus-reference", "Name": "MPontus Reference", "Version": "6" }, "X-Plasma-FallbackTheme": "default" }' > "$theme/metadata.json"
+        printf '{ "KPlugin": { "Id": "mpontus-reference", "Name": "MPontus Reference", "Version": "7" }, "X-Plasma-FallbackTheme": "default" }' > "$theme/metadata.json"
         cp ${pkgs.kdePackages.breeze}/share/color-schemes/BreezeDark.colors "$theme/colors"
-        mkdir -p "$theme/widgets"
-        cat > "$theme/widgets/panel-background.svg" <<'SVGEOF'
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="28" viewBox="0 0 64 28">
-        <defs>
-          <linearGradient id="topBorder" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a466d"/><stop offset="1" stop-color="#d36b90"/></linearGradient>
-          <linearGradient id="bottomBorder" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#cb5986"/><stop offset="1" stop-color="#5e3952"/></linearGradient>
-          <linearGradient id="leftBorder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a466d"/><stop offset="1" stop-color="#cb5986"/></linearGradient>
-          <linearGradient id="rightBorder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d36b90"/><stop offset="1" stop-color="#5e3952"/></linearGradient>
-        </defs>
-        <rect id="hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-        <rect id="topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-        <rect id="topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-        <rect id="center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-        <rect id="right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-        <rect id="bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-        <rect id="bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="north-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-        <rect id="north-topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="north-top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-        <rect id="north-topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="north-left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-        <rect id="north-center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-        <rect id="north-right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-        <rect id="north-bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="north-bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-        <rect id="north-bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="floating-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-        <rect id="floating-topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="floating-top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-        <rect id="floating-topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="floating-left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-        <rect id="floating-center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-        <rect id="floating-right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-        <rect id="floating-bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="floating-bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-        <rect id="floating-bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="translucent-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-        <rect id="translucent-topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="translucent-top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-        <rect id="translucent-topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-        <rect id="translucent-left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-        <rect id="translucent-center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-        <rect id="translucent-right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-        <rect id="translucent-bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-        <rect id="translucent-bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-        <rect id="translucent-bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-        <path id="mask-topleft" d="M0,6 H6 V0 C2,0 0,2 0,6 Z" fill="#000000"/>
-        <rect id="mask-top" x="6" y="0" width="52" height="6" fill="#000000"/>
-        <path id="mask-topright" d="M6,6 H0 V0 C4,0 6,2 6,6 Z" transform="translate(58,0)" fill="#000000"/>
-        <rect id="mask-left" x="0" y="6" width="6" height="16" fill="#000000"/>
-        <rect id="mask-center" x="6" y="6" width="52" height="16" fill="#000000"/>
-        <rect id="mask-right" x="58" y="6" width="6" height="16" fill="#000000"/>
-        <path id="mask-bottomleft" d="M0,0 H6 V6 C2,6 0,4 0,0 Z" transform="translate(0,22)" fill="#000000"/>
-        <rect id="mask-bottom" x="6" y="22" width="52" height="6" fill="#000000"/>
-        <path id="mask-bottomright" d="M6,0 H0 V6 C4,6 6,4 6,0 Z" transform="translate(58,22)" fill="#000000"/>
-        <rect id="floating-hint-top-margin" x="0" y="0" width="8" height="16" fill="none"/>
-        <rect id="floating-hint-left-margin" x="0" y="0" width="10" height="8" fill="none"/>
-        <rect id="floating-hint-right-margin" x="54" y="0" width="10" height="8" fill="none"/>
-        <rect id="floating-hint-bottom-margin" x="0" y="20" width="8" height="8" fill="none"/>
-        </svg>
-  SVGEOF
         sed -i \
           -e 's/42,46,50/14,22,36/g' \
           -e 's/49,54,59/19,28,43/g' \
@@ -675,10 +611,6 @@
         <path id="mask-bottomleft" d="M0,0 H6 V6 C2,6 0,4 0,0 Z" transform="translate(0,22)" fill="#000000"/>
         <rect id="mask-bottom" x="6" y="22" width="52" height="6" fill="#000000"/>
         <path id="mask-bottomright" d="M6,0 H0 V6 C4,6 6,4 6,0 Z" transform="translate(58,22)" fill="#000000"/>
-        <rect id="floating-hint-top-margin" x="0" y="0" width="8" height="16" fill="none"/>
-        <rect id="floating-hint-left-margin" x="0" y="0" width="10" height="8" fill="none"/>
-        <rect id="floating-hint-right-margin" x="54" y="0" width="10" height="8" fill="none"/>
-        <rect id="floating-hint-bottom-margin" x="0" y="20" width="8" height="8" fill="none"/>
         </svg>
   SVGEOF
       '';
@@ -725,6 +657,18 @@
       '
       /run/current-system/sw/bin/plasma-apply-desktoptheme mpontus-reference || true
       /run/current-system/sw/bin/plasma-apply-colorscheme BreezeDark || true
+      # Top panels anchor at y=0. Move whole dock windows below reference gap;
+      # Picom GLX then rounds visible surface rather than transparent padding.
+      export DISPLAY=:0 XAUTHORITY="$HOME/.Xauthority"
+      sleep 1
+      for id in $(/run/current-system/sw/bin/xdotool search --class plasmashell 2>/dev/null || true); do
+        /run/current-system/sw/bin/xprop -id "$id" _NET_WM_WINDOW_TYPE 2>/dev/null | grep -q '_NET_WM_WINDOW_TYPE_DOCK' || continue
+        x=
+        for pair in $(/run/current-system/sw/bin/xdotool getwindowgeometry --shell "$id"); do
+          case "$pair" in X=*) x=''${pair#X=} ;; esac
+        done
+        [ -n "$x" ] && /run/current-system/sw/bin/xdotool windowmove "$id" "$x" 16
+      done
       [ "$(evaluate 'print(panels().length)')" = 3 ]
     '';
     plasmaXmonad = pkgs.writers.writeHaskellBin "plasma-xmonad" {
@@ -757,6 +701,12 @@
     '';
   in {
     virtualisation.diskSize = 8192;
+    # VM-only VirGL path: Picom GLX supplies real rounded corners.
+    virtualisation.qemu.options = [
+      "-vga none"
+      "-device virtio-vga-gl"
+      "-display egl-headless,gl=on"
+    ];
   
     services.xserver.desktopManager.xfce = {
       enable = false;
@@ -980,7 +930,7 @@
     services.picom = {
       enable = true;
       package = pkgs.picom;
-      backend = "xrender";
+      backend = "glx";
       vSync = false;
       fade = false;
       shadow = false;
