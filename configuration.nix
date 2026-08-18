@@ -705,7 +705,7 @@
     virtualisation.qemu.options = [
       "-vga none"
       "-device virtio-vga-gl"
-      "-display egl-headless,gl=on"
+      "-display gtk,gl=on"
     ];
   
     services.xserver.desktopManager.xfce = {
