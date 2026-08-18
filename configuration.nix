@@ -440,18 +440,22 @@
     # VM-only 1024×768 island geometry. XFCE CSS and Picom consume this block.
     xfceIslands = rec {
       viewportWidth = 1024;
-      top = 16;
-      height = 28; # outer island height, including the GTK outline
-      radius = 6;
-      outline = 1;
-      panelSize = height - outline * 2;
+      top = 23;
+      height = 36; # outer island height, including the GTK outline
+      radius = 9;
+      outline = 2;
+      # GTK adds a 2px physical frame here; calibrated against fresh VM geometry.
+      panelSize = height - outline;
       centerY = top + height / 2;
-      outlineColor = "#d36b90";
+      outlineColor = "#b75681";
       fill = "#0e1624";
-      left = { lengthPercent = 29; centerX = 158; };
-      center = { lengthPercent = 21; centerX = viewportWidth / 2; };
-      right = { lengthPercent = 20; centerX = 912; };
-      topGap = top + height;
+      left = { lengthPercent = 26; centerX = 144; };
+      center = { lengthPercent = 22; centerX = viewportWidth / 2; };
+      right = { lengthPercent = 18; centerX = 843; };
+      power = { lengthPercent = 6; centerX = 980; };
+      outerGap = 13;
+      # XMonad spacing contributes this edge once more below the top reserve.
+      topGap = top + height - outerGap;
     };
     appmenuXfce = pkgs.stdenv.mkDerivation {
       pname = "vala-panel-appmenu-xfce";
@@ -749,9 +753,9 @@
           { terminal = "${pkgs.kitty}/bin/kitty"
           , modMask = mod4Mask
           , borderWidth = 1
-          , normalBorderColor = "#8b5cf6"
-          , focusedBorderColor = "#f25aa6"
-          , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge 10 $ layoutHook xfceConfig
+          , normalBorderColor = "#8a466d"
+          , focusedBorderColor = "#f05a9d"
+          , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
           , startupHook = do
               startupHook xfceConfig
               spawn "hsetroot -solid '#131c2b'"
@@ -1001,7 +1005,7 @@
         <channel name="xfce4-panel" version="1.0">
           <property name="configver" type="int" value="2"/>
           <property name="panels" type="array">
-            <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/>
+            <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/><value type="int" value="4"/>
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
               <property name="position" type="string" value="p=0;x=${toString xfceIslands.left.centerX};y=${toString xfceIslands.centerY}"/>
@@ -1019,7 +1023,13 @@
               <property name="position" type="string" value="p=0;x=${toString xfceIslands.right.centerX};y=${toString xfceIslands.centerY}"/>
               <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
-              <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="14"/></property>
+              <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/></property>
+            </property>
+            <property name="panel-4" type="empty">
+              <property name="position" type="string" value="p=0;x=${toString xfceIslands.power.centerX};y=${toString xfceIslands.centerY}"/>
+              <property name="length" type="double" value="${toString xfceIslands.power.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+              <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
+              <property name="plugin-ids" type="array"><value type="int" value="14"/></property>
             </property>
           </property>
           <property name="plugins" type="empty">
@@ -1038,7 +1048,10 @@
               <property name="digital-layout" type="uint" value="2"/>
               <property name="digital-date-format" type="string" value="%a %d %b  |  %I:%M %p"/>
             </property>
-            <property name="plugin-14" type="string" value="actions"/>
+            <property name="plugin-14" type="string" value="actions">
+              <property name="appearance" type="uint" value="0"/>
+              <property name="items" type="array"><value type="string" value="+logout"/></property>
+            </property>
           </property>
         </channel>
       '';
@@ -1051,13 +1064,13 @@
           box-shadow: none;
           color: #f4effa;
           font-family: "JetBrainsMono Nerd Font";
-          font-size: 10px;
+          font-size: 11px;
           margin: 0;
           padding: ${toString xfceIslands.outline}px;
         }
         #clock-button {
-          padding-left: 20px;
-          padding-right: 20px;
+          padding-left: 22px;
+          padding-right: 22px;
         }
         /* Parent paints the outline. Plugin wrappers stay inside its padding. */
         #XfcePanelWindowWrapper > *,
@@ -1083,13 +1096,17 @@
           border-radius: 0;
           box-shadow: none;
           color: #f4effa;
-          padding: 2px 5px;
+          padding: 2px 6px;
+        }
+        .-vala-panel-appmenu-private > menuitem {
+          font-size: 10px;
+          padding: 2px 3px;
         }
         #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
         #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
         #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
-          background-color: #6d28d9;
-          border-radius: 5px;
+          background-color: #8a466d;
+          border-radius: 7px;
         }
         .whiskermenu,
         .whiskermenu frame,
@@ -1129,9 +1146,13 @@
           color: #ffffff;
         }
       '';
+      "kitty/kitty.conf".text = ''
+        background #131c2b
+        foreground #f4effa
+      '';
       "xfce4/terminal/terminalrc".text = ''
         [Configuration]
-        ColorBackground=#0e1826
+        ColorBackground=#131c2b
         ColorForeground=#f4effa
         FontName=JetBrainsMono Nerd Font 11
         MiscMenubarDefault=TRUE
