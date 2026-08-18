@@ -735,13 +735,14 @@ let
     centerY = top + height / 2;
     outlineColor = "#b75681";
     fill = "#0e1624";
-    left = { lengthPercent = 26; centerX = 144; };
+    left = { lengthPercent = 36; centerX = 195; };
     center = { lengthPercent = 22; centerX = viewportWidth / 2; };
     right = { lengthPercent = 18; centerX = 843; };
     power = { lengthPercent = 6; centerX = 980; };
-    outerGap = 13;
-    # XMonad spacing contributes this edge once more below the top reserve.
-    topGap = top + height - outerGap;
+    outerGap = 6;
+    visibleWindowGap = 13;
+    # spacingWithEdge contributes outerGap twice to the terminal's top edge.
+    topGap = top + height + visibleWindowGap - 2 * outerGap;
   };
   appmenuXfce = pkgs.stdenv.mkDerivation {
     pname = "vala-panel-appmenu-xfce";
@@ -1038,9 +1039,9 @@ in {
       main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
         { terminal = "${pkgs.kitty}/bin/kitty"
         , modMask = mod4Mask
-        , borderWidth = 1
-        , normalBorderColor = "#8a466d"
-        , focusedBorderColor = "#f05a9d"
+        , borderWidth = ${toString xfceIslands.outline}
+        , normalBorderColor = "${xfceIslands.outlineColor}"
+        , focusedBorderColor = "${xfceIslands.outlineColor}"
         , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
         , startupHook = do
             startupHook xfceConfig
