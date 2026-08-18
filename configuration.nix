@@ -1087,7 +1087,12 @@
         }
         /* External GtkPlug wrappers have ARGB visuals. Keep every wrapper pixel
            transparent so parent panel chrome remains visible and clickable. */
-        #XfcePanelWindowWrapper,
+        #XfcePanelWindowWrapper {
+          background: rgba(0, 0, 0, 0) !important;
+          border: 0 !important;
+          box-shadow: none !important;
+          color: #f4effa;
+        }
         #XfcePanelWindowWrapper *,
         #sn-button-box,
         #sn-button-box *,
@@ -1095,14 +1100,13 @@
         .-vala-panel-appmenu-core *,
         menubar.-vala-panel-appmenu-private,
         menubar.-vala-panel-appmenu-private * {
-          background: transparent;
+          background-color: transparent;
           background-image: none;
           border: 0;
           border-radius: 0;
           box-shadow: none;
         }
         #XfcePanelWindowWrapper {
-          color: #f4effa;
           font-family: "JetBrainsMono Nerd Font";
           font-size: 11px;
         }
