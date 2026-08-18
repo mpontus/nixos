@@ -1053,15 +1053,15 @@
           font-family: "JetBrainsMono Nerd Font";
           font-size: 10px;
           margin: 0;
-          padding: 0;
+          padding: ${toString xfceIslands.outline}px;
         }
         #clock-button {
           padding-left: 20px;
           padding-right: 20px;
         }
-        #XfcePanelWindowWrapper.xfce4-panel.background,
-        #XfcePanelWindowWrapper,
-        #XfcePanelWindowWrapper *,
+        /* Parent paints the outline. Plugin wrappers stay inside its padding. */
+        #XfcePanelWindowWrapper > *,
+        #XfcePanelWindowWrapper > * *,
         #sn-button-box,
         #sn-button-box *,
         .-vala-panel-appmenu-core,
@@ -1069,7 +1069,7 @@
         menubar.-vala-panel-appmenu-private,
         .-vala-panel-appmenu-private,
         .-vala-panel-appmenu-private > menuitem {
-          background-color: #0e1624;
+          background-color: transparent;
           background-image: none;
           border: 0;
           border-radius: 0;
