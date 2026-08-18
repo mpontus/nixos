@@ -437,6 +437,22 @@
   services.xserver.windowManager.dwm.enable = true;
   virtualisation.vmVariant = { lib, pkgs, ... }:
   let
+    # VM-only 1024×768 island geometry. XFCE CSS and Picom consume this block.
+    xfceIslands = rec {
+      viewportWidth = 1024;
+      top = 16;
+      height = 28; # outer island height, including the GTK outline
+      radius = 6;
+      outline = 1;
+      panelSize = height - outline * 2;
+      centerY = top + height / 2;
+      outlineColor = "#d36b90";
+      fill = "#0e1624";
+      left = { lengthPercent = 29; centerX = 158; };
+      center = { lengthPercent = 21; centerX = viewportWidth / 2; };
+      right = { lengthPercent = 20; centerX = 912; };
+      topGap = top + height;
+    };
     appmenuXfce = pkgs.stdenv.mkDerivation {
       pname = "vala-panel-appmenu-xfce";
       version = "2026-08-16";
@@ -709,42 +725,45 @@
     ];
   
     services.xserver.desktopManager.xfce = {
-      enable = false;
+      enable = true;
       noDesktop = true;
       enableXfwm = false;
     };
   
     services.xserver.windowManager.xmonad = {
-      enable = false;
+      enable = true;
       enableContribAndExtras = true;
-      extraPackages = hp: [
-        hp.xmonad
-        hp.xmonad-contrib
-        hp.xmonad-extras
-      ];
+      extraPackages = hp: [ hp.xmonad hp.xmonad-contrib hp.xmonad-extras ];
       config = ''
         import XMonad
+        import XMonad.Config.Xfce
         import XMonad.Hooks.EwmhDesktops
         import XMonad.Hooks.ManageDocks
         import XMonad.Hooks.SetWMName
+        import XMonad.Layout.Gaps
         import XMonad.Layout.Spacing
         import XMonad.Util.EZConfig
   
         main :: IO ()
-        main = xmonad $ ewmhFullscreen $ ewmh $ docks def
-          { terminal = "xfce4-terminal"
+        main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
+          { terminal = "${pkgs.kitty}/bin/kitty"
           , modMask = mod4Mask
           , borderWidth = 1
           , normalBorderColor = "#8b5cf6"
           , focusedBorderColor = "#f25aa6"
-          , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook def
-          , manageHook = manageDocks <+> manageHook def
-          , startupHook = setWMName "LG3D"
+          , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge 10 $ layoutHook xfceConfig
+          , startupHook = do
+              startupHook xfceConfig
+              spawn "hsetroot -solid '#131c2b'"
+              spawn "snixembed"
+              spawn "nm-applet"
+              spawn "xfce4-power-manager"
+              setWMName "LG3D"
           }
           `additionalKeysP`
-          [ ("M-<Return>", spawn "xfce4-terminal")
-          , ("M-d", spawn "qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu")
-          , ("M-S-e", spawn "qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1")
+          [ ("M-<Return>", spawn "${pkgs.kitty}/bin/kitty")
+          , ("M-d", spawn "xfce4-popup-whiskermenu")
+          , ("M-S-e", spawn "xfce4-session-logout")
           ]
       '';
     };
@@ -935,35 +954,14 @@
       fade = false;
       shadow = false;
       settings = {
-        corner-radius = 7;
-        # Plasma keeps a 2px surface inset inside dock windows; compensate so
-        # visible islands retain the reference's ~6px corner radius.
-        corner-radius-rules = [ "12:window_type = 'dock'" ];
-        round-borders = 1;
-        round-borders-exclude = [ "window_type = 'desktop'" ];
+        corner-radius = xfceIslands.radius;
+        corner-radius-rules = [ "${toString xfceIslands.radius}:window_type = 'dock'" ];
         use-damage = false;
         rounded-corners-exclude = [ "window_type = 'desktop'" ];
       };
     };
   
-    # Plasma spike: native panel shell, X11 session, XMonad as the WM.
-    services.desktopManager.plasma6.enable = true;
-    systemd.user.services.plasma-kwin_x11.serviceConfig = {
-      ExecStart = lib.mkForce "${plasmaXmonad}/bin/plasma-xmonad";
-      Type = lib.mkForce "simple";
-      BusName = lib.mkForce "";
-    };
-    systemd.user.services.picom.after = [ "plasma-plasmashell.service" ];
-    systemd.user.services.plasma-islands = {
-      description = "Configure Plasma top islands";
-      wantedBy = [ "graphical-session.target" ];
-      after = [ "picom.service" "plasma-plasmashell.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = plasmaIslands;
-      };
-    };
+    # XFCE owns native panel geometry; no Plasma shell or panel provisioning.
     environment.sessionVariables = {
       GTK_MODULES = "appmenu-gtk-module";
       GTK_PATH = "${appmenuXfce}/lib";
@@ -972,12 +970,9 @@
     };
     environment.systemPackages = with pkgs; [
       appmenuXfce
-      plasmaClock
-      plasmaTheme
       xdotool
       xorg.xwininfo
       xorg.xprop
-      xfceIslandInset
       xfce.xfce4-panel
       xfce.xfce4-whiskermenu-plugin
       xfce.xfce4-pulseaudio-plugin
@@ -1009,20 +1004,20 @@
             <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/>
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
-              <property name="position" type="string" value="p=6;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="24"/>
+              <property name="position" type="string" value="p=0;x=${toString xfceIslands.left.centerX};y=${toString xfceIslands.centerY}"/>
+              <property name="length" type="double" value="${toString xfceIslands.left.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
             </property>
             <property name="panel-2" type="empty">
-              <property name="position" type="string" value="p=9;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="24"/>
+              <property name="position" type="string" value="p=0;x=${toString xfceIslands.center.centerX};y=${toString xfceIslands.centerY}"/>
+              <property name="length" type="double" value="${toString xfceIslands.center.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
             </property>
             <property name="panel-3" type="empty">
-              <property name="position" type="string" value="p=2;x=0;y=0"/>
-              <property name="length" type="uint" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="24"/>
+              <property name="position" type="string" value="p=0;x=${toString xfceIslands.right.centerX};y=${toString xfceIslands.centerY}"/>
+              <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/><value type="int" value="14"/></property>
             </property>
@@ -1048,15 +1043,17 @@
         </channel>
       '';
       "gtk-3.0/gtk.css".text = ''
-        .xfce4-panel.background {
-          background-color: #0e1624;
-          border: 1px solid #f05a9d;
-          border-radius: 7px;
+        .xfce4-panel.background,
+        #XfcePanelWindowWrapper.xfce4-panel.background {
+          background-color: ${xfceIslands.fill};
+          border: ${toString xfceIslands.outline}px solid ${xfceIslands.outlineColor};
+          border-radius: ${toString xfceIslands.radius}px;
           box-shadow: none;
           color: #f4effa;
           font-family: "JetBrainsMono Nerd Font";
           font-size: 10px;
-          padding: 1px 7px;
+          margin: 0;
+          padding: 0;
         }
         #clock-button {
           padding-left: 20px;
@@ -1093,20 +1090,6 @@
         #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
           background-color: #6d28d9;
           border-radius: 5px;
-        }
-        #XfcePanelWindowWrapper.xfce4-panel.background {
-          border-top: 1px solid #f05a9d;
-          border-bottom: 1px solid #f05a9d;
-          padding-top: 0;
-          padding-bottom: 0;
-        }
-        #whiskermenu-button, #sn-button-box {
-          border-left: 1px solid #f05a9d;
-          border-radius: 7px 0 0 7px;
-        }
-        .-vala-panel-appmenu-core, #actions-button {
-          border-right: 1px solid #f05a9d;
-          border-radius: 0 7px 7px 0;
         }
         .whiskermenu,
         .whiskermenu frame,
@@ -1163,7 +1146,7 @@
     hardware.bluetooth.enable = true;
     services.blueman.enable = true;
   
-    services.displayManager.defaultSession = lib.mkForce "plasmax11";
+    services.displayManager.defaultSession = lib.mkForce "xfce+xmonad";
     services.xserver.displayManager.autoLogin.enable = lib.mkForce true;
     services.xserver.displayManager.autoLogin.user = "mpontus";
     services.displayManager.autoLogin.enable = lib.mkForce true;
