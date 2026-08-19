@@ -82,6 +82,8 @@ Representative screenshots:
 - `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-baseline-20260819-172519.png`
 - `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-unmap2-20260819-172542.png`
 - `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-remap2-20260819-172545.png`
+- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-q2B-20260819-182024.png`
+- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-q2green-20260819-182523.png`
 
 ## Tested CSS approaches
 
@@ -89,11 +91,20 @@ Representative screenshots:
 
 The configuration targeted `#XfcePanelWindowWrapper` and descendants with transparent backgrounds, no borders, and no shadows. This can remove the appmenu's visible dark-gray `#353535` fill, but it does not restore the second rose border row. Underlying navy remains.
 
-### Root-only transparent background
+### Q1: root `background-image` attribution
 
-Targeting the named ARGB GtkPlug root with only `background-color: transparent` preserves icons and menu text. It still leaves navy on the inner border rows.
+The earlier claim that root `background-image: none` made appmenu text disappear was false. It came from a multi-variable screenshot and was not isolated.
 
-Adding `background-image: none` to the root produced a fully transparent-looking wrapper perimeter, but external plugin content disappeared. It is not acceptable because launcher, tray, appmenu, and power-plugin visuals must remain real and visible.
+Four fresh-VM states all launched a focused terminal, retained a live mapped `289×34` appmenu wrapper, showed its `File Edit View Terminal Tabs Help` labels, and had no CSS parse error in the user journal:
+
+| State | Parent selector | Wrapper root rule | Evidence |
+|---|---|---|---|
+| A | `#XfcePanelWindow` | `background-color: transparent` | `qemu-xfce-q1A-20260819-180930.png` |
+| B | `#XfcePanelWindow` | A plus `background-image: none` | `qemu-xfce-q1B-20260819-181210.png` |
+| C | `.xfce4-panel.background` | none | `qemu-xfce-q1C-20260819-181453.png` |
+| D | `.xfce4-panel.background` | B plus `window#...` and `plug#...` selectors | `qemu-xfce-q1D-20260819-181738.png` |
+
+Therefore root `background-image: none` is not a demonstrated cause of missing appmenu text. The old screenshot must have involved an unrecorded state variable and cannot support a causal claim.
 
 ### Broad `.xfce4-panel` reset
 
@@ -107,21 +118,23 @@ Setting a panel to XFCE `background-style=COLOR` with `background-rgba=rgba(0,0,
 
 A temporary VM-only `GTK_THEME=Adwaita` was inherited by `wrapper-2.0`. The navy inner-row pixels remained `#131c2b`. The probe was reverted.
 
+### Q2: navy-pixel attribution
+
+State B row scans show `#131c2b` filling every uncovered pixel of each wrapper, not only edge rows. Appmenu's 289-pixel span is navy on all rows `24` through `57` except where glyphs occupy pixels; the 35-pixel status and 34-pixel power spans have the same pattern around their icon content. This is a wrapper-surface fill, not a narrow border artifact.
+
+All inspected appmenu, status, power, and status-socket windows have a 32-bit TrueColor visual, zero border width, and no `_NET_WM_WINDOW_OPACITY`. Installed `xwininfo` has no `-winwa`/background-pixel option, and neither XFCE source nor installed Adwaita files contains a literal `#131c2b` or equivalent RGB constant. Thus an X-server background-pixel hypothesis remains plausible but unproven.
+
+The CSS-reach probe changed the wrapper root `background-color` to `#00ff00`; external-wrapper content no longer rendered in the resulting capture (`qemu-xfce-q2green-20260819-182523.png`). This proves root styling materially affects wrapper rendering, but does not identify the rendering path or the navy painter.
+
 ### `!important`
 
-This GTK3 build logged parse errors for attempted declarations containing `!important`, for example:
-
-```text
-Junk at end of value for background
-```
-
-No persistent configuration uses `!important`.
+This GTK3 build logged parse errors for attempted declarations containing `!important`, including `Junk at end of value for background`. No persistent configuration uses it. GTK's CSS overview documents selectors, `rgba`, and `transparent`, but does not include `!important` in its declaration grammar: https://docs.gtk.org/gtk3/css-overview.html.
 
 ## Current conclusion
 
-The appmenu `wrapper-2.0` X window is the remaining navy painter. It occupies the second border row because XFCE allocates it one pixel inside the panel. The panel itself is correct beneath it.
+The panel is correct beneath external windows. Appmenu and power wrapper X windows own their overlap; status has both a wrapper and a panel-process GtkSocket overlap. All occupy the second border row because XFCE allocates them one pixel inside the panel.
 
-Current user CSS cannot make that wrapper visually transparent without either leaving navy pixels or hiding plugin content. The remaining direct solutions are therefore allocation correction or visual clipping, not more panel-container CSS.
+We have not yet identified the exact producer of the wrapper's `#131c2b` surface fill. Do not claim that it is a theme constant, a panel internal child box, or a CSS image effect. Fix-route choice remains deferred.
 
 ## Deliberately not implemented
 
