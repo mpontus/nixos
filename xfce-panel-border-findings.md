@@ -4,7 +4,7 @@
 
 Render a continuous, rounded two-pixel `#b75681` outline around each XFCE top-panel island while preserving real XFCE widgets, XEmbed plugins, global menus, tray icons, and click targets.
 
-The active stable configuration is the commit before the temporary experiments in this document. It intentionally keeps the current one-pixel-visible outline rather than applying an unverified workaround.
+The active configuration repairs the overlap with a CSS-only wrapper rule. It keeps native geometry, XEmbed windows, and Picom clipping unchanged.
 
 ## Proven window structure
 
@@ -91,7 +91,7 @@ Representative screenshots:
 
 ### Wrapper and descendant resets
 
-The configuration targeted `#XfcePanelWindowWrapper` and descendants with transparent backgrounds, no borders, and no shadows. This can remove the appmenu's visible dark-gray `#353535` fill, but it does not restore the second rose border row. Underlying navy remains.
+A fully transparent wrapper root removes the appmenu's visible dark-gray `#353535` fill but exposes the root background through the wrapper's overlap. Descendant resets are still used for plugin chrome; they are not sufficient to paint the inner outline row.
 
 ### Q1: root `background-image` attribution
 
@@ -106,7 +106,7 @@ Four isolated fresh-VM states all launched a focused terminal, retained a live m
 | C | `.xfce4-panel.background` | none | `qemu-xfce-q1C-20260819-181453.png` |
 | D | `.xfce4-panel.background` | B plus `window#...` and `plug#...` selectors | `qemu-xfce-q1D-20260819-181738.png` |
 
-The earlier root2 screenshot has zero white label pixels. A three-boot exact-D time series resolved the missing variable: labels were absent at t+2 in runs 1 and 2, and through t+4 in run 3; they appeared by t+4 in runs 1–2 and t+8 in run 3. Before this, XFCE logged `No window manager registered on screen 0`; the AppMenu Registrar service then started and the plugin logged its initial Registrar lookup error. The loss is a panel/Registrar startup race, not a demonstrated `background-image` effect.
+The earlier root2 screenshot has zero white label pixels. Re-running its recovered CSS and original timing (`12s` after SSH, terminal launch, `4s` later) reproduced the blank appmenu and dark overlap state, but not a fully settled plugin tree: one tray icon was already present while other plugin wrappers had not yet mapped. The same CSS is populated after settling. Thus startup timing demonstrably contributes, but the historical fully mapped empty-plugin state is not proven to be only a startup race.
 
 ### Broad `.xfce4-panel` reset
 
@@ -132,21 +132,27 @@ The CSS-reach probe changed the wrapper root `background-color` to `#00ff00`; ex
 
 This GTK3 build logged parse errors for attempted declarations containing `!important`, including `Junk at end of value for background`. No persistent configuration uses it. GTK's CSS overview documents selectors, `rgba`, and `transparent`, but does not include `!important` in its declaration grammar: https://docs.gtk.org/gtk3/css-overview.html.
 
-## Current conclusion
+## Attribution and accepted CSS repair
 
-The remaining navy is the desktop seen through transparent native-child regions whose mapped presence prevents the panel from painting its inner border/body pixels. Appmenu and power have one wrapper layer; status has a panel-process GtkSocket plus wrapper layer. All start one pixel inside the panel and therefore coincide with the inner border row.
+The dark right-island regions are root exposure, not paint from a socket or wrapper. In a fully mapped synthetic blank-content state, changing the root background to `#00ff00` turned both status and power overlap samples green. Changing panel body/border to magenta/cyan left those same samples at root `#131c2b`. Raw XPixmap samples for each status/power socket and wrapper were `0x00000000` ARGB; the panel's outer border sample was opaque rose. A wrapper-root `#ff8800` sentinel then turned both overlap samples orange.
 
-The remaining design question is no longer color attribution: it is how to keep the panel background/border painted beneath mapped transparent XEmbed children. Allocation correction, visual clipping, or a panel-level rendering change remain deferred pending explicit approval.
+The accepted minimal repair gives the wrapper root the same body color plus only horizontal inner-border pixels:
+
+```css
+#XfcePanelWindowWrapper {
+  background-color: #0e1624;
+  border-top: 1px solid #b75681;
+  border-right: 0;
+  border-bottom: 1px solid #b75681;
+  border-left: 0;
+}
+```
+
+It does not alter geometry or hide native children. In the populated VM, appmenu and right icons render normally; clicking `File` opens the native terminal menu. In synthetic mapped blank-content state, the same rule preserves rose at left/status/power inner rows (`y=24` and `y=57`) with no desktop-colored overlap. GTK logged no parser error. Visual evidence: `qemu-xfce-csscandidate-20260819-194603.png`, `qemu-xfce-csscandidate-click-20260819-194628.png`, `qemu-xfce-csscandidate-blank-20260819-194935.png`, `qemu-xfce-finalcandidate-menu-20260819-195239.png`, and `qemu-xfce-finalcandidate-power-hover-20260819-195241.png`.
 
 ## Deliberately not implemented
 
-The following would be technical escape routes, but require explicit user approval before any implementation:
-
-1. **XFCE panel source override:** reserve the full CSS border width when allocating the internal child and external-wrapper socket.
-2. **XShape helper:** clip only a wrapper's visual perimeter while retaining its full input region.
-3. **GTK module or appmenu resource override:** inject a high-priority, wrapper-process-specific style provider.
-
-No source patch, helper, overlay painter, Picom fork, or pre-rendered corner asset was added.
+No XFCE/Picom source patch, XShape/helper, overlay painter, GTK module, geometry change, or pre-rendered asset was added. Those escape routes remain unnecessary unless this CSS rule regresses in a future plugin/theme combination.
 
 ## Reproduction and validation
 

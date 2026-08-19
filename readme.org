@@ -1409,6 +1409,15 @@ in {
         font-family: "JetBrainsMono Nerd Font";
         font-size: 11px;
       }
+      /* Native wrapper allocation covers parent inner border rows. Repaint
+         only its own body and horizontal inner-border pixels. */
+      #XfcePanelWindowWrapper {
+        background-color: #0e1624;
+        border-top: 1px solid #b75681;
+        border-right: 0;
+        border-bottom: 1px solid #b75681;
+        border-left: 0;
+      }
       #whiskermenu-button, #sn-button, #pulseaudio-button,
       #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
         color: #f4effa;
