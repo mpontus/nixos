@@ -50,13 +50,25 @@ x=100,y=57 = #131c2b
 x=100,y=58 = #b75681
 ```
 
-Thus the outer rose row survives, while the inner row is overpainted by a navy painter. The same navy remained after a fresh VM boot with `GTK_THEME=Adwaita`, and the appmenu wrapper process was verified to inherit that environment variable. This rules out the active Adwaita-dark theme as the sole source of the navy layer. It does **not** prove the exact remaining painter; it may be a panel-local container, panel-local CSS provider, or another XEmbed/panel compositing layer.
+The remaining navy is conclusively owned by the appmenu wrapper X window, not by the panel's internal child box. In a live VM, temporarily unmapping the visible `289×34` appmenu wrapper changed the same probe to:
+
+```text
+x=100,y=23 = #b75681
+x=100,y=24 = #b75681
+x=100,y=40 = #0e1624
+x=100,y=57 = #b75681
+x=100,y=58 = #b75681
+```
+
+Remapping the wrapper immediately restored `#131c2b` at `y=24` and `y=57` plus the appmenu content. The panel is already painting the desired two-pixel rose border and exact navy body beneath the wrapper.
+
+There is no `_NET_WM_WINDOW_OPACITY` property on the panel or wrapper windows. A temporary `GTK_THEME=Adwaita` probe was inherited by the wrapper but left the navy unchanged; it is not ordinary active Adwaita-dark theme fill.
 
 Representative screenshots:
 
-- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-recheck-appmenu-20260819-001154.png`
-- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-layer1-appmenu-20260819-164357.png`
-- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-theme-probe-appmenu-20260819-165419.png`
+- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-baseline-20260819-172519.png`
+- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-unmap2-20260819-172542.png`
+- `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-remap2-20260819-172545.png`
 
 ## Tested CSS approaches
 
@@ -94,9 +106,9 @@ No persistent configuration uses `!important`.
 
 ## Current conclusion
 
-The exact remaining navy painter is not yet identified. The claim that it is definitively the panel's internal child box is a hypothesis, not a proven conclusion. Current CSS targeting cannot distinguish that hypothetical panel child from wrapper plugs because both expose broad XFCE panel classes.
+The appmenu `wrapper-2.0` X window is the remaining navy painter. It occupies the second border row because XFCE allocates it one pixel inside the panel. The panel itself is correct beneath it.
 
-The stable state is preferable to a workaround that hides controls or removes island fill.
+Current user CSS cannot make that wrapper visually transparent without either leaving navy pixels or hiding plugin content. The remaining direct solutions are therefore allocation correction or visual clipping, not more panel-container CSS.
 
 ## Deliberately not implemented
 
