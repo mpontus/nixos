@@ -502,6 +502,23 @@ services.openssh = {
 pkgs.virt-manager
 #+end_src
 
+*** Inhibit suspend while VMs run
+
+QEMU/KVM can hard-freeze the host on suspend. =nixos-vm= wraps any runner
+(=nixos-vm ./result/bin/run-nixos-vm=) with a logind block inhibitor for sleep
+and lid switch; normal suspend resumes once the VM exits.
+
+#+begin_src nix :noweb-ref system-packages
+(pkgs.writeShellScriptBin "nixos-vm" ''
+  exec systemd-inhibit \
+    --what=sleep:handle-lid-switch \
+    --mode=block \
+    --who="nixos-vm" \
+    --why="QEMU VM running" \
+    "$@"
+'')
+#+end_src
+
 #+begin_src nix :noweb-ref system-configuration
 virtualisation.libvirtd.enable = true;
 #+end_src

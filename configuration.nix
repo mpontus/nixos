@@ -14,6 +14,14 @@
 
   environment.systemPackages = with pkgs; [
     pkgs.virt-manager
+    (pkgs.writeShellScriptBin "nixos-vm" ''
+      exec systemd-inhibit \
+        --what=sleep:handle-lid-switch \
+        --mode=block \
+        --who="nixos-vm" \
+        --why="QEMU VM running" \
+        "$@"
+    '')
     gnome-tweaks
     gnomeExtensions.appindicator
     dmenu
