@@ -64,6 +64,19 @@ Remapping the wrapper immediately restored `#131c2b` at `y=24` and `y=57` plus t
 
 There is no `_NET_WM_WINDOW_OPACITY` property on the panel or wrapper windows. A temporary `GTK_THEME=Adwaita` probe was inherited by the wrapper but left the navy unchanged; it is not ordinary active Adwaita-dark theme fill.
 
+Right-island ownership is split:
+
+```text
+power:  panel GtkSocket 34×34 @ (971,24)
+        └── wrapper-2.0 34×34 @ (971,24)
+
+status: panel GtkSocket 35×34 @ (753,24)
+        └── wrapper-2.0 35×34 @ (753,24)
+            └── snixembed 22×22 @ (759,30)
+```
+
+Unmapping the power `wrapper-2.0` revealed rose at its inner rows, so the power overlap is directly owned by the wrapper. Unmapping only the status wrapper left navy because its panel-process `GtkSocket` remained mapped. Unmapping that socket then revealed `#b75681` at `y=24` and `y=57` and exact parent fill `#0e1624` at `y=40`. Status therefore has two potential painters: its wrapper and its socket.
+
 Representative screenshots:
 
 - `/home/mpontus/Pictures/pi-screenshots/qemu-xfce-probe-baseline-20260819-172519.png`
