@@ -457,10 +457,11 @@
       centerY = top + height / 2;
       outlineColor = "#b75681";
       fill = "#0e1624";
-      left = { lengthPercent = 36; centerX = 195; };
-      center = { lengthPercent = 19; centerX = viewportWidth / 2; };
-      right = { lengthPercent = 14; centerX = 823; };
-      power = { lengthPercent = 4; centerX = 990; };
+      # One percent is the minimum; XFCE expands each panel to plugin requisition.
+      left = { lengthPercent = 1; centerX = 195; };
+      center = { lengthPercent = 1; centerX = viewportWidth / 2; };
+      right = { lengthPercent = 1; centerX = 823; };
+      power = { lengthPercent = 1; centerX = 990; };
       outerGap = 6;
       visibleWindowGap = 13;
       # spacingWithEdge contributes outerGap twice to the terminal's top edge.
@@ -1023,25 +1024,25 @@
             <property name="dark-mode" type="bool" value="true"/>
             <property name="panel-1" type="empty">
               <property name="position" type="string" value="p=0;x=${toString xfceIslands.left.centerX};y=${toString xfceIslands.centerY}"/>
-              <property name="length" type="double" value="${toString xfceIslands.left.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+              <property name="length" type="double" value="${toString xfceIslands.left.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
             </property>
             <property name="panel-2" type="empty">
               <property name="position" type="string" value="p=0;x=${toString xfceIslands.center.centerX};y=${toString xfceIslands.centerY}"/>
-              <property name="length" type="double" value="${toString xfceIslands.center.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+              <property name="length" type="double" value="${toString xfceIslands.center.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
             </property>
             <property name="panel-3" type="empty">
               <property name="position" type="string" value="p=0;x=${toString xfceIslands.right.centerX};y=${toString xfceIslands.centerY}"/>
-              <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+              <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/></property>
             </property>
             <property name="panel-4" type="empty">
               <property name="position" type="string" value="p=0;x=${toString xfceIslands.power.centerX};y=${toString xfceIslands.centerY}"/>
-              <property name="length" type="double" value="${toString xfceIslands.power.lengthPercent}"/><property name="length-adjust" type="bool" value="false"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+              <property name="length" type="double" value="${toString xfceIslands.power.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
               <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
               <property name="plugin-ids" type="array"><value type="int" value="14"/></property>
             </property>
