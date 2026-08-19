@@ -50,7 +50,7 @@ x=100,y=57 = #131c2b
 x=100,y=58 = #b75681
 ```
 
-The remaining navy is conclusively owned by the appmenu wrapper X window, not by the panel's internal child box. In a live VM, temporarily unmapping the visible `289×34` appmenu wrapper changed the same probe to:
+The appmenu wrapper physically occupies the overlap region, but the first unmap result did not identify the navy painter. Unmapping the visible `289×34` appmenu wrapper changed the probe to:
 
 ```text
 x=100,y=23 = #b75681
@@ -60,9 +60,11 @@ x=100,y=57 = #b75681
 x=100,y=58 = #b75681
 ```
 
-Remapping the wrapper immediately restored `#131c2b` at `y=24` and `y=57` plus the appmenu content. The panel is already painting the desired two-pixel rose border and exact navy body beneath the wrapper.
+Remapping the wrapper immediately restored `#131c2b` at `y=24` and `y=57` plus the appmenu content. Later raw-drawable capture corrected the interpretation: every inspected wrapper edge is ARGB `0x00000000`, not opaque navy. Unmapping causes the parent to repaint the exposed region, so it cannot by itself prove that the wrapper painted the former navy.
 
-There is no `_NET_WM_WINDOW_OPACITY` property on the panel or wrapper windows. A temporary `GTK_THEME=Adwaita` probe was inherited by the wrapper but left the navy unchanged; it is not ordinary active Adwaita-dark theme fill.
+The `#131c2b` color is the desktop/root background: samples at `(100,15)` and `(500,200)` exactly match it. In state B, raw panel-interior pixels beneath mapped native children are also `0x00000000`; transparent `GtkSocket`/`GtkPlug` regions therefore expose the desktop through an unpainted parent-child hole. Unmapping the child damages and repaints the parent, yielding the rose rows and `#0e1624` body seen in the earlier test.
+
+There is no `_NET_WM_WINDOW_OPACITY` property on panel or wrapper windows. A temporary `GTK_THEME=Adwaita` probe was inherited by the wrapper but left the desktop-colored hole unchanged; ordinary Adwaita-dark fill is not its source.
 
 Right-island ownership is split:
 
@@ -75,7 +77,7 @@ status: panel GtkSocket 35×34 @ (753,24)
             └── snixembed 22×22 @ (759,30)
 ```
 
-Unmapping the power `wrapper-2.0` revealed rose at its inner rows, so the power overlap is directly owned by the wrapper. Unmapping only the status wrapper left navy because its panel-process `GtkSocket` remained mapped. Unmapping that socket then revealed `#b75681` at `y=24` and `y=57` and exact parent fill `#0e1624` at `y=40`. Status therefore has two potential painters: its wrapper and its socket.
+Power and status native children still create the physical overlap: all are allocated at `+1,+1`, spanning the second border row. Raw B-state captures show appmenu, status, power, and the status socket each have 32-bit TrueColor visuals, `backing_pixel=0`, and transparent edge pixels (`0x00000000`). Status has both socket and wrapper layers, so either mapped layer can keep the parent region unpainted; it is not evidence of two opaque navy painters.
 
 Representative screenshots:
 
@@ -95,7 +97,7 @@ The configuration targeted `#XfcePanelWindowWrapper` and descendants with transp
 
 The earlier claim that root `background-image: none` made appmenu text disappear was false. It came from a multi-variable screenshot and was not isolated.
 
-Four fresh-VM states all launched a focused terminal, retained a live mapped `289×34` appmenu wrapper, showed its `File Edit View Terminal Tabs Help` labels, and had no CSS parse error in the user journal:
+Four isolated fresh-VM states all launched a focused terminal, retained a live mapped `289×34` appmenu wrapper, showed its `File Edit View Terminal Tabs Help` labels, and had no CSS parse error in the user journal. The corrected white-glyph probe (`R`, `G`, and `B` each above `230`) found 41 label pixels in every state:
 
 | State | Parent selector | Wrapper root rule | Evidence |
 |---|---|---|---|
@@ -104,7 +106,7 @@ Four fresh-VM states all launched a focused terminal, retained a live mapped `28
 | C | `.xfce4-panel.background` | none | `qemu-xfce-q1C-20260819-181453.png` |
 | D | `.xfce4-panel.background` | B plus `window#...` and `plug#...` selectors | `qemu-xfce-q1D-20260819-181738.png` |
 
-Therefore root `background-image: none` is not a demonstrated cause of missing appmenu text. The old screenshot must have involved an unrecorded state variable and cannot support a causal claim.
+The earlier root2 screenshot has zero white label pixels. A three-boot exact-D time series resolved the missing variable: labels were absent at t+2 in runs 1 and 2, and through t+4 in run 3; they appeared by t+4 in runs 1–2 and t+8 in run 3. Before this, XFCE logged `No window manager registered on screen 0`; the AppMenu Registrar service then started and the plugin logged its initial Registrar lookup error. The loss is a panel/Registrar startup race, not a demonstrated `background-image` effect.
 
 ### Broad `.xfce4-panel` reset
 
@@ -120,11 +122,11 @@ A temporary VM-only `GTK_THEME=Adwaita` was inherited by `wrapper-2.0`. The navy
 
 ### Q2: navy-pixel attribution
 
-State B row scans show `#131c2b` filling every uncovered pixel of each wrapper, not only edge rows. Appmenu's 289-pixel span is navy on all rows `24` through `57` except where glyphs occupy pixels; the 35-pixel status and 34-pixel power spans have the same pattern around their icon content. This is a wrapper-surface fill, not a narrow border artifact.
+State B root captures show `#131c2b` throughout every uncovered wrapper span. Raw per-window capture settles the apparent contradiction: appmenu, status, power, and status-socket edge and body-background pixels are `0x00000000` ARGB, while real plugin content has an `0xff` high byte. The desktop/root samples are exactly `#131c2b`; this is a compositing hole, not a wrapper-surface fill.
 
-All inspected appmenu, status, power, and status-socket windows have a 32-bit TrueColor visual, zero border width, and no `_NET_WM_WINDOW_OPACITY`. Installed `xwininfo` has no `-winwa`/background-pixel option, and neither XFCE source nor installed Adwaita files contains a literal `#131c2b` or equivalent RGB constant. Thus an X-server background-pixel hypothesis remains plausible but unproven.
+All inspected windows have 32-bit TrueColor visuals, zero border width, `backing_store=0`, `backing_pixel=0`, and no `_NET_WM_WINDOW_OPACITY`. `xwd` and Python Xlib were added temporarily to obtain these attributes and raw ZPixmap pixels, then removed. Neither XFCE source nor installed Adwaita files contains a literal `#131c2b`; arithmetic enumeration also found no source-over, pairwise mix, or RGB-scale formula within ±1 channel from the known palette (`#0e1624`, `#353535`, `#b75681`, `#f4effa`, black, white).
 
-The CSS-reach probe changed the wrapper root `background-color` to `#00ff00`; external-wrapper content no longer rendered in the resulting capture (`qemu-xfce-q2green-20260819-182523.png`). This proves root styling materially affects wrapper rendering, but does not identify the rendering path or the navy painter.
+The CSS-reach probe changed the wrapper root `background-color` to `#00ff00`; external-wrapper content no longer rendered in the resulting capture (`qemu-xfce-q2green-20260819-182523.png`). This proves root styling materially affects wrapper rendering, but does not alter the raw-alpha conclusion.
 
 ### `!important`
 
@@ -132,9 +134,9 @@ This GTK3 build logged parse errors for attempted declarations containing `!impo
 
 ## Current conclusion
 
-The panel is correct beneath external windows. Appmenu and power wrapper X windows own their overlap; status has both a wrapper and a panel-process GtkSocket overlap. All occupy the second border row because XFCE allocates them one pixel inside the panel.
+The remaining navy is the desktop seen through transparent native-child regions whose mapped presence prevents the panel from painting its inner border/body pixels. Appmenu and power have one wrapper layer; status has a panel-process GtkSocket plus wrapper layer. All start one pixel inside the panel and therefore coincide with the inner border row.
 
-We have not yet identified the exact producer of the wrapper's `#131c2b` surface fill. Do not claim that it is a theme constant, a panel internal child box, or a CSS image effect. Fix-route choice remains deferred.
+The remaining design question is no longer color attribution: it is how to keep the panel background/border painted beneath mapped transparent XEmbed children. Allocation correction, visual clipping, or a panel-level rendering change remain deferred pending explicit approval.
 
 ## Deliberately not implemented
 
