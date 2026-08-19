@@ -455,6 +455,8 @@
       # GTK adds a 2px physical frame here; calibrated against fresh VM geometry.
       panelSize = height - outline;
       centerY = top + height / 2;
+      edgeGap = 12;
+      islandGap = 12;
       outlineColor = "#b75681";
       fill = "#0e1624";
       # One percent is the minimum; XFCE expands each panel to plugin requisition.
@@ -504,6 +506,72 @@
         "-Djayatana=disabled"
         "-Dappmenu-gtk-module:gtk=3"
       ];
+    };
+    referenceGtkTheme = pkgs.stdenvNoCC.mkDerivation {
+      pname = "mpontus-reference-gtk-theme";
+      version = "1";
+      dontUnpack = true;
+      installPhase = ''
+        theme=$out/share/themes/Mpontus-Reference
+        mkdir -p "$theme/gtk-3.0"
+        cat > "$theme/index.theme" <<'EOF'
+        [Desktop Entry]
+        Type=X-GNOME-Metatheme
+        Name=Mpontus Reference
+        Comment=VM reference palette based on Adwaita Dark
+        [X-GNOME-Metatheme]
+        GtkTheme=Mpontus-Reference
+        MetacityTheme=Adwaita
+        IconTheme=Adwaita
+        CursorTheme=Adwaita
+        ButtonLayout=menu:minimize,maximize,close
+        EOF
+        cat > "$theme/gtk-3.0/gtk.css" <<'EOF'
+        @import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+        @define-color theme_bg_color #0e1624;
+        @define-color theme_base_color #131c2b;
+        @define-color theme_fg_color #f4effa;
+        @define-color theme_text_color #f4effa;
+        @define-color theme_selected_bg_color #b75681;
+        @define-color theme_selected_fg_color #ffffff;
+        @define-color borders #26344f;
+        * {
+          color: @theme_fg_color;
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 11px;
+        }
+        window, .background, menu, popover,
+        #XfcePanelWindow, #XfcePanelWindowWrapper, #sn-button-box,
+        .-vala-panel-appmenu-core, menubar.-vala-panel-appmenu-private {
+          background-color: @theme_bg_color;
+          background-image: none;
+          color: @theme_fg_color;
+        }
+        button, menuitem {
+          color: @theme_fg_color;
+        }
+        button:hover, menuitem:hover {
+          color: @theme_selected_fg_color;
+        }
+        entry, textview text, treeview.view {
+          background-color: @theme_base_color;
+          color: @theme_text_color;
+        }
+        *:selected {
+          background-color: @theme_selected_bg_color;
+          color: @theme_selected_fg_color;
+        }
+        tooltip, tooltip.background {
+          background-color: @theme_bg_color;
+          color: @theme_fg_color;
+          border: 2px solid @theme_selected_bg_color;
+          border-radius: 9px;
+          box-shadow: none;
+          padding: 4px 7px;
+        }
+        EOF
+        runHook postInstall
+      '';
     };
     xfceIslandInset = pkgs.writeShellApplication {
       name = "xfce-island-inset";
@@ -749,7 +817,9 @@
       enableContribAndExtras = true;
       extraPackages = hp: [ hp.xmonad hp.xmonad-contrib hp.xmonad-extras ];
       config = ''
-        import Graphics.X11.Xlib (getGeometry, moveWindow, setWindowBorder, setWindowBorderWidth)
+        import Control.Monad (when)
+        import Data.Monoid (All (..))
+        import Graphics.X11.Xlib (moveWindow, setWindowBorder, setWindowBorderWidth)
         import XMonad
         import XMonad.Config.Xfce
         import XMonad.Hooks.EwmhDesktops
@@ -764,13 +834,38 @@
         nativePanelBorder = do
           window <- ask
           liftX $ withDisplay $ \display -> io $ do
-            (_, x, y, _, _, _, _) <- getGeometry display window
             setWindowBorder display window 0xffb75681
             setWindowBorderWidth display window ${toString xfceIslands.outline}
-            moveWindow display window
-              (x - fromIntegral ${toString xfceIslands.outline})
-              (y - fromIntegral ${toString xfceIslands.outline})
           idHook
+        anchorPanels :: Event -> X All
+        anchorPanels ConfigureEvent
+          { ev_window = window
+          , ev_x = x
+          , ev_y = y
+          , ev_width = width
+          , ev_height = height
+          } = do
+            panelClass <- runQuery className window
+            when (panelClass == "Xfce4-panel" && height == ${toString xfceIslands.height}) $
+              withDisplay $ \display -> io $ do
+                let border = ${toString xfceIslands.outline}
+                    outerWidth = width + 2 * border
+                    center = x + width `div` 2
+                    edge = ${toString xfceIslands.edgeGap}
+                    gap = ${toString xfceIslands.islandGap}
+                    screenWidth = ${toString xfceIslands.viewportWidth}
+                    powerOuterWidth = 40
+                    powerLeft = screenWidth - edge - powerOuterWidth
+                    targetX
+                      | width < 60 = screenWidth - edge - outerWidth
+                      | center < 350 = edge
+                      | center < 650 = (screenWidth - outerWidth) `div` 2
+                      | otherwise = powerLeft - gap - outerWidth
+                    targetY = ${toString xfceIslands.top}
+                when (x /= targetX || y /= targetY) $
+                  moveWindow display window (fromIntegral targetX) (fromIntegral targetY)
+            pure (All True)
+        anchorPanels _ = pure (All True)
         main :: IO ()
         main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
           { terminal = "${pkgs.kitty}/bin/kitty"
@@ -779,6 +874,7 @@
           , normalBorderColor = "${xfceIslands.outlineColor}"
           , focusedBorderColor = "${xfceIslands.outlineColor}"
           , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
+          , handleEventHook = anchorPanels <+> handleEventHook xfceConfig
           , manageHook =
               ((className =? "Xfce4-panel") --> nativePanelBorder)
               <+> ((className =? "Wrapper-2.0" <&&>
@@ -1002,6 +1098,7 @@
     };
     environment.systemPackages = with pkgs; [
       appmenuXfce
+      referenceGtkTheme
       xdotool
       xorg.xwininfo
       xorg.xprop
@@ -1087,19 +1184,15 @@
         <?xml version="1.0" encoding="UTF-8"?>
         <channel name="xsettings" version="1.0">
           <property name="Net" type="empty">
-            <property name="ThemeName" type="string" value="Adwaita-dark"/>
+            <property name="ThemeName" type="string" value="Mpontus-Reference"/>
           </property>
         </channel>
       '';
       "gtk-3.0/gtk.css".text = ''
         #XfcePanelWindow {
-          background: ${xfceIslands.fill};
           border: 0;
           border-radius: ${toString xfceIslands.radius}px;
           box-shadow: none;
-          color: #f4effa;
-          font-family: "JetBrainsMono Nerd Font";
-          font-size: 11px;
           margin: 0;
           padding: 0;
         }
@@ -1107,34 +1200,9 @@
           padding-left: 16px;
           padding-right: 16px;
         }
-        /* External GtkPlug wrappers have ARGB visuals. Keep every wrapper pixel
-           transparent so parent panel chrome remains visible and clickable. */
-        #XfcePanelWindowWrapper,
-        #XfcePanelWindowWrapper *,
-        #sn-button-box,
-        #sn-button-box *,
-        .-vala-panel-appmenu-core,
-        .-vala-panel-appmenu-core *,
-        menubar.-vala-panel-appmenu-private,
-        menubar.-vala-panel-appmenu-private * {
-          background: transparent;
-          background-image: none;
-          border: 0;
-          border-radius: 0;
-          box-shadow: none;
-        }
-        #XfcePanelWindowWrapper {
-          color: #f4effa;
-          font-family: "JetBrainsMono Nerd Font";
-          font-size: 11px;
-        }
         #whiskermenu-button, #sn-button, #pulseaudio-button,
         #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
-          color: #f4effa;
           padding: 2px 4px;
-        }
-        #whiskermenu-button {
-          padding-left: 16px;
         }
         #sn-button {
           padding-left: 16px;
@@ -1152,61 +1220,10 @@
           -gtk-icon-transform: scale(0.67);
         }
         .-vala-panel-appmenu-private > menuitem {
-          font-size: 10px;
           padding: 2px 3px;
         }
-        .-vala-panel-appmenu-private > menuitem:last-child {
-          padding-right: 16px;
-        }
-        #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
-        #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
-        #actions-button:hover, .-vala-panel-appmenu-private > menuitem:hover {
-          color: #ffffff;
-        }
-        .whiskermenu,
-        .whiskermenu frame,
-        .whiskermenu box,
-        .whiskermenu scrolledwindow,
-        .whiskermenu viewport,
-        .whiskermenu treeview,
-        .whiskermenu treeview.view {
-          background-color: #0e1826;
-          background-image: none;
-          color: #f4effa;
-          border-color: #26344f;
-        }
-        .whiskermenu {
-          border: 1px solid #f05a9d;
-          border-radius: 7px;
-          font-family: "JetBrainsMono Nerd Font";
-          font-size: 10px;
-        }
-        .whiskermenu entry {
-          background-color: #131c2b;
-          color: #f4effa;
-          border: 1px solid #8b5cf6;
-          border-radius: 5px;
-          box-shadow: none;
-        }
-        .whiskermenu button {
-          background-color: transparent;
-          background-image: none;
-          color: #f4effa;
-          border: 0;
-          box-shadow: none;
-        }
-        .whiskermenu button:hover,
-        .whiskermenu treeview:selected {
-          background-color: #6d28d9;
-          color: #ffffff;
-        }
-        tooltip, tooltip.background {
-          background-color: #0e1624;
-          color: #f4effa;
-          border: 2px solid #b75681;
-          border-radius: 9px;
-          box-shadow: none;
-          padding: 4px 7px;
+        menubar.-vala-panel-appmenu-private {
+          padding-right: 8px;
         }
       '';
       "kitty/kitty.conf".text = ''
