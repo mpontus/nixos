@@ -4,7 +4,7 @@
 
 Render a continuous, rounded two-pixel `#b75681` outline around each XFCE top-panel island while preserving real XFCE widgets, XEmbed plugins, global menus, tray icons, and click targets.
 
-The active configuration repairs the overlap with a CSS-only wrapper rule. It keeps native geometry, XEmbed windows, and Picom clipping unchanged.
+The active configuration uses a native two-pixel X11 panel border applied by XMonad. The border sits outside each panel client area, so XEmbed children cannot overlap it; Picom clips the complete native frame to the configured radius.
 
 ## Proven window structure
 
@@ -132,27 +132,17 @@ The CSS-reach probe changed the wrapper root `background-color` to `#00ff00`; ex
 
 This GTK3 build logged parse errors for attempted declarations containing `!important`, including `Junk at end of value for background`. No persistent configuration uses it. GTK's CSS overview documents selectors, `rgba`, and `transparent`, but does not include `!important` in its declaration grammar: https://docs.gtk.org/gtk3/css-overview.html.
 
-## Attribution and accepted CSS repair
+## Attribution and accepted native-border repair
 
-The dark right-island regions are root exposure, not paint from a socket or wrapper. In a fully mapped synthetic blank-content state, changing the root background to `#00ff00` turned both status and power overlap samples green. Changing panel body/border to magenta/cyan left those same samples at root `#131c2b`. Raw XPixmap samples for each status/power socket and wrapper were `0x00000000` ARGB; the panel's outer border sample was opaque rose. A wrapper-root `#ff8800` sentinel then turned both overlap samples orange.
+The dark right-island regions are root exposure, not paint from a socket or wrapper. In a fully mapped synthetic blank-content state, changing the root background to `#00ff00` turned both status and power overlap samples green. Changing panel body/border to magenta/cyan left those same samples at root `#131c2b`. Raw XPixmap samples for each status/power socket and wrapper were `0x00000000` ARGB; a wrapper-root `#ff8800` sentinel then turned both overlap samples orange.
 
-The accepted minimal repair gives the wrapper root the same body color plus only horizontal inner-border pixels:
+GTK `box-shadow` and `outline` probes could not create an outside outline: X clipped both at the panel drawable bounds. A native X11 border succeeded. XMonad now applies `border_width=2` and ARGB pixel `0xffb75681` when each `Xfce4-panel` window is managed, then offsets the outer frame by two pixels. The GTK panel client stays 36 pixels high and contains no border; native children therefore cannot cover the outline. Picom rounds the complete client-plus-border frame.
 
-```css
-#XfcePanelWindowWrapper {
-  background-color: #0e1624;
-  border-top: 1px solid #b75681;
-  border-right: 0;
-  border-bottom: 1px solid #b75681;
-  border-left: 0;
-}
-```
-
-It does not alter geometry or hide native children. In the populated VM, appmenu and right icons render normally; clicking `File` opens the native terminal menu. In synthetic mapped blank-content state, the same rule preserves rose at left/status/power inner rows (`y=24` and `y=57`) with no desktop-colored overlap. GTK logged no parser error. Visual evidence: `qemu-xfce-csscandidate-20260819-194603.png`, `qemu-xfce-csscandidate-click-20260819-194628.png`, `qemu-xfce-csscandidate-blank-20260819-194935.png`, `qemu-xfce-finalcandidate-menu-20260819-195239.png`, and `qemu-xfce-finalcandidate-power-hover-20260819-195241.png`.
+All panels are content-fit (`length=1`, `length-adjust=true`). Balanced spacing uses 16-pixel outer-edge padding, compact internal status spacing, and 0.67 icon transforms (approximately 16 rendered pixels). After `xfce4-panel -r`, all four visible panel windows retained `Border width: 2`; appmenu click and power tooltip still worked. Evidence: `qemu-xfce-nativeborder-corrected-20260819-200933.png`, `qemu-xfce-balanced-20260819-203500.png`, `qemu-xfce-balanced-restart-20260819-203544.png`, `qemu-xfce-balanced-menu-20260819-203617.png`, and `qemu-xfce-balanced-power-hover-20260819-203619.png`.
 
 ## Deliberately not implemented
 
-No XFCE/Picom source patch, XShape/helper, overlay painter, GTK module, geometry change, or pre-rendered asset was added. Those escape routes remain unnecessary unless this CSS rule regresses in a future plugin/theme combination.
+No XFCE/Picom source patch, XShape/helper process, overlay painter, GTK module, or pre-rendered asset was added.
 
 ## Reproduction and validation
 

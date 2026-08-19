@@ -1044,6 +1044,7 @@ in {
     enableContribAndExtras = true;
     extraPackages = hp: [ hp.xmonad hp.xmonad-contrib hp.xmonad-extras ];
     config = ''
+      import Graphics.X11.Xlib (getGeometry, moveWindow, setWindowBorder, setWindowBorderWidth)
       import XMonad
       import XMonad.Config.Xfce
       import XMonad.Hooks.EwmhDesktops
@@ -1054,6 +1055,17 @@ in {
       import XMonad.Layout.Spacing
       import XMonad.Util.EZConfig
 
+      nativePanelBorder :: ManageHook
+      nativePanelBorder = do
+        window <- ask
+        liftX $ withDisplay $ \display -> io $ do
+          (_, x, y, _, _, _, _) <- getGeometry display window
+          setWindowBorder display window 0xffb75681
+          setWindowBorderWidth display window ${toString xfceIslands.outline}
+          moveWindow display window
+            (x - fromIntegral ${toString xfceIslands.outline})
+            (y - fromIntegral ${toString xfceIslands.outline})
+        idHook
       main :: IO ()
       main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
         { terminal = "${pkgs.kitty}/bin/kitty"
@@ -1063,8 +1075,9 @@ in {
         , focusedBorderColor = "${xfceIslands.outlineColor}"
         , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
         , manageHook =
-            (className =? "Wrapper-2.0" <&&>
-             isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_MENU") --> doIgnore
+            ((className =? "Xfce4-panel") --> nativePanelBorder)
+            <+> ((className =? "Wrapper-2.0" <&&>
+                  isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_MENU") --> doIgnore)
             <+> manageDocks <+> manageHook xfceConfig
         , startupHook = do
             startupHook xfceConfig
@@ -1376,7 +1389,7 @@ in {
     "gtk-3.0/gtk.css".text = ''
       #XfcePanelWindow {
         background: ${xfceIslands.fill};
-        border: ${toString xfceIslands.outline}px solid ${xfceIslands.outlineColor};
+        border: 0;
         border-radius: ${toString xfceIslands.radius}px;
         box-shadow: none;
         color: #f4effa;
@@ -1386,8 +1399,8 @@ in {
         padding: 0;
       }
       #clock-button {
-        padding-left: 22px;
-        padding-right: 22px;
+        padding-left: 16px;
+        padding-right: 16px;
       }
       /* External GtkPlug wrappers have ARGB visuals. Keep every wrapper pixel
          transparent so parent panel chrome remains visible and clickable. */
@@ -1410,23 +1423,35 @@ in {
         font-family: "JetBrainsMono Nerd Font";
         font-size: 11px;
       }
-      /* Native wrapper allocation covers parent inner border rows. Repaint
-         only its own body and horizontal inner-border pixels. */
-      #XfcePanelWindowWrapper {
-        background-color: #0e1624;
-        border-top: 1px solid #b75681;
-        border-right: 0;
-        border-bottom: 1px solid #b75681;
-        border-left: 0;
-      }
       #whiskermenu-button, #sn-button, #pulseaudio-button,
       #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
         color: #f4effa;
-        padding: 2px 6px;
+        padding: 2px 4px;
+      }
+      #whiskermenu-button {
+        padding-left: 16px;
+      }
+      #sn-button {
+        padding-left: 16px;
+      }
+      #xfce4-notification-plugin {
+        padding-right: 16px;
+      }
+      #actions-button {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      #whiskermenu-button image, #sn-button image, #pulseaudio-button image,
+      #xfce4-power-manager-plugin image, #xfce4-notification-plugin image,
+      #actions-button image {
+        -gtk-icon-transform: scale(0.67);
       }
       .-vala-panel-appmenu-private > menuitem {
         font-size: 10px;
         padding: 2px 3px;
+      }
+      .-vala-panel-appmenu-private > menuitem:last-child {
+        padding-right: 16px;
       }
       #whiskermenu-button:hover, #sn-button:hover, #pulseaudio-button:hover,
       #xfce4-power-manager-plugin:hover, #xfce4-notification-plugin:hover,
