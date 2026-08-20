@@ -286,6 +286,14 @@
     # programs.firefox.package = pkgs.unstable.firefox-unwrapped;
     programs.firefox.package = pkgs.firefox-beta.unwrapped;
     # programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
+    programs.tmux = {
+      enable = true;
+      prefix = "C-a";
+      extraConfig = ''
+        unbind C-b
+        bind C-a send-prefix
+      '';
+    };
     programs.bash = {
       enable = true
       ;

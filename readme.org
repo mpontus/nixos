@@ -1990,6 +1990,18 @@ monero-gui
 #+end_src
 
 ** Shell
+*** tmux
+#+begin_src nix :noweb-ref home-configuration
+  programs.tmux = {
+    enable = true;
+    prefix = "C-a";
+    extraConfig = ''
+      unbind C-b
+      bind C-a send-prefix
+    '';
+  };
+#+end_src
+
 *** bash
 #+begin_src nix :noweb-ref home-configuration
   programs.bash = {
