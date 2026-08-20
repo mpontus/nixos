@@ -4,14 +4,14 @@ let
   xfceIslands = rec {
     viewportWidth = 1920;
     outerGap = 8;
-    top = 2 * outerGap; # match spacingWithEdge's physical screen-edge gap
+    top = outerGap; # match windows' physical screen-edge gap
     height = 48; # outer island height, including the GTK outline
     radius = 12;
     outline = 2;
     # GTK adds a 2px physical frame here; calibrated against fresh VM geometry.
     panelSize = height - outline;
     centerY = top + height / 2;
-    edgeGap = 16;
+    edgeGap = outerGap;
     islandGap = 16;
     outlineColor = "#b75681";
     fill = "#0e1624";
@@ -21,8 +21,8 @@ let
     right = { lengthPercent = 1; centerX = viewportWidth - 200; };
     power = { lengthPercent = 1; centerX = viewportWidth - 30; };
     visibleWindowGap = 16;
-    # spacingWithEdge contributes outerGap twice to the terminal's top edge.
-    topGap = top + height + visibleWindowGap - 2 * outerGap;
+    # spacing contributes outerGap once to the terminal's top edge.
+    topGap = top + height + visibleWindowGap - outerGap;
   };
   appmenuXfce = pkgs.stdenv.mkDerivation {
     pname = "vala-panel-appmenu-xfce";
@@ -417,7 +417,7 @@ in {
         , borderWidth = ${toString xfceIslands.outline}
         , normalBorderColor = "${xfceIslands.outlineColor}"
         , focusedBorderColor = "${xfceIslands.outlineColor}"
-        , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacingWithEdge ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
+        , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacing ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
         , handleEventHook = anchorPanels <+> handleEventHook xfceConfig
         , manageHook =
             ((className =? "Xfce4-panel") --> nativePanelBorder)
