@@ -341,7 +341,7 @@ SVGEOF
 in {
   services.xserver.desktopManager.xfce = {
     enable = true;
-    noDesktop = true;
+    noDesktop = false;
     enableXfwm = false;
   };
 
