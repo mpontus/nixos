@@ -5,7 +5,7 @@ let
     viewportWidth = 1920;
     outerGap = 8;
     top = outerGap; # match windows' physical screen-edge gap
-    height = 48; # outer island height, including the GTK outline
+    height = 36; # outer island height, including the GTK outline
     radius = 12;
     outline = 2;
     # GTK adds a 2px physical frame here; calibrated against fresh VM geometry.
