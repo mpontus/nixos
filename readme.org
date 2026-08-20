@@ -753,7 +753,8 @@ let
   # Shared island geometry. XMonad resolves horizontal anchors from root width.
   xfceIslands = rec {
     viewportWidth = 1920;
-    top = 23;
+    outerGap = 6;
+    top = 2 * outerGap; # match spacingWithEdge's physical screen-edge gap
     height = 36; # outer island height, including the GTK outline
     radius = 9;
     outline = 2;
@@ -769,7 +770,6 @@ let
     center = { lengthPercent = 1; centerX = viewportWidth / 2; };
     right = { lengthPercent = 1; centerX = viewportWidth - 200; };
     power = { lengthPercent = 1; centerX = viewportWidth - 30; };
-    outerGap = 6;
     visibleWindowGap = 13;
     # spacingWithEdge contributes outerGap twice to the terminal's top edge.
     topGap = top + height + visibleWindowGap - 2 * outerGap;
