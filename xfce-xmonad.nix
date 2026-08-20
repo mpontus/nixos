@@ -362,6 +362,7 @@ in {
       import XMonad.Layout.Gaps
       import XMonad.Layout.Spacing
       import XMonad.Util.EZConfig
+      import XMonad.Util.NamedActions
 
       nativePanelBorder :: ManageHook
       nativePanelBorder = do
@@ -402,8 +403,14 @@ in {
                 moveWindow display window (fromIntegral targetX) (fromIntegral targetY)
           pure (All True)
       anchorPanels _ = pure (All True)
+      myKeys c = (subtitle "Custom Keys" :) $ mkNamedKeymap c
+        [ ("M-<Return>", addName "Open Kitty" $ spawn "${pkgs.kitty}/bin/kitty")
+        , ("M-d", addName "Open Whisker menu" $ spawn "xfce4-popup-whiskermenu")
+        , ("M-f", addName "Toggle focused-window fullscreen" $ spawn "${pkgs.wmctrl}/bin/wmctrl -r :ACTIVE: -b toggle,fullscreen")
+        , ("M-S-e", addName "Log out" $ spawn "xfce4-session-logout")
+        ]
       main :: IO ()
-      main = getDirectories >>= launch (ewmhFullscreen $ ewmh $ docks $ xfceConfig
+      main = getDirectories >>= launch (ewmhFullscreen $ ewmh $ docks $ addDescrKeys ((mod4Mask, xK_F1), xMessage) myKeys $ xfceConfig
         { terminal = "${pkgs.kitty}/bin/kitty"
         , modMask = mod4Mask
         , borderWidth = ${toString xfceIslands.outline}
@@ -423,12 +430,7 @@ in {
             spawn "nm-applet"
             spawn "xfce4-power-manager"
             setWMName "LG3D"
-        }
-        `additionalKeysP`
-        [ ("M-<Return>", spawn "${pkgs.kitty}/bin/kitty")
-        , ("M-d", spawn "xfce4-popup-whiskermenu")
-        , ("M-S-e", spawn "xfce4-session-logout")
-        ])
+        })
     '';
   };
 

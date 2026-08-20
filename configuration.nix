@@ -26,6 +26,7 @@
     gnomeExtensions.appindicator
     dmenu
     st
+    xmessage
     ly
     unstable.uv
     pkg-config libssh2 zlib
