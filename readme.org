@@ -733,16 +733,20 @@ dmenu
 st
 #+end_src
 
-** XFCE + i3 VM
+** XFCE + XMonad islands
 
-This VM-only variant keeps the installed system on GNOME while making =nixos-rebuild build-vm= boot straight into an Xorg XFCE session with i3 as the window manager.
+This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
 
-#+begin_src nix :noweb-ref system-configuration
-virtualisation.vmVariant = { lib, pkgs, ... }:
+#+begin_src nix :noweb-ref import-files
+./xfce-xmonad.nix
+#+end_src
+
+#+begin_src nix :tangle xfce-xmonad.nix :noweb-ref xfce-xmonad-module
+{ lib, pkgs, ... }:
 let
-  # VM-only 1024×768 island geometry. XFCE CSS and Picom consume this block.
+  # Shared island geometry. XMonad resolves horizontal anchors from root width.
   xfceIslands = rec {
-    viewportWidth = 1024;
+    viewportWidth = 1920;
     top = 23;
     height = 36; # outer island height, including the GTK outline
     radius = 9;
@@ -757,8 +761,8 @@ let
     # One percent is the minimum; XFCE expands each panel to plugin requisition.
     left = { lengthPercent = 1; centerX = 195; };
     center = { lengthPercent = 1; centerX = viewportWidth / 2; };
-    right = { lengthPercent = 1; centerX = 823; };
-    power = { lengthPercent = 1; centerX = 990; };
+    right = { lengthPercent = 1; centerX = viewportWidth - 200; };
+    power = { lengthPercent = 1; centerX = viewportWidth - 30; };
     outerGap = 6;
     visibleWindowGap = 13;
     # spacingWithEdge contributes outerGap twice to the terminal's top edge.
@@ -814,12 +818,6 @@ let
       Type=X-GNOME-Metatheme
       Name=Mpontus Reference
       Comment=VM reference palette based on Adwaita Dark
-      [X-GNOME-Metatheme]
-      GtkTheme=Mpontus-Reference
-      MetacityTheme=Adwaita
-      IconTheme=Adwaita
-      CursorTheme=Adwaita
-      ButtonLayout=menu:minimize,maximize,close
       EOF
       cat > "$theme/gtk-3.0/gtk.css" <<'EOF'
       @import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
@@ -829,24 +827,16 @@ let
       @define-color theme_text_color #f4effa;
       @define-color theme_selected_bg_color #b75681;
       @define-color theme_selected_fg_color #ffffff;
-      @define-color borders #26344f;
       * {
         color: @theme_fg_color;
         font-family: "JetBrainsMono Nerd Font";
         font-size: 11px;
       }
       window, .background, menu, popover,
-      #XfcePanelWindow, #XfcePanelWindowWrapper, #sn-button-box,
-      .-vala-panel-appmenu-core, menubar.-vala-panel-appmenu-private {
+      #XfcePanelWindow, #XfcePanelWindowWrapper {
         background-color: @theme_bg_color;
         background-image: none;
         color: @theme_fg_color;
-      }
-      button, menuitem {
-        color: @theme_fg_color;
-      }
-      button:hover, menuitem:hover {
-        color: @theme_selected_fg_color;
       }
       entry, textview text, treeview.view {
         background-color: @theme_base_color;
@@ -1093,14 +1083,6 @@ SVGEOF
     main = getDirectories >>= launch myConfig
   '';
 in {
-  virtualisation.diskSize = 8192;
-  # VM-only VirGL path: Picom GLX supplies real rounded corners.
-  virtualisation.qemu.options = [
-    "-vga none"
-    "-device virtio-vga-gl"
-    "-display gtk,gl=on"
-  ];
-
   services.xserver.desktopManager.xfce = {
     enable = true;
     noDesktop = true;
@@ -1114,7 +1096,7 @@ in {
     config = ''
       import Control.Monad (when)
       import Data.Monoid (All (..))
-      import Graphics.X11.Xlib (moveWindow, setWindowBorder, setWindowBorderWidth)
+      import Graphics.X11.Xlib (defaultRootWindow, getGeometry, moveWindow, setWindowBorder, setWindowBorderWidth)
       import XMonad
       import XMonad.Config.Xfce
       import XMonad.Hooks.EwmhDesktops
@@ -1143,21 +1125,24 @@ in {
           panelClass <- runQuery className window
           when (panelClass == "Xfce4-panel" && height == ${toString xfceIslands.height}) $
             withDisplay $ \display -> io $ do
+              (_, _, _, rootWidth, _, _, _) <- getGeometry display (defaultRootWindow display)
               let border = ${toString xfceIslands.outline}
-                  outerWidth = width + 2 * border
-                  center = x + width `div` 2
+                  width' = fromIntegral width :: Int
+                  x' = fromIntegral x :: Int
+                  outerWidth = width' + 2 * border
+                  center = x' + width' `div` 2
                   edge = ${toString xfceIslands.edgeGap}
                   gap = ${toString xfceIslands.islandGap}
-                  screenWidth = ${toString xfceIslands.viewportWidth}
+                  screenWidth = fromIntegral rootWidth :: Int
                   powerOuterWidth = 40
                   powerLeft = screenWidth - edge - powerOuterWidth
                   targetX
-                    | width < 60 = screenWidth - edge - outerWidth
-                    | center < 350 = edge
-                    | center < 650 = (screenWidth - outerWidth) `div` 2
+                    | width' < 60 = screenWidth - edge - outerWidth
+                    | center < screenWidth `div` 3 = edge
+                    | center < 2 * screenWidth `div` 3 = (screenWidth - outerWidth) `div` 2
                     | otherwise = powerLeft - gap - outerWidth
                   targetY = ${toString xfceIslands.top}
-              when (x /= targetX || y /= targetY) $
+              when (x' /= targetX || fromIntegral y /= targetY) $
                 moveWindow display window (fromIntegral targetX) (fromIntegral targetY)
           pure (All True)
       anchorPanels _ = pure (All True)
@@ -1190,10 +1175,6 @@ in {
         ]
     '';
   };
-
-  services.xserver.desktopManager.gnome.enable = lib.mkForce false;
-  services.xserver.displayManager.gdm.enable = lib.mkForce false;
-  services.xserver.displayManager.lightdm.enable = lib.mkForce true;
 
   environment.etc."polybar-xmonad/config.ini".text = ''
     [colors]
@@ -1394,6 +1375,7 @@ in {
   environment.systemPackages = with pkgs; [
     appmenuXfce
     referenceGtkTheme
+    papirus-icon-theme
     xdotool
     xorg.xwininfo
     xorg.xprop
@@ -1480,6 +1462,7 @@ in {
       <channel name="xsettings" version="1.0">
         <property name="Net" type="empty">
           <property name="ThemeName" type="string" value="Mpontus-Reference"/>
+          <property name="IconThemeName" type="string" value="Papirus-Dark"/>
         </property>
       </channel>
     '';
@@ -1499,20 +1482,9 @@ in {
       #xfce4-power-manager-plugin, #xfce4-notification-plugin, #actions-button {
         padding: 2px 4px;
       }
-      #sn-button {
-        padding-left: 16px;
-      }
-      #xfce4-notification-plugin {
-        padding-right: 16px;
-      }
       #actions-button {
         padding-left: 16px;
         padding-right: 16px;
-      }
-      #whiskermenu-button image, #sn-button image, #pulseaudio-button image,
-      #xfce4-power-manager-plugin image, #xfce4-notification-plugin image,
-      #actions-button image {
-        -gtk-icon-transform: scale(0.67);
       }
       .-vala-panel-appmenu-private > menuitem {
         padding: 2px 3px;
@@ -1543,25 +1515,7 @@ in {
   services.blueman.enable = true;
 
   services.displayManager.defaultSession = lib.mkForce "xfce+xmonad";
-  services.xserver.displayManager.autoLogin.enable = lib.mkForce true;
-  services.xserver.displayManager.autoLogin.user = "mpontus";
-  services.displayManager.autoLogin.enable = lib.mkForce true;
-  services.displayManager.autoLogin.user = "mpontus";
-
-  users.mutableUsers = lib.mkForce false;
-  users.users.mpontus = {
-    hashedPassword = lib.mkForce "";
-    # VM-only key for SSH-driven UI iteration through loopback forwarding.
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzyhZA4hmSFf9vhRM4QBEgVuTKkZXCQw0VMByKnGLtc m.pontus@gmail.com"
-    ];
-  };
-  security.pam.services.login.allowNullPassword = true;
-  security.pam.services.lightdm.allowNullPassword = true;
-  security.pam.services.i3lock.allowNullPassword = true;
-  security.pam.services.xfce4-screensaver.allowNullPassword = true;
-  services.openssh.settings.PermitEmptyPasswords = lib.mkForce true;
-};
+}
 #+end_src
 
 ** ly
