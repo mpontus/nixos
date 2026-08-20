@@ -403,7 +403,7 @@ in {
           pure (All True)
       anchorPanels _ = pure (All True)
       main :: IO ()
-      main = xmonad $ ewmhFullscreen $ ewmh $ docks $ xfceConfig
+      main = getDirectories >>= launch (ewmhFullscreen $ ewmh $ docks $ xfceConfig
         { terminal = "${pkgs.kitty}/bin/kitty"
         , modMask = mod4Mask
         , borderWidth = ${toString xfceIslands.outline}
@@ -428,7 +428,7 @@ in {
         [ ("M-<Return>", spawn "${pkgs.kitty}/bin/kitty")
         , ("M-d", spawn "xfce4-popup-whiskermenu")
         , ("M-S-e", spawn "xfce4-session-logout")
-        ]
+        ])
     '';
   };
 

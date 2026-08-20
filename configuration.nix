@@ -318,6 +318,7 @@
     home.stateVersion = "18.09";
   };
   home-manager.useGlobalPkgs = true;
+  home-manager.backupFileExtension = "hm-backup";
   home-manager.users.er = { pkgs, ... }: {
     imports = [
       
