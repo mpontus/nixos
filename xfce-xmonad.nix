@@ -357,12 +357,13 @@ in {
       import XMonad.Config.Xfce
       import XMonad.Hooks.EwmhDesktops
       import XMonad.Hooks.ManageDocks
-      import XMonad.Hooks.ManageHelpers (isInProperty)
+      import XMonad.Hooks.ManageHelpers (doFocus, isInProperty)
       import XMonad.Hooks.SetWMName
       import XMonad.Layout.Gaps
       import XMonad.Layout.Spacing
       import XMonad.Util.EZConfig
       import XMonad.Util.NamedActions
+      import XMonad.Util.Ungrab
 
       nativePanelBorder :: ManageHook
       nativePanelBorder = do
@@ -405,7 +406,7 @@ in {
       anchorPanels _ = pure (All True)
       myKeys c = (subtitle "Custom Keys" :) $ mkNamedKeymap c
         [ ("M-<Return>", addName "Open Kitty" $ spawn "${pkgs.kitty}/bin/kitty")
-        , ("M-d", addName "Open Whisker menu" $ spawn "xfce4-popup-whiskermenu")
+        , ("M-d", addName "Open Whisker menu" $ unGrab >> spawn "xfce4-popup-whiskermenu")
         , ("M-f", addName "Toggle focused-window fullscreen" $ spawn "${pkgs.wmctrl}/bin/wmctrl -r :ACTIVE: -b toggle,fullscreen")
         , ("M-S-e", addName "Log out" $ spawn "xfce4-session-logout")
         ]
@@ -421,7 +422,7 @@ in {
         , manageHook =
             ((className =? "Xfce4-panel") --> nativePanelBorder)
             <+> ((className =? "Wrapper-2.0" <&&>
-                  isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_MENU") --> doIgnore)
+                  isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_MENU") --> (doFloat <+> doFocus))
             <+> manageDocks <+> manageHook xfceConfig
         , startupHook = do
             startupHook xfceConfig
