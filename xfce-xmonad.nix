@@ -585,6 +585,7 @@ in {
   };
 
   home-manager.users.mpontus.xdg.configFile = {
+    "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".force = true;
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
       <channel name="xfce4-panel" version="1.0">
@@ -640,6 +641,7 @@ in {
         </property>
       </channel>
     '';
+    "xfce4/xfconf/xfce-perchannel-xml/xsettings.xml".force = true;
     "xfce4/xfconf/xfce-perchannel-xml/xsettings.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
       <channel name="xsettings" version="1.0">
