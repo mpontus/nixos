@@ -113,7 +113,7 @@
     require-sigs = true;
     substituters = [ "https://cache.nixos.org/" ];
   };
-  home-manager.users.mpontus = { pkgs, ... }: {
+  home-manager.users.mpontus = { config, pkgs, ... }: {
     imports = [
       
     ];
@@ -273,6 +273,8 @@
       lib.attrsets.listToAttrs
     ]
     );
+    home.file.".config/xmonad/xmonad.hs".source =
+      config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
     programs.emacs = {
       enable = true;
       # package = pkgs.emacs.withPackages (epkgs: with epkgs; [
@@ -454,6 +456,10 @@
   services.xserver.displayManager.autoLogin.enable = false;
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.xserver.windowManager.dwm.enable = true;
+  services.xserver.windowManager.xmonad = {
+    enable = true;
+    enableContribAndExtras = true;
+  };
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
     General = {

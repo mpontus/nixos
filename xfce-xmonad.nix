@@ -341,7 +341,7 @@ SVGEOF
 in {
   services.xserver.desktopManager.xfce = {
     enable = true;
-    noDesktop = true;
+    noDesktop = false;
     enableXfwm = false;
   };
 
@@ -349,90 +349,7 @@ in {
     enable = true;
     enableContribAndExtras = true;
     extraPackages = hp: [ hp.xmonad hp.xmonad-contrib hp.xmonad-extras ];
-    config = ''
-      import Control.Monad (when)
-      import Data.Monoid (All (..))
-      import Graphics.X11.Xlib (defaultRootWindow, getGeometry, moveWindow, setWindowBorder, setWindowBorderWidth)
-      import XMonad
-      import XMonad.Config.Xfce
-      import XMonad.Hooks.EwmhDesktops
-      import XMonad.Hooks.ManageDocks
-      import XMonad.Hooks.ManageHelpers (doFocus, isInProperty)
-      import XMonad.Hooks.SetWMName
-      import XMonad.Layout.Gaps
-      import XMonad.Layout.Spacing
-      import XMonad.Util.EZConfig
-      import XMonad.Util.NamedActions
-      import XMonad.Util.Ungrab
-
-      nativePanelBorder :: ManageHook
-      nativePanelBorder = do
-        window <- ask
-        liftX $ withDisplay $ \display -> io $ do
-          setWindowBorder display window 0xffb75681
-          setWindowBorderWidth display window ${toString xfceIslands.outline}
-        idHook
-      anchorPanels :: Event -> X All
-      anchorPanels ConfigureEvent
-        { ev_window = window
-        , ev_x = x
-        , ev_y = y
-        , ev_width = width
-        , ev_height = height
-        } = do
-          panelClass <- runQuery className window
-          when (panelClass == "Xfce4-panel" && height == ${toString xfceIslands.height}) $
-            withDisplay $ \display -> io $ do
-              (_, _, _, rootWidth, _, _, _) <- getGeometry display (defaultRootWindow display)
-              let border = ${toString xfceIslands.outline}
-                  width' = fromIntegral width :: Int
-                  x' = fromIntegral x :: Int
-                  outerWidth = width' + 2 * border
-                  center = x' + width' `div` 2
-                  edge = ${toString xfceIslands.edgeGap}
-                  gap = ${toString xfceIslands.islandGap}
-                  screenWidth = fromIntegral rootWidth :: Int
-                  powerOuterWidth = 40
-                  powerLeft = screenWidth - edge - powerOuterWidth
-                  targetX
-                    | width' < 60 = screenWidth - edge - outerWidth
-                    | center < screenWidth `div` 3 = edge
-                    | center < 2 * screenWidth `div` 3 = (screenWidth - outerWidth) `div` 2
-                    | otherwise = powerLeft - gap - outerWidth
-                  targetY = ${toString xfceIslands.top}
-              when (x' /= targetX || fromIntegral y /= targetY) $
-                moveWindow display window (fromIntegral targetX) (fromIntegral targetY)
-          pure (All True)
-      anchorPanels _ = pure (All True)
-      myKeys c = (subtitle "Custom Keys" :) $ mkNamedKeymap c
-        [ ("M-<Return>", addName "Open Kitty" $ spawn "${pkgs.kitty}/bin/kitty")
-        , ("M-d", addName "Open Whisker menu" $ unGrab >> spawn "xfce4-popup-whiskermenu")
-        , ("M-f", addName "Toggle focused-window fullscreen" $ spawn "${pkgs.wmctrl}/bin/wmctrl -r :ACTIVE: -b toggle,fullscreen")
-        , ("M-S-e", addName "Log out" $ spawn "xfce4-session-logout")
-        ]
-      main :: IO ()
-      main = getDirectories >>= launch (ewmhFullscreen $ ewmh $ docks $ addDescrKeys ((mod4Mask, xK_F1), xMessage) myKeys $ xfceConfig
-        { terminal = "${pkgs.kitty}/bin/kitty"
-        , modMask = mod4Mask
-        , borderWidth = ${toString xfceIslands.outline}
-        , normalBorderColor = "${xfceIslands.outlineColor}"
-        , focusedBorderColor = "${xfceIslands.outlineColor}"
-        , layoutHook = avoidStruts $ gaps [(U, ${toString xfceIslands.topGap})] $ spacing ${toString xfceIslands.outerGap} $ layoutHook xfceConfig
-        , handleEventHook = anchorPanels <+> handleEventHook xfceConfig
-        , manageHook =
-            ((className =? "Xfce4-panel") --> nativePanelBorder)
-            <+> ((className =? "Wrapper-2.0" <&&>
-                  isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_MENU") --> (doFloat <+> doFocus))
-            <+> manageDocks <+> manageHook xfceConfig
-        , startupHook = do
-            startupHook xfceConfig
-            spawn "hsetroot -solid '#131c2b'"
-            spawn "snixembed"
-            spawn "nm-applet"
-            spawn "xfce4-power-manager"
-            setWMName "LG3D"
-        })
-    '';
+    config = null;
   };
 
   environment.etc."polybar-xmonad/config.ini".text = ''
