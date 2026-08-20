@@ -6,7 +6,7 @@ let
     outerGap = 8;
     top = 2 * outerGap; # match spacingWithEdge's physical screen-edge gap
     height = 48; # outer island height, including the GTK outline
-    radius = 16;
+    radius = 12;
     outline = 2;
     # GTK adds a 2px physical frame here; calibrated against fresh VM geometry.
     panelSize = height - outline;
