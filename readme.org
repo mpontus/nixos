@@ -1409,6 +1409,13 @@ in {
     (callPackage ./pkgs/toptracker { })
   ];
 
+  home-manager.users.mpontus.xsession = {
+    enable = true;
+    initExtra = ''
+      setxkbmap -option "" -option terminate:ctrl_alt_bksp -option ctrl:nocaps
+    '';
+  };
+
   home-manager.users.mpontus.xdg.configFile = {
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
