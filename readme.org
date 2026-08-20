@@ -575,7 +575,7 @@ environment.variables = {
 
 #+begin_src nix :noweb-ref system-configuration
   services.xserver.enable = true;
-  services.xserver.xkb.options = "ctrl:nocaps";
+  services.xserver.xkb.options = "ctrl:swapcaps";
 #+end_src
 
 *** Attempt to fix window flickering
@@ -1412,7 +1412,7 @@ in {
   home-manager.users.mpontus.xsession = {
     enable = true;
     initExtra = ''
-      setxkbmap -option "" -option terminate:ctrl_alt_bksp -option ctrl:nocaps
+      setxkbmap -option "" -option terminate:ctrl_alt_bksp -option ctrl:swapcaps
     '';
   };
 

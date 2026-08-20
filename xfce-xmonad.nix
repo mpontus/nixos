@@ -662,7 +662,7 @@ in {
   home-manager.users.mpontus.xsession = {
     enable = true;
     initExtra = ''
-      setxkbmap -option "" -option terminate:ctrl_alt_bksp -option ctrl:nocaps
+      setxkbmap -option "" -option terminate:ctrl_alt_bksp -option ctrl:swapcaps
     '';
   };
 
