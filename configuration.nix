@@ -426,6 +426,7 @@
     ]);
   };
   services.xserver.enable = true;
+  services.xserver.xkb.options = "ctrl:nocaps";
   services.xserver.config = ''
   Section "Device"
   

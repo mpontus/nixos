@@ -575,6 +575,7 @@ environment.variables = {
 
 #+begin_src nix :noweb-ref system-configuration
   services.xserver.enable = true;
+  services.xserver.xkb.options = "ctrl:nocaps";
 #+end_src
 
 *** Attempt to fix window flickering
