@@ -809,17 +809,15 @@ XMonad surfaces config compile errors through ~xmessage~. GDM merges ~~/.Xresour
 #+begin_src nix :tangle xfce-xmonad.nix :noweb-ref xfce-xmonad-module
 { lib, pkgs, ... }:
 let
-  # Tested XFCE panel geometry.
-  xfceIslands = rec {
-    viewportWidth = 1920;
-    radius = 12;
-    panelSize = 34;
-    centerY = 26;
-    # One percent is the minimum; XFCE expands each panel to plugin requisition.
-    left = { lengthPercent = 1; centerX = 195; };
-    center = { lengthPercent = 1; centerX = viewportWidth / 2; };
-    right = { lengthPercent = 1; centerX = viewportWidth - 200; };
-    power = { lengthPercent = 1; centerX = viewportWidth - 30; };
+  # Tested XFCE panel geometry. Panels share identical shape; only anchors differ.
+  panelY = 26;
+  panelSize = 34;
+  panelRadius = 12;
+  panelX = {
+    left = 195;
+    center = 960;
+    right = 1720;
+    power = 1890;
   };
   appmenuXfce = pkgs.stdenv.mkDerivation {
     pname = "vala-panel-appmenu-xfce";
@@ -932,8 +930,8 @@ in {
     fade = false;
     shadow = false;
     settings = {
-      corner-radius = xfceIslands.radius;
-      corner-radius-rules = [ "${toString xfceIslands.radius}:window_type = 'dock'" ];
+      corner-radius = panelRadius;
+      corner-radius-rules = [ "${toString panelRadius}:window_type = 'dock'" ];
       use-damage = false;
       rounded-corners-exclude = [ "window_type = 'desktop'" ];
     };
@@ -957,7 +955,6 @@ in {
     pavucontrol
     material-icons
     font-awesome
-    xfce.xfce4-terminal
   ];
 
   home-manager.users.mpontus.xsession = {
@@ -977,26 +974,26 @@ in {
           <value type="int" value="1"/><value type="int" value="2"/><value type="int" value="3"/><value type="int" value="4"/>
           <property name="dark-mode" type="bool" value="true"/>
           <property name="panel-1" type="empty">
-            <property name="position" type="string" value="p=0;x=${toString xfceIslands.left.centerX};y=${toString xfceIslands.centerY}"/>
-            <property name="length" type="double" value="${toString xfceIslands.left.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+            <property name="position" type="string" value="p=0;x=${toString panelX.left};y=${toString panelY}"/>
+            <property name="length" type="double" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString panelSize}"/>
             <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
             <property name="plugin-ids" type="array"><value type="int" value="1"/><value type="int" value="7"/></property>
           </property>
           <property name="panel-2" type="empty">
-            <property name="position" type="string" value="p=0;x=${toString xfceIslands.center.centerX};y=${toString xfceIslands.centerY}"/>
-            <property name="length" type="double" value="${toString xfceIslands.center.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+            <property name="position" type="string" value="p=0;x=${toString panelX.center};y=${toString panelY}"/>
+            <property name="length" type="double" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString panelSize}"/>
             <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
             <property name="plugin-ids" type="array"><value type="int" value="12"/></property>
           </property>
           <property name="panel-3" type="empty">
-            <property name="position" type="string" value="p=0;x=${toString xfceIslands.right.centerX};y=${toString xfceIslands.centerY}"/>
-            <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+            <property name="position" type="string" value="p=0;x=${toString panelX.right};y=${toString panelY}"/>
+            <property name="length" type="double" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString panelSize}"/>
             <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
             <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/></property>
           </property>
           <property name="panel-4" type="empty">
-            <property name="position" type="string" value="p=0;x=${toString xfceIslands.power.centerX};y=${toString xfceIslands.centerY}"/>
-            <property name="length" type="double" value="${toString xfceIslands.power.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
+            <property name="position" type="string" value="p=0;x=${toString panelX.power};y=${toString panelY}"/>
+            <property name="length" type="double" value="1"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString panelSize}"/>
             <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
             <property name="plugin-ids" type="array"><value type="int" value="14"/></property>
           </property>
@@ -1046,7 +1043,7 @@ in {
     "gtk-3.0/gtk.css".text = ''
       #XfcePanelWindow {
         border: 0;
-        border-radius: ${toString xfceIslands.radius}px;
+        border-radius: ${toString panelRadius}px;
         box-shadow: none;
         margin: 0;
         padding: 0;
