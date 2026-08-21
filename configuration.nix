@@ -120,6 +120,15 @@
   
     home.packages = with pkgs; [
       dconf-editor
+      adapta-backgrounds
+      budgie-backgrounds
+      cosmic-wallpapers
+      gnome-backgrounds
+      kdePackages.plasma-workspace-wallpapers
+      pantheon.elementary-wallpapers
+      pop-hp-wallpapers
+      pop-wallpapers
+      system76-wallpapers
       pavucontrol
       input-leap
       # latest.firefox-nightly-bin

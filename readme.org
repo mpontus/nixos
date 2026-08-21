@@ -741,6 +741,20 @@ st
 xmessage
 #+end_src
 
+*** Wallpapers
+
+#+begin_src nix :noweb-ref home-packages
+adapta-backgrounds
+budgie-backgrounds
+cosmic-wallpapers
+gnome-backgrounds
+kdePackages.plasma-workspace-wallpapers
+pantheon.elementary-wallpapers
+pop-hp-wallpapers
+pop-wallpapers
+system76-wallpapers
+#+end_src
+
 This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
 
 #+begin_src nix :noweb-ref import-files
