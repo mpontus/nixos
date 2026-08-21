@@ -743,46 +743,35 @@ xmessage
 
 *** Wallpapers
 
-#+begin_src nix :noweb-ref home-packages
-adapta-backgrounds
-budgie-backgrounds
-cosmic-wallpapers
-gnome-backgrounds
-kdePackages.plasma-workspace-wallpapers
-pantheon.elementary-wallpapers
-pop-hp-wallpapers
-pop-wallpapers
-system76-wallpapers
-#+end_src
-
-#+begin_src nix :noweb-ref home-configuration
-xdg.dataFile."backgrounds".source =
+#+begin_src nix :noweb-ref overlays
+(final: prev:
   let
     wallpapers = [
-      { prefix = "adapta"; package = pkgs.adapta-backgrounds; }
-      { prefix = "budgie"; package = pkgs.budgie-backgrounds; }
-      { prefix = "cosmic"; package = pkgs.cosmic-wallpapers; }
-      { prefix = "gnome"; package = pkgs.gnome-backgrounds; }
-      { prefix = "kde"; package = pkgs.kdePackages.plasma-workspace-wallpapers; }
-      { prefix = "elementary"; package = pkgs.pantheon.elementary-wallpapers; }
-      { prefix = "pop-hp"; package = pkgs.pop-hp-wallpapers; }
-      { prefix = "pop"; package = pkgs.pop-wallpapers; }
-      { prefix = "system76"; package = pkgs.system76-wallpapers; }
+      { prefix = "adapta"; package = prev.adapta-backgrounds; }
+      { prefix = "budgie"; package = prev.budgie-backgrounds; }
+      { prefix = "cosmic"; package = prev.cosmic-wallpapers; }
+      { prefix = "gnome"; package = prev.gnome-backgrounds; }
+      { prefix = "kde"; package = prev.kdePackages.plasma-workspace-wallpapers; }
+      { prefix = "elementary"; package = prev.pantheon.elementary-wallpapers; }
+      { prefix = "pop-hp"; package = prev.pop-hp-wallpapers; }
+      { prefix = "pop"; package = prev.pop-wallpapers; }
+      { prefix = "system76"; package = prev.system76-wallpapers; }
     ];
-    gallery = pkgs.runCommand "xfce-wallpapers" {
-      nativeBuildInputs = [ pkgs.coreutils pkgs.findutils ];
-    } ''
-      mkdir -p "$out/share/backgrounds/xfce"
-      ${lib.concatMapStringsSep "\n" ({ prefix, package }: ''
-        for directory in "${package}/share/backgrounds" "${package}/share/wallpapers"; do
-          [ -d "$directory" ] || continue
-          find "$directory" -type f \
-            \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
-            -exec sh -c 'directory=$1; shift; for image; do relative="''${image#"$directory"/}"; name=$(printf "%s" "$relative" | tr "/" "-"); ln -s "$image" "$out/share/backgrounds/xfce/${prefix}-$name"; done' sh "$directory" {} +
-        done
-      '') wallpapers}
-    '';
-  in "${gallery}/share/backgrounds";
+  in {
+    xfdesktop = prev.xfdesktop.overrideAttrs (old: {
+      postInstall = (old.postInstall or "") + ''
+        mkdir -p "$out/share/backgrounds/xfce"
+        ${final.lib.concatMapStringsSep "\n" ({ prefix, package }: ''
+          for directory in "${package}/share/backgrounds" "${package}/share/wallpapers"; do
+            [ -d "$directory" ] || continue
+            ${final.findutils}/bin/find "$directory" -type f \
+              \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+              -exec sh -c 'directory=$1; shift; for image; do relative="''${image#"$directory"/}"; name=$(${final.coreutils}/bin/printf "%s" "$relative" | ${final.coreutils}/bin/tr "/" "-"); ${final.coreutils}/bin/ln -s "$image" "$out/share/backgrounds/xfce/${prefix}-$name"; done' sh "$directory" {} +
+          done
+        '') wallpapers}
+      '';
+    });
+  })
 #+end_src
 
 This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
