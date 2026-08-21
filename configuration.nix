@@ -224,7 +224,7 @@
     } // (lib.trivial.pipe {
       "<Super>e" = {
         name = "Switch to Emacs";
-        command = "launch-or-raise -W Emacs emacs";
+        command = "launch-or-raise -W Emacsd emacsclient --create-frame";
       };
       "<Super>i" = {
         name = "Emacs Everyhere";
@@ -283,6 +283,13 @@
       # package = (pkgs.emacsGit.override {
       #   withXwidgets = true;
       # });
+    };
+    services.emacs = {
+      enable = true;
+      socketActivation.enable = true;
+      startWithUserSession = false;
+      client.enable = true;
+      defaultEditor = true;
     };
     programs.firefox.enable = true;
     # programs.firefox.package = pkgs.unstable.firefox-unwrapped;

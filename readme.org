@@ -1545,7 +1545,7 @@ input-leap
 #+begin_src nix :noweb-ref dconf-keymap
   "<Super>e" = {
     name = "Switch to Emacs";
-    command = "launch-or-raise -W Emacs emacs";
+    command = "launch-or-raise -W Emacsd emacsclient --create-frame";
   };
 #+end_src
 
@@ -1649,10 +1649,16 @@ vterm
 })
 #+end_src
 
-**** COMMENT Service
+**** Service
 
 #+begin_src nix :noweb-ref home-configuration
-services.emacs.enable = true;
+services.emacs = {
+  enable = true;
+  socketActivation.enable = true;
+  startWithUserSession = false;
+  client.enable = true;
+  defaultEditor = true;
+};
 #+end_src
 
 **** COMMENT Overlay
