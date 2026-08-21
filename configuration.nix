@@ -491,10 +491,6 @@
   services.xserver.displayManager.autoLogin.enable = false;
   services.xserver.displayManager.autoLogin.user = "mpontus";
   services.xserver.windowManager.dwm.enable = true;
-  services.xserver.windowManager.xmonad = {
-    enable = true;
-    enableContribAndExtras = true;
-  };
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
     General = {

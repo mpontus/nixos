@@ -776,6 +776,13 @@ xmessage
 
 This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
 
+*** User XMonad configuration
+
+#+begin_src nix :noweb-ref home-configuration
+  home.file.".config/xmonad/xmonad.hs".source =
+    config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
+#+end_src
+
 #+begin_src nix :noweb-ref import-files
 ./xfce-xmonad.nix
 #+end_src
@@ -783,29 +790,17 @@ This module keeps GNOME available as a GDM fallback while making the tested Xorg
 #+begin_src nix :tangle xfce-xmonad.nix :noweb-ref xfce-xmonad-module
 { lib, pkgs, ... }:
 let
-  # Shared island geometry. XMonad resolves horizontal anchors from root width.
+  # Tested XFCE panel geometry.
   xfceIslands = rec {
     viewportWidth = 1920;
-    outerGap = 8;
-    top = outerGap; # match windows' physical screen-edge gap
-    height = 36; # outer island height, including the GTK outline
     radius = 12;
-    outline = 2;
-    # GTK adds a 2px physical frame here; calibrated against fresh VM geometry.
-    panelSize = height - outline;
-    centerY = top + height / 2;
-    edgeGap = outerGap;
-    islandGap = 16;
-    outlineColor = "#b75681";
-    fill = "#0e1624";
+    panelSize = 34;
+    centerY = 26;
     # One percent is the minimum; XFCE expands each panel to plugin requisition.
     left = { lengthPercent = 1; centerX = 195; };
     center = { lengthPercent = 1; centerX = viewportWidth / 2; };
     right = { lengthPercent = 1; centerX = viewportWidth - 200; };
     power = { lengthPercent = 1; centerX = viewportWidth - 30; };
-    visibleWindowGap = 16;
-    # spacing contributes outerGap once to the terminal's top edge.
-    topGap = top + height + visibleWindowGap - outerGap;
   };
   appmenuXfce = pkgs.stdenv.mkDerivation {
     pname = "vala-panel-appmenu-xfce";
@@ -897,230 +892,6 @@ let
       runHook postInstall
     '';
   };
-  xfceIslandInset = pkgs.writeShellApplication {
-    name = "xfce-island-inset";
-    runtimeInputs = with pkgs; [ util-linux xdotool ];
-    text = ''
-      exec 9>/tmp/xfce-island-inset.lock
-      flock -n 9 || exit 0
-      while sleep 0.25; do
-        read -r screen_width _ < <(xdotool getdisplaygeometry)
-        left_third=$((screen_width / 3))
-        right_third=$((screen_width * 2 / 3))
-        while read -r id; do
-          eval "$(xdotool getwindowgeometry --shell "$id" 2>/dev/null)" || continue
-          (( WIDTH > 20 && HEIGHT > 20 )) || continue
-          center=$((X + WIDTH / 2))
-          if (( center < left_third )); then
-            target_x=10
-          elif (( center > right_third )); then
-            target_x=$((screen_width - WIDTH - 10))
-          else
-            target_x=$(((screen_width - WIDTH) / 2))
-          fi
-          (( X == target_x && Y == 16 )) || xdotool windowmove "$id" "$target_x" 16
-        done < <(xdotool search --name '^xfce4-panel$' 2>/dev/null)
-      done
-    '';
-  };
-  plasmaClock = pkgs.stdenvNoCC.mkDerivation {
-    pname = "plasma-reference-clock";
-    version = "1";
-    dontUnpack = true;
-    installPhase = ''
-      applet=$out/share/plasma/plasmoids/org.mpontus.referenceclock
-      mkdir -p "$applet/contents/ui"
-      cat > "$applet/metadata.json" <<'EOF'
-      { "KPlugin": { "Id": "org.mpontus.referenceclock", "Name": "Reference Clock", "Version": "1" }, "KPackageStructure": "Plasma/Applet", "X-Plasma-API": "declarativeappletscript", "X-Plasma-API-Min-Version": "6.0", "X-Plasma-MainScript": "ui/main.qml" }
-      EOF
-      cat > "$applet/contents/ui/main.qml" <<'EOF'
-      import QtQuick
-      import QtQuick.Layouts
-      import org.kde.plasma.plasmoid
-      PlasmoidItem {
-          id: root
-          property string now: ""
-          function tick() { root.now = Qt.formatDateTime(new Date(), "ddd d MMM | hh:mm") }
-          Component.onCompleted: tick()
-          Timer { interval: 1000; running: true; repeat: true; onTriggered: root.tick() }
-          preferredRepresentation: fullRepresentation
-          compactRepresentation: Item {
-              Layout.preferredWidth: 190; Layout.preferredHeight: 28
-              implicitWidth: 190; implicitHeight: 28
-              Text { anchors.centerIn: parent; text: root.now; color: "#f5f0f7"; font.family: "Noto Sans"; font.pixelSize: 11; font.weight: Font.Medium }
-          }
-          fullRepresentation: Item {
-              Layout.preferredWidth: 190; Layout.preferredHeight: 28
-              implicitWidth: 190; implicitHeight: 28
-              Text { anchors.centerIn: parent; text: root.now; color: "#f5f0f7"; font.family: "Noto Sans"; font.pixelSize: 11; font.weight: Font.Medium }
-          }
-      }
-      EOF
-    '';
-  };
-  plasmaTheme = pkgs.stdenvNoCC.mkDerivation {
-    pname = "plasma-theme-mpontus-reference";
-    version = "1";
-    dontUnpack = true;
-    installPhase = ''
-      theme=$out/share/plasma/desktoptheme/mpontus-reference
-      mkdir -p "$theme"
-      printf '{ "KPlugin": { "Id": "mpontus-reference", "Name": "MPontus Reference", "Version": "7" }, "X-Plasma-FallbackTheme": "default" }' > "$theme/metadata.json"
-      cp ${pkgs.kdePackages.breeze}/share/color-schemes/BreezeDark.colors "$theme/colors"
-      sed -i \
-        -e 's/42,46,50/14,22,36/g' \
-        -e 's/49,54,59/19,28,43/g' \
-        -e 's/61,174,233/240,90,157/g' \
-        -e 's/239,240,241/245,240,247/g' \
-        -e 's/^ColorScheme=.*/ColorScheme=MPontus Reference/' \
-        -e 's/^Name=.*/Name=MPontus Reference/' \
-        "$theme/colors"
-      mkdir -p "$theme/widgets"
-      cat > "$theme/widgets/panel-background.svg" <<'SVGEOF'
-      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="28" viewBox="0 0 64 28">
-      <defs>
-        <linearGradient id="topBorder" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a466d"/><stop offset="1" stop-color="#d36b90"/></linearGradient>
-        <linearGradient id="bottomBorder" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#cb5986"/><stop offset="1" stop-color="#5e3952"/></linearGradient>
-        <linearGradient id="leftBorder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a466d"/><stop offset="1" stop-color="#cb5986"/></linearGradient>
-        <linearGradient id="rightBorder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d36b90"/><stop offset="1" stop-color="#5e3952"/></linearGradient>
-      </defs>
-      <rect id="hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-      <rect id="topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-      <rect id="topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-      <rect id="center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-      <rect id="right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-      <rect id="bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-      <rect id="bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="north-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-      <rect id="north-topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="north-top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-      <rect id="north-topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="north-left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-      <rect id="north-center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-      <rect id="north-right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-      <rect id="north-bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="north-bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-      <rect id="north-bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="floating-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-      <rect id="floating-topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="floating-top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-      <rect id="floating-topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="floating-left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-      <rect id="floating-center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-      <rect id="floating-right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-      <rect id="floating-bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="floating-bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-      <rect id="floating-bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="translucent-hint-stretch-borders" x="0" y="0" width="1" height="1" fill="none"/>
-      <rect id="translucent-topleft" x="0" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="translucent-top" x="6" y="0" width="52" height="1" fill="url(#topBorder)"/>
-      <rect id="translucent-topright" x="58" y="0" width="6" height="6" fill="#0e1624"/>
-      <rect id="translucent-left" x="0" y="6" width="1" height="16" fill="url(#leftBorder)"/>
-      <rect id="translucent-center" x="6" y="6" width="52" height="16" fill="#0e1624"/>
-      <rect id="translucent-right" x="63" y="6" width="1" height="16" fill="url(#rightBorder)"/>
-      <rect id="translucent-bottomleft" x="0" y="22" width="6" height="6" fill="#0e1624"/>
-      <rect id="translucent-bottom" x="6" y="27" width="52" height="1" fill="url(#bottomBorder)"/>
-      <rect id="translucent-bottomright" x="58" y="22" width="6" height="6" fill="#0e1624"/>
-      <path id="mask-topleft" d="M0,6 H6 V0 C2,0 0,2 0,6 Z" fill="#000000"/>
-      <rect id="mask-top" x="6" y="0" width="52" height="6" fill="#000000"/>
-      <path id="mask-topright" d="M6,6 H0 V0 C4,0 6,2 6,6 Z" transform="translate(58,0)" fill="#000000"/>
-      <rect id="mask-left" x="0" y="6" width="6" height="16" fill="#000000"/>
-      <rect id="mask-center" x="6" y="6" width="52" height="16" fill="#000000"/>
-      <rect id="mask-right" x="58" y="6" width="6" height="16" fill="#000000"/>
-      <path id="mask-bottomleft" d="M0,0 H6 V6 C2,6 0,4 0,0 Z" transform="translate(0,22)" fill="#000000"/>
-      <rect id="mask-bottom" x="6" y="22" width="52" height="6" fill="#000000"/>
-      <path id="mask-bottomright" d="M6,0 H0 V6 C4,6 6,4 6,0 Z" transform="translate(58,22)" fill="#000000"/>
-      </svg>
-SVGEOF
-    '';
-  };
-  plasmaIslands = pkgs.writeShellScript "plasma-islands" ''
-    set -eu
-    evaluate() {
-      /run/current-system/sw/bin/qdbus org.kde.plasmashell \
-        /PlasmaShell org.kde.PlasmaShell.evaluateScript "$1"
-    }
-    for attempt in $(seq 1 60); do
-      [ "$(evaluate 'print(panels().length)' 2>/dev/null || true)" -ge 1 ] && break
-      sleep 1
-    done
-    evaluate '
-      for (const desktop of desktops()) {
-        desktop.wallpaperPlugin = "org.kde.color";
-        desktop.currentConfigGroup = Array("Wallpaper", "org.kde.color", "General");
-        desktop.writeConfig("Color", "#131c2b");
-      }
-      for (const panel of panels()) panel.remove();
-    '
-    evaluate '
-      const left = new Panel;
-      left.location = "top";
-      left.alignment = "left";
-      left.lengthMode = "fit";
-      left.height = 28;
-      left.hiding = "none";
-      left.addWidget("org.kde.plasma.kickoff");
-      left.addWidget("org.kde.plasma.appmenu");
-      const center = new Panel;
-      center.location = "top";
-      center.alignment = "center";
-      center.lengthMode = "fit";
-      center.height = 28;
-      center.addWidget("org.mpontus.referenceclock");
-      const right = new Panel;
-      right.location = "top";
-      right.alignment = "right";
-      right.lengthMode = "fit";
-      right.height = 28;
-      right.addWidget("org.kde.plasma.systemtray");
-    '
-    /run/current-system/sw/bin/plasma-apply-desktoptheme mpontus-reference || true
-    /run/current-system/sw/bin/plasma-apply-colorscheme BreezeDark || true
-    # Top panels anchor at y=0. Move whole dock windows below reference gap;
-    # Picom GLX then rounds visible surface rather than transparent padding.
-    export DISPLAY=:0 XAUTHORITY="$HOME/.Xauthority"
-    sleep 1
-    for id in $(/run/current-system/sw/bin/xdotool search --class plasmashell 2>/dev/null || true); do
-      /run/current-system/sw/bin/xprop -id "$id" _NET_WM_WINDOW_TYPE 2>/dev/null | grep -q '_NET_WM_WINDOW_TYPE_DOCK' || continue
-      x=
-      for pair in $(/run/current-system/sw/bin/xdotool getwindowgeometry --shell "$id"); do
-        case "$pair" in X=*) x=''${pair#X=} ;; esac
-      done
-      [ -n "$x" ] && /run/current-system/sw/bin/xdotool windowmove "$id" "$x" 16
-    done
-    [ "$(evaluate 'print(panels().length)')" = 3 ]
-  '';
-  plasmaXmonad = pkgs.writers.writeHaskellBin "plasma-xmonad" {
-    ghc = pkgs.haskellPackages.ghc;
-    libraries = with pkgs.haskellPackages; [ xmonad xmonad-contrib ];
-  } ''
-    import XMonad
-    import XMonad.Hooks.EwmhDesktops
-    import XMonad.Hooks.ManageDocks
-    import XMonad.Hooks.SetWMName
-    import XMonad.Layout.Spacing
-    import XMonad.Util.EZConfig
-    myConfig = ewmhFullscreen $ ewmh $ docks def
-      { terminal = "${pkgs.kitty}/bin/kitty"
-      , modMask = mod4Mask
-      , borderWidth = 1
-      , normalBorderColor = "#8b5cf6"
-      , focusedBorderColor = "#f25aa6"
-      , layoutHook = avoidStruts $ spacingWithEdge 10 $ layoutHook def
-      , manageHook = manageDocks <+> manageHook def
-      , startupHook = setWMName "LG3D"
-      }
-      `additionalKeysP`
-      [ ("M-<Return>", spawn "${pkgs.kitty}/bin/kitty")
-      , ("M-d", spawn "qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu")
-      , ("M-S-e", spawn "qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1")
-      ]
-    main :: IO ()
-    main = getDirectories >>= launch myConfig
-  '';
 in {
   services.xserver.desktopManager.xfce = {
     enable = true;
@@ -1131,183 +902,8 @@ in {
   services.xserver.windowManager.xmonad = {
     enable = true;
     enableContribAndExtras = true;
-    extraPackages = hp: [ hp.xmonad hp.xmonad-contrib hp.xmonad-extras ];
     config = null;
   };
-
-  environment.etc."polybar-xmonad/config.ini".text = ''
-    [colors]
-    bg = #cc0f172a
-    bg-alt = #cc1e293b
-    fg = #e5e7eb
-    muted = #94a3b8
-    accent = #b4befe
-    warm = #f5c2e7
-
-    [bar/base]
-    monitor =
-    fixed-center = true
-    override-redirect = false
-    wm-restack = generic
-    bottom = false
-    height = 30
-    radius = 14
-    background = ''${colors.bg}
-    foreground = ''${colors.fg}
-    border-size = 2
-    border-color = #3b5274
-    padding-left = 4
-    padding-right = 4
-    module-margin = 3
-    font-0 = JetBrainsMono Nerd Font:size=10;2
-    font-1 = Symbols Nerd Font:size=11;2
-
-    [bar/workspaces]
-    inherit = bar/base
-    width = 28%
-    offset-x = 20
-    offset-y = 8
-    modules-center = xworkspaces
-
-    [bar/clock]
-    inherit = bar/base
-    width = 24%
-    offset-x = 38%
-    offset-y = 8
-    modules-center = date
-
-    [bar/tray]
-    inherit = bar/base
-    width = 26%
-    offset-x = 72%
-    offset-y = 8
-    modules-center = network tray
-
-    [module/xworkspaces]
-    type = internal/xworkspaces
-    group-by-monitor = false
-    format = <label-state>
-    label-active = %name%
-    label-active-foreground = #ff111827
-    label-active-background = #ffb4befe
-    label-active-padding = 2
-    label-occupied = %name%
-    label-occupied-foreground = #ffe5e7eb
-    label-occupied-padding = 2
-    label-empty = %name%
-    label-empty-foreground = #ffe5e7eb
-    label-empty-padding = 2
-
-    [module/network]
-    type = internal/network
-    interface = eth0
-    interval = 5
-    format-connected = <label-connected>
-    label-connected = 󰈀 wired
-    format-disconnected = <label-disconnected>
-    label-disconnected = 󰤭 off
-    label-disconnected-foreground = ''${colors.warm}
-    click-left = nm-connection-editor
-
-    [module/date]
-    type = internal/date
-    interval = 1
-    date = %a %d %b
-    time = %I:%M %p
-    label = %date% | %time%
-
-    [module/tray]
-    type = internal/tray
-    format-margin = 1
-    tray-spacing = 8px
-    tray-size = 70%
-  '';
-
-  environment.etc."rofi-xmonad/theme.rasi".text = ''
-    configuration {
-      show-icons: true;
-      icon-theme: "Papirus-Dark";
-      drun-display-format: "{name}";
-      font: "Noto Sans 11";
-    }
-
-    * {
-      bg: #0f172aee;
-      bg-alt: #1e293bee;
-      fg: #e5e7eb;
-      muted: #93a4c7;
-      accent: #b4befe;
-      border: #3b5274;
-    }
-
-    window {
-      width: 58%;
-      location: center;
-      anchor: center;
-      border: 2px;
-      border-color: @border;
-      border-radius: 14px;
-      background-color: @bg;
-      padding: 14px;
-    }
-
-    mainbox {
-      spacing: 12px;
-      background-color: transparent;
-    }
-
-    inputbar {
-      children: [entry];
-      background-color: @bg-alt;
-      border-radius: 12px;
-      padding: 10px 12px;
-      spacing: 8px;
-    }
-
-    prompt {
-      text-color: @accent;
-      background-color: transparent;
-    }
-    entry {
-      text-color: @fg;
-      placeholder: "Search apps";
-      background-color: transparent;
-    }
-
-    listview {
-      columns: 2;
-      lines: 6;
-      spacing: 6px;
-      fixed-height: true;
-      background-color: transparent;
-    }
-
-    element {
-      children: [element-icon, element-text];
-      padding: 9px 10px;
-      border-radius: 10px;
-      background-color: transparent;
-      text-color: @fg;
-    }
-
-    element selected {
-      background-color: @accent;
-      text-color: #111827;
-    }
-
-    element-icon {
-      size: 24px;
-      margin: 0 10px 0 0;
-      background-color: transparent;
-    }
-    element-text {
-      vertical-align: 0.5;
-      background-color: transparent;
-      text-color: inherit;
-    }
-
-    scrollbar { handle-color: @accent; background-color: transparent; }
-  '';
 
   services.picom = {
     enable = true;
@@ -1335,29 +931,14 @@ in {
     appmenuXfce
     referenceGtkTheme
     papirus-icon-theme
-    xdotool
-    xorg.xwininfo
-    xorg.xprop
     xfce.xfce4-panel
     xfce.xfce4-whiskermenu-plugin
     xfce.xfce4-pulseaudio-plugin
-    dmenu
-    i3status
-    st
-    polybar
-    rofi
     snixembed
     pavucontrol
-    hsetroot
-    papirus-icon-theme
-    feh
     material-icons
     font-awesome
-    xorg.xsetroot
     xfce.xfce4-terminal
-    unstable.upwork
-    (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
-    (callPackage ./pkgs/toptracker { })
   ];
 
   home-manager.users.mpontus.xsession = {
@@ -1421,6 +1002,15 @@ in {
             <property name="appearance" type="uint" value="0"/>
             <property name="items" type="array"><value type="string" value="+logout"/></property>
           </property>
+        </property>
+      </channel>
+    '';
+    "xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".force = true;
+    "xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
+      <?xml version="1.0" encoding="UTF-8"?>
+      <channel name="xfce4-desktop" version="1.0">
+        <property name="desktop-icons" type="empty">
+          <property name="style" type="int" value="0"/>
         </property>
       </channel>
     '';
@@ -1493,20 +1083,6 @@ ly
 #+end_src
 
 ** COMMENT LightDM
-** XMonad
-
-#+begin_src nix :noweb-ref home-configuration
-  home.file.".config/xmonad/xmonad.hs".source =
-    config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
-#+end_src
-
-#+begin_src nix :noweb-ref system-configuration
-services.xserver.windowManager.xmonad = {
-  enable = true;
-  enableContribAndExtras = true;
-};
-#+end_src
-
 ** COMMENT PulseAudio
 
 #+begin_src nix
