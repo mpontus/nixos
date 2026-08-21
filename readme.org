@@ -774,6 +774,21 @@ xmessage
   })
 #+end_src
 
+*** GTK themes
+
+#+begin_src nix :noweb-ref system-packages
+arc-theme
+catppuccin-gtk
+colloid-gtk-theme
+graphite-gtk-theme
+gruvbox-dark-gtk
+nordic
+orchis-theme
+pop-gtk-theme
+rose-pine-gtk-theme
+tokyonight-gtk-theme
+#+end_src
+
 This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
 
 #+begin_src nix :noweb-ref import-files

@@ -27,6 +27,16 @@
     dmenu
     st
     xmessage
+    arc-theme
+    catppuccin-gtk
+    colloid-gtk-theme
+    graphite-gtk-theme
+    gruvbox-dark-gtk
+    nordic
+    orchis-theme
+    pop-gtk-theme
+    rose-pine-gtk-theme
+    tokyonight-gtk-theme
     ly
     unstable.uv
     pkg-config libssh2 zlib
