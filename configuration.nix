@@ -282,6 +282,24 @@
       lib.attrsets.listToAttrs
     ]
     );
+    xdg.dataFile."backgrounds".source =
+      let
+        wallpaperGallery = pkgs.buildEnv {
+          name = "wallpaper-gallery";
+          paths = with pkgs; [
+            adapta-backgrounds
+            budgie-backgrounds
+            cosmic-wallpapers
+            gnome-backgrounds
+            kdePackages.plasma-workspace-wallpapers
+            pantheon.elementary-wallpapers
+            pop-hp-wallpapers
+            pop-wallpapers
+            system76-wallpapers
+          ];
+          pathsToLink = [ "/share/backgrounds" ];
+        };
+      in "${wallpaperGallery}/share/backgrounds";
     home.file.".config/xmonad/xmonad.hs".source =
       config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
     programs.emacs = {
