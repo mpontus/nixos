@@ -756,24 +756,33 @@ system76-wallpapers
 #+end_src
 
 #+begin_src nix :noweb-ref home-configuration
-xdg.dataFile."backgrounds".source =
+xdg.dataFile."backgrounds/xfce".source =
   let
-    wallpaperGallery = pkgs.buildEnv {
-      name = "wallpaper-gallery";
-      paths = with pkgs; [
-        adapta-backgrounds
-        budgie-backgrounds
-        cosmic-wallpapers
-        gnome-backgrounds
-        kdePackages.plasma-workspace-wallpapers
-        pantheon.elementary-wallpapers
-        pop-hp-wallpapers
-        pop-wallpapers
-        system76-wallpapers
-      ];
-      pathsToLink = [ "/share/backgrounds" ];
-    };
-  in "${wallpaperGallery}/share/backgrounds";
+    wallpapers = [
+      { prefix = "adapta"; package = pkgs.adapta-backgrounds; }
+      { prefix = "budgie"; package = pkgs.budgie-backgrounds; }
+      { prefix = "cosmic"; package = pkgs.cosmic-wallpapers; }
+      { prefix = "gnome"; package = pkgs.gnome-backgrounds; }
+      { prefix = "kde"; package = pkgs.kdePackages.plasma-workspace-wallpapers; }
+      { prefix = "elementary"; package = pkgs.pantheon.elementary-wallpapers; }
+      { prefix = "pop-hp"; package = pkgs.pop-hp-wallpapers; }
+      { prefix = "pop"; package = pkgs.pop-wallpapers; }
+      { prefix = "system76"; package = pkgs.system76-wallpapers; }
+    ];
+    gallery = pkgs.runCommand "xfce-wallpapers" {
+      nativeBuildInputs = [ pkgs.coreutils pkgs.findutils ];
+    } ''
+      mkdir -p "$out/share/backgrounds/xfce"
+      ${lib.concatMapStringsSep "\n" ({ prefix, package }: ''
+        for directory in "${package}/share/backgrounds" "${package}/share/wallpapers"; do
+          [ -d "$directory" ] || continue
+          find "$directory" -type f \
+            \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+            -exec sh -c 'directory=$1; shift; for image; do relative="''${image#"$directory"/}"; name=$(printf "%s" "$relative" | tr "/" "-"); ln -s "$image" "$out/share/backgrounds/xfce/${prefix}-$name"; done' sh "$directory" {} +
+        done
+      '') wallpapers}
+    '';
+  in "${gallery}/share/backgrounds/xfce";
 #+end_src
 
 This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
