@@ -301,6 +301,18 @@
       lib.attrsets.listToAttrs
     ]
     );
+    xresources.properties = {
+      "xmessage*background" = "#f5efdd";
+      "xmessage*foreground" = "#2b2115";
+      "xmessage*borderColor" = "#b75681";
+      "xmessage*borderWidth" = "2";
+      "xmessage*font" = "-adobe-times-medium-r-normal--18-*-*-*-*-*-*-*";
+      "xmessage*Command.font" = "-adobe-times-bold-r-normal--18-*-*-*-*-*-*-*";
+      "xmessage*Command.foreground" = "#6d4f1e";
+      "xmessage*Command.internalHeight" = "4";
+      "xmessage*Command.internalWidth" = "12";
+      "xmessage.geometry" = "700x320";
+    };
     home.file.".config/xmonad/xmonad.hs".source =
       config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
     programs.emacs = {
