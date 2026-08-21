@@ -282,7 +282,7 @@
       lib.attrsets.listToAttrs
     ]
     );
-    xdg.dataFile."backgrounds/xfce".source =
+    xdg.dataFile."backgrounds".source =
       let
         wallpapers = [
           { prefix = "adapta"; package = pkgs.adapta-backgrounds; }
@@ -308,7 +308,7 @@
             done
           '') wallpapers}
         '';
-      in "${gallery}/share/backgrounds/xfce";
+      in "${gallery}/share/backgrounds";
     home.file.".config/xmonad/xmonad.hs".source =
       config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
     programs.emacs = {

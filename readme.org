@@ -756,7 +756,7 @@ system76-wallpapers
 #+end_src
 
 #+begin_src nix :noweb-ref home-configuration
-xdg.dataFile."backgrounds/xfce".source =
+xdg.dataFile."backgrounds".source =
   let
     wallpapers = [
       { prefix = "adapta"; package = pkgs.adapta-backgrounds; }
@@ -782,7 +782,7 @@ xdg.dataFile."backgrounds/xfce".source =
         done
       '') wallpapers}
     '';
-  in "${gallery}/share/backgrounds/xfce";
+  in "${gallery}/share/backgrounds";
 #+end_src
 
 This module keeps GNOME available as a GDM fallback while making the tested Xorg XFCE + XMonad session the default login.
