@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>XFCE + XMonad — Literate Configuration</title>
+<style>
+  :root {
+    --bg: #131c2b;
+    --panel: #0e1624;
+    --fg: #f4effa;
+    --muted: #94a3b8;
+    --accent: #b75681;
+    --code-bg: #1a2438;
+    --border: #3b5274;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.7 -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  main { max-width: 60rem; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+  header {
+    background: var(--panel);
+    border-bottom: 2px solid var(--accent);
+    padding: 2.5rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+  header h1 { margin: 0 0 .4rem; font-size: 1.9rem; }
+  header p { margin: 0; color: var(--muted); }
+  h2 {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .3rem;
+    margin-top: 3rem;
+    color: #f5c2e7;
+  }
+  h3 { color: #f5c2e7; margin-top: 2rem; }
+  code {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: .1em .35em;
+    font-size: .9em;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; font-size: .85rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid var(--border); padding: .45rem .7rem; text-align: left; }
+  th { background: var(--panel); }
+  .path { color: #8ad8c0; font-family: "JetBrains Mono", monospace; font-size: .85rem; }
+  .note {
+    background: rgba(183, 86, 129, .12);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: .8rem 1.1rem;
+    margin: 1.2rem 0;
+  }
+  .toc { list-style: none; padding-left: 0; columns: 2; }
+  .toc a { color: var(--fg); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  footer { color: var(--muted); font-size: .85rem; margin-top: 4rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>XFCE + XMonad</h1>
+  <p>A literate walkthrough of the island-panel desktop on NixOS</p>
+</header>
+<main>
+
+<nav>
+<h2>Contents</h2>
+<ul class="toc">
+  <li><a href="#overview">1. Overview</a></li>
+  <li><a href="#architecture">2. Architecture &amp; Ownership</a></li>
+  <li><a href="#nix">3. The Nix Layer</a></li>
+  <li><a href="#panels">4. Panel Islands</a></li>
+  <li><a href="#wallpapers">5. Wallpapers</a></li>
+  <li><a href="#xmonad">6. XMonad (user-space)</a></li>
+  <li><a href="#accent">7. Fixed Accent</a></li>
+  <li><a href="#workflows">8. Daily Workflows</a></li>
+</ul>
+</nav>
+
+<h2 id="overview">1. Overview</h2>
+
+<p>This desktop combines XMonad — a keyboard-driven tiling window manager — with
+XFCE’s panels, session plumbing, and desktop services. The visual signature is a
+set of four small rounded <em>island panels</em> floating near the top of the screen,
+with a 2px accent border painted on every window and panel.</p>
+
+<p>Three repositories cooperate:</p>
+
+<table>
+  <tr><th>Repository</th><th>Role</th><th>Source of truth</th></tr>
+  <tr><td><span class="path">~/projects/nixpkgs</span></td><td>NixOS system + Home Manager</td><td><code>readme.org</code> (literate, tangled to <code>configuration.nix</code>, <code>xfce-xmonad.nix</code>)</td></tr>
+  <tr><td><span class="path">~/projects/xmonad-config</span></td><td>All XMonad behavior</td><td><code>xmonad.hs</code> (private GitHub repo)</td></tr>
+  <tr><td>nixpkgs (upstream)</td><td>Packages</td><td>—</td></tr>
+</table>
+
+<h2 id="architecture">2. Architecture &amp; Ownership</h2>
+
+<p>Each concern has exactly one owner. This division is what keeps the setup
+maintainable: Nix changes are rare and declarative; XMonad changes are instant
+and imperative.</p>
+
+<table>
+  <tr><th>Concern</th><th>Owner</th><th>Change cycle</th></tr>
+  <tr><td>Window management, keybindings, layouts, window rules</td><td><code>xmonad.hs</code></td><td>Edit → <code>Super+Q</code>, no rebuild</td></tr>
+  <tr><td>Panels, plugins, geometry</td><td>XFCE via Home Manager XML</td><td><code>nixos-rebuild switch</code></td></tr>
+  <tr><td>Compositing (rounded corners)</td><td>Picom (NixOS module)</td><td><code>nixos-rebuild switch</code></td></tr>
+  <tr><td>Theme, GTK, terminal colors</td><td>Home Manager files + derived GTK theme</td><td><code>nixos-rebuild switch</code></td></tr>
+  <tr><td>Wallpaper gallery</td><td><code>xfdesktop</code> derivation override</td><td><code>nixos-rebuild switch</code></td></tr>
+  <tr><td>XMonad compiler + libraries</td><td>NixOS <code>services.xserver.windowManager.xmonad</code></td><td><code>nixos-rebuild switch</code></td></tr>
+</table>
+
+<div class="note">
+<strong>Key decision:</strong> <code>config = null</code> on the NixOS xmonad
+module. XMonad runs as the <em>vanilla</em> launcher; it recompiles
+<code>~/.config/xmonad/xmonad.hs</code> (a symlink to the user repo) with the
+Nix-supplied GHC + contrib libraries. Config edits never require a Nix rebuild
+or a display-manager restart.
+</div>
+
+<p>The chain, from literate source to running desktop:</p>
+
+<pre><code>readme.org
+  │ org-babel-tangle
+  ├──&gt; configuration.nix ──┐
+  └──&gt; xfce-xmonad.nix ────┤ (imported)
+                           ▼
+                 nixos-rebuild switch
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+   GDM session       Home Manager        system path
+   "xfce+xmonad"     ~/.config files     picom, xfdesktop(+wallpapers),
+        │            xmonad.hs symlink   GHC + xmonad-contrib
+        ▼
+   xmonad --recompile  →  ~/.cache/xmonad/xmonad-x86_64-linux
+   xmonad --restart    →  preserves workspaces</code></pre>
+
+<h2 id="nix">3. The Nix Layer</h2>
+
+<p>Everything below lives in the tangled <span class="path">xfce-xmonad.nix</span>
+module, edited only through its <code>readme.org</code> source block.</p>
+
+<h3>3.1 Services</h3>
+
+<pre><code>services.xserver.desktopManager.xfce = {
+  enable = true;
+  noDesktop = false;    # xfdesktop, xfsettingsd, session management
+  enableXfwm = false;   # XMonad is the only WM
+};
+
+services.xserver.windowManager.xmonad = {
+  enable = true;
+  enableContribAndExtras = true;  # adds xmonad-contrib/extras to GHC env
+  config = null;                  # vanilla launcher; user config used
+};</code></pre>
+
+<h3>3.2 Panel geometry constants</h3>
+
+<p>Single <code>xfceIslands</code> record feeds both the XFCE panel XML and the
+Picom radius, keeping panel appearance coherent:</p>
+
+<pre><code>xfceIslands = rec {
+  viewportWidth = 1920;
+  radius = 12;      # corner radius (picom + GTK css)
+  panelSize = 34;   # panel height, excluding the 2px GTK outline
+  centerY = 26;     # vertical anchor
+  left   = { lengthPercent = 1; centerX = 195; };
+  center = { lengthPercent = 1; centerX = viewportWidth / 2; };
+  right  = { lengthPercent = 1; centerX = viewportWidth - 200; };
+  power  = { lengthPercent = 1; centerX = viewportWidth - 30; };
+};</code></pre>
+
+<h3>3.3 Picom compositor</h3>
+
+<pre><code>services.picom = {
+  enable = true;
+  backend = "glx";     # "xrender" needed inside some VMs
+  vSync = false;
+  fade = false;
+  shadow = false;
+  settings = {
+    corner-radius = xfceIslands.radius;
+    corner-radius-rules = [ "12:window_type = 'dock'" ];
+    use-damage = false;
+    rounded-corners-exclude = [ "window_type = 'desktop'" ];
+  };
+};</code></pre>
+
+<h3>3.4 GTK theme</h3>
+
+<p>XFCE selects stock <code>Adwaita-dark</code> with
+<code>Papirus-Dark</code> icons through <code>xsettings.xml</code>. A short
+Home Manager-managed <code>gtk-3.0/gtk.css</code> supplies the palette and
+panel spacing. No custom theme derivation or global-menu module is built.</p>
+
+<h2 id="panels">4. Panel Islands</h2>
+
+<p>Four position-locked panels float at <code>y = 26</code> with
+<code>enable-struts = false</code> — they do <em>not</em> reserve screen space;
+XMonad’s layout gap (<code>gaps [(U, 52)]</code>) reserves it instead.</p>
+
+<table>
+  <tr><th>Panel</th><th>Plugins</th><th>Anchor</th></tr>
+  <tr><td>1 (left)</td><td>Whisker menu</td><td>x = 195</td></tr>
+  <tr><td>2 (center)</td><td>Clock <code>%a %d %b | %I:%M %p</code></td><td>viewport center</td></tr>
+  <tr><td>3 (right)</td><td>Systray, PulseAudio, power-manager, notifications</td><td>x = viewport − 200</td></tr>
+  <tr><td>4 (power)</td><td>Logout action button</td><td>x = viewport − 30</td></tr>
+</table>
+
+<p>GTK CSS removes native panel chrome so Picom supplies the rounded corners:</p>
+
+<pre><code>#XfcePanelWindow {
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}</code></pre>
+
+<div class="note"><strong>One geometry owner:</strong> XFCE positions panels
+from declarative XML. XMonad only reserves the top layout gap; it no longer
+contains duplicate panel-positioning logic.</div>
+
+<h2 id="wallpapers">5. Wallpapers</h2>
+
+<p>Desktop Settings only lists images inside
+<code>&lt;datadir&gt;/share/backgrounds/xfce/</code> (non-recursive). An overlay
+rebuilds <code>xfdesktop</code> with symlinked images from nine collections
+(cosmic, pop, kde plasma, system76, gnome, budgie, elementary, pop-hp, adapta),
+flattened with prefixes to avoid filename collisions:</p>
+
+<pre><code>xfdesktop = prev.xfdesktop.overrideAttrs (old: {
+  postInstall = (old.postInstall or "") + ''
+    mkdir -p "$out/share/backgrounds/xfce"
+    # find … -iname '*.jpg|*.jpeg|*.png' in each package,
+    # ln -s into backgrounds/xfce/&lt;prefix&gt;-&lt;path-with-dashes&gt;
+  '';
+});</code></pre>
+
+<p>Result: 243 entries in the native gallery. Desktop icons are hidden via a
+declarative <code>xfce4-desktop.xml</code>
+(<code>/desktop-icons/style = 0</code>).</p>
+
+<h2 id="xmonad">6. XMonad (user-space)</h2>
+
+<p>Live in <span class="path">~/projects/xmonad-config/xmonad.hs</span>,
+symlinked to <code>~/.config/xmonad/xmonad.hs</code> by Home Manager:</p>
+
+<pre><code>home.file.".config/xmonad/xmonad.hs".source =
+  config.lib.file.mkOutOfStoreSymlink
+    "/home/mpontus/projects/xmonad-config/xmonad.hs";</code></pre>
+
+<h3>6.1 Configuration skeleton</h3>
+
+<pre><code>main = xmonad $ ewmhFullscreen $ ewmh $ docks $
+  addDescrKeys ((mod4Mask, xK_F1), xMessage) myKeys $
+    xfceConfig
+      { terminal    = "kitty"
+      , modMask     = mod4Mask        -- Super
+      , borderWidth = 2
+      , normalBorderColor   = accent
+      , focusedBorderColor = accent
+      , layoutHook  = avoidStruts $ gaps [(U, 52)] $ spacing 8 $
+                      layoutHook xfceConfig
+      , ... }</code></pre>
+
+<h3>6.2 Window rules (manageHook)</h3>
+
+<p>Ordered — first match wins:</p>
+
+<table>
+  <tr><th>Rule</th><th>Effect</th></tr>
+  <tr><td><code>_NET_WM_WINDOW_TYPE_DESKTOP</code></td><td>lower + ignore (xfdesktop below everything)</td></tr>
+  <tr><td>title = <em>Picture-in-Picture</em></td><td>float + copy to all workspaces</td></tr>
+  <tr><td><code>manageSpawn</code></td><td>apply placement recorded by <code>spawnOn</code></td></tr>
+  <tr><td>class = <em>Xfce4-panel</em></td><td>paint 2px accent border</td></tr>
+  <tr><td>Whisker menu (<em>Wrapper-2.0</em> + type menu)</td><td>float + focus</td></tr>
+  <tr><td>everything else, except firefox-beta / TelegramDesktop / Slack</td><td><strong>float by default</strong></td></tr>
+</table>
+
+<p>Default float is deliberate: this is a mouse-friendly stacking desktop. The
+three startup apps are exempted so they tile in the stacked layout on their
+assigned workspaces.</p>
+
+<h3>6.3 Startup apps on workspaces</h3>
+
+<pre><code>startupAppOn :: WorkspaceId -&gt; Query Bool -&gt; String -&gt; X ()
+startupAppOn ws running cmd = withWindowSet $ \s -&gt; do
+  hits &lt;- mapM (\w -&gt; runQuery running w) (W.allWindows s)
+  when (not (or hits)) $ spawnOn ws cmd
+
+-- startupHook:
+startupAppOn "1" (className =? "firefox-beta")  "firefox-beta"
+startupAppOn "2" (className =? "TelegramDesktop") "Telegram"
+startupAppOn "2" (className =? "Slack")           "slack"</code></pre>
+
+<p>Two cooperating halves:</p>
+<ul>
+  <li><strong>Dedup</strong> — the <code>Query Bool</code> checks whether a
+  window with that class already exists. Restarts with apps running spawn
+  nothing.</li>
+  <li><strong>Placement</strong> — <code>spawnOn</code> records the spawned PID
+  plus a <code>doShift</code> hook; <code>manageSpawn</code> in the manageHook
+  matches the new window’s <code>_NET_WM_PID</code> and applies the shift
+  <em>only to that window</em>. Later windows launched manually are untouched.</li>
+</ul>
+
+<div class="note">Upstream has no <code>spawnOnceOn</code>; the two features
+live in different modules with different dedup mechanisms. The window-class
+check avoids both the process-name/class-name mismatch bug (Telegram’s binary
+is <code>Telegram</code>, its class is <code>TelegramDesktop</code>) and any
+shell-out to <code>pgrep</code>.</div>
+
+<h3>6.4 Session startup (startupHook)</h3>
+
+<pre><code>startupHook = do
+  startupHook xfceConfig
+  paintWindowBorders          -- repaint borders of pre-existing windows
+  paintPanelBorders
+  spawn "snixembed"           -- SNI tray icons for xembed apps
+  startupAppOn …              -- workspace apps, see above
+  spawn "xfce4-power-manager" -- autostart doesn't fire in this hybrid session
+  setWMName "LG3D"            -- Java AWT compatibility
+  spawn "xfdesktop --disable-wm-check"  -- xfdesktop waits for an EWMH WM otherwise</code></pre>
+
+<p><code>nm-applet</code> is <em>not</em> spawned here —
+<code>programs.nm-applet.enable</code> owns its autostart.</p>
+
+<h2 id="accent">7. Fixed Accent</h2>
+
+<p>Window and panel borders use one explicit color:</p>
+
+<pre><code>accent :: String
+accent = "#b75681"</code></pre>
+
+<p>No cache, theme parser, helper process, or dynamic refresh is involved.
+<code>Super+Q</code> only recompiles and restarts XMonad.</p>
+
+<h2 id="workflows">8. Daily Workflows</h2>
+
+<h3>Change XMonad behavior</h3>
+<pre><code>cd ~/projects/xmonad-config
+$EDITOR xmonad.hs
+# press Super+Q  (recompile; on failure the old WM keeps running)
+git commit -am "…" &amp;&amp; git push</code></pre>
+
+<h3>Change panels, theme, packages, wallpapers</h3>
+<pre><code>cd ~/projects/nixpkgs
+$EDITOR readme.org            # edit the xfce-xmonad module block
+emacs --batch readme.org --eval "(require 'org)" \
+      --eval "(org-babel-tangle)"
+nix build .#nixosConfigurations.nixos.config.system.build.toplevel  # validate
+sudo nixos-rebuild switch --flake .#nixos</code></pre>
+
+<h3>Key bindings</h3>
+<table>
+  <tr><th>Keys</th><th>Action</th></tr>
+  <tr><td><code>Super+Enter</code></td><td>Kitty terminal</td></tr>
+  <tr><td><code>Super+D</code></td><td>Whisker app menu</td></tr>
+  <tr><td><code>Super+F</code></td><td>Fullscreen toggle (wmctrl)</td></tr>
+  <tr><td><code>Super+Q</code></td><td>Recompile and restart XMonad</td></tr>
+  <tr><td><code>Super+Shift+E</code></td><td>Log out (xfce4-session-logout)</td></tr>
+  <tr><td><code>Super+F1</code></td><td>Keybinding help (xmessage)</td></tr>
+</table>
+
+<footer>
+Generated from the live configuration · nixpkgs repo <code>~/projects/nixpkgs</code>
+(readme.org source of truth) · XMonad repo <code>~/projects/xmonad-config</code> (private).
+</footer>
+
+</main>
+</body>
+</html>
