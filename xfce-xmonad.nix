@@ -313,6 +313,7 @@ in {
     "kitty/kitty.conf".text = ''
       background #131c2b
       foreground #f4effa
+      allow_remote_control yes
     '';
     "xfce4/terminal/terminalrc".text = ''
       [Configuration]
