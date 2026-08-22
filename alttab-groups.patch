@@ -1,0 +1,196 @@
+diff --git a/doc/alttab.1.ronn b/doc/alttab.1.ronn
+index ea9a53a..fa5c46e 100644
+--- a/doc/alttab.1.ronn
++++ b/doc/alttab.1.ronn
+@@ -19 +19 @@ alttab(1) -- the task switcher
+-`alttab` [`-w` <N>] [`-d` <N>] [`-sc` <N>] [`-mk` <str>] [`-kk` <str>] [`-bk` <str>] [`-pk` <str>] [`-nk` <str>] [`-ck` <str>] [`-dk` <str>] [`-mm` <N>] [`-bm` <N>] [`-t` <NxM>] [`-i` <NxM>] [`-vp` <str>] [`-p` <str>] [`-s` <N>] [`-theme` <name>] [`-bg` <color>] [`-fg` <color>] [`-frame` <color>] [`-inact` <color>] [`-min` <color>] [`-bc` <color>] [`-fw` <N>] [`-bw` <N>] [`-font` <name>] [`-vertical`] [`-sortmin`] [`-e`] [`-b` <N>] [`-ns`] [`-v`\|`-vv`]
++`alttab` [`-w` <N>] [`-d` <N>] [`-g` <N>] [`-f`] [`-sc` <N>] [`-mk` <str>] [`-kk` <str>] [`-bk` <str>] [`-pk` <str>] [`-nk` <str>] [`-ck` <str>] [`-dk` <str>] [`-mm` <N>] [`-bm` <N>] [`-t` <NxM>] [`-i` <NxM>] [`-vp` <str>] [`-p` <str>] [`-s` <N>] [`-theme` <name>] [`-bg` <color>] [`-fg` <color>] [`-frame` <color>] [`-inact` <color>] [`-min` <color>] [`-bc` <color>] [`-fw` <N>] [`-bw` <N>] [`-font` <name>] [`-vertical`] [`-sortmin`] [`-e`] [`-b` <N>] [`-ns`] [`-v`\|`-vv`]
+@@ -90,0 +91,20 @@ Most command line options have corresponding X resource, see doc/alttab.ad for e
++  * `-g` <NUMBER>:
++    resource: alttab.group
++    default: <0>
++
++    Group windows by their case-insensitive `WM_CLASS` application class. <NUMBER> must be between 0 and 2:
++
++      <0>: Show every window.
++
++      <1>: Show the most recently used window from each application.
++
++      <2>: Show only windows from the application active when the switcher opens.
++
++    Windows without `WM_CLASS` remain separate.
++
++  * `-f`:
++    resource: alttab.focus
++    default: no
++
++    Focus and raise each selected window while the switcher remains open. Escape restores the original selection.
++
+diff --git a/doc/alttab.ad b/doc/alttab.ad
+index fe08705..568157a 100644
+--- a/doc/alttab.ad
++++ b/doc/alttab.ad
+@@ -15,0 +16,6 @@
++! Show one most-recent window per WM_CLASS application
++!alttab.group:           1
++
++! Focus each selection while switching
++!alttab.focus:           true
++
+diff --git a/src/alttab.c b/src/alttab.c
+index 1cc156a..ff2ab23 100644
+--- a/src/alttab.c
++++ b/src/alttab.c
+@@ -53,0 +54,2 @@ Options:\n\
++    -g N      grouping: 0=windows, 1=applications, 2=current application\n\
++    -f        focus each selection immediately\n\
+@@ -102 +104 @@ static int use_args_and_xrm(int *argc, char **argv)
+-    unsigned int wmindex, dsindex, scindex, isrc, bindex;
++    unsigned int wmindex, dsindex, scindex, isrc, bindex, group;
+@@ -117,0 +120 @@ static int use_args_and_xrm(int *argc, char **argv)
++        {"-g", "*group", XrmoptionSepArg, NULL},
+@@ -141,0 +145 @@ static int use_args_and_xrm(int *argc, char **argv)
++        {"-f", "*focus", XrmoptionIsArg, NULL},
+@@ -250,0 +255,18 @@ static int use_args_and_xrm(int *argc, char **argv)
++    switch (xresource_load_int(&db, XRMAPPNAME, "group", &group)) {
++    case 1:
++        if (group >= GROUP_MIN && group <= GROUP_MAX)
++            g.option_group = group;
++        else
++            die(inv, "group argument range");
++        break;
++    case 0:
++        g.option_group = GROUP_WINDOWS;
++        break;
++    case -1:
++        die(inv, "group argument");
++        break;
++    }
++    g.option_focus_preview = xresource_load_string(&db, XRMAPPNAME, "focus") != NULL;
++    msg(0, "group: %d, focus preview: %d\n",
++        g.option_group, g.option_focus_preview);
++
+diff --git a/src/alttab.h b/src/alttab.h
+index 429600d..df2c087 100644
+--- a/src/alttab.h
++++ b/src/alttab.h
+@@ -85,0 +86 @@ typedef struct {
++    char app_id[MAXNAMESZ];
+@@ -207,0 +209,7 @@ typedef struct {
++#define GROUP_MIN       0
++#define GROUP_WINDOWS   0
++#define GROUP_APPS      1
++#define GROUP_CURRENT   2
++#define GROUP_MAX       2
++    int option_group;
++    bool option_focus_preview;
+diff --git a/src/gui.c b/src/gui.c
+index 696411c..94ef8e2 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -49,0 +50 @@ static int selNdx;                 // current (selected) item
++static void focusSelection(void);
+@@ -711,0 +713 @@ int uiShow(bool direction)
++    focusSelection();
+@@ -755,0 +758,8 @@ void uiExpose(void)
++static void focusSelection(void)
++{
++    if (!g.option_focus_preview || !uiwin)
++        return;
++    setFocus(selNdx);
++    XRaiseWindow(dpy, uiwin);
++}
++
+@@ -768,0 +779,2 @@ int uiHide(void)
++    // Final focus is user-visible history, unlike intermediate previews.
++    g.uiShowHasRun = false;
+@@ -806,0 +819 @@ int uiNextWindow(void)
++    focusSelection();
+@@ -821,0 +835 @@ int uiPrevWindow(void)
++    focusSelection();
+@@ -868,0 +883 @@ int uiSelectWindow(int ndx)
++    focusSelection();
+diff --git a/src/win.c b/src/win.c
+index 9825f20..890318c 100644
+--- a/src/win.c
++++ b/src/win.c
+@@ -28,0 +29 @@ along with alttab.  If not, see <http://www.gnu.org/licenses/>.
++#include <ctype.h>
+@@ -192,0 +194,61 @@ size_t get_desktop_name(Window win, unsigned long desktop, char* name) {
++static void set_app_id(WindowInfo *wi)
++{
++    XClassHint hint = {0};
++    const char *source = NULL;
++
++    if (XGetClassHint(dpy, wi->id, &hint))
++        source = (hint.res_class && hint.res_class[0]) ? hint.res_class : hint.res_name;
++
++    if (source && source[0]) {
++        size_t i;
++        for (i = 0; source[i] && i < MAXNAMESZ - 1; i++)
++            wi->app_id[i] = tolower((unsigned char)source[i]);
++        wi->app_id[i] = '\0';
++    } else {
++        snprintf(wi->app_id, MAXNAMESZ, "window:%lx", wi->id);
++    }
++
++    if (hint.res_name)
++        XFree(hint.res_name);
++    if (hint.res_class)
++        XFree(hint.res_class);
++}
++
++static void filter_window_groups(void)
++{
++    int in, out = 0;
++    char current_app[MAXNAMESZ];
++
++    if (g.option_group == GROUP_WINDOWS || g.maxNdx == 0)
++        return;
++
++    strncpy(current_app, g.winlist[0].app_id, MAXNAMESZ);
++    current_app[MAXNAMESZ - 1] = '\0';
++
++    for (in = 0; in < g.maxNdx; in++) {
++        bool keep = true;
++        int seen;
++
++        if (g.option_group == GROUP_CURRENT) {
++            keep = strcmp(g.winlist[in].app_id, current_app) == 0;
++        } else {
++            for (seen = 0; seen < out; seen++) {
++                if (strcmp(g.winlist[seen].app_id, g.winlist[in].app_id) == 0) {
++                    keep = false;
++                    break;
++                }
++            }
++        }
++
++        if (!keep) {
++            if (g.winlist[in].icon_allocated)
++                XFreePixmap(dpy, g.winlist[in].icon_drawable);
++            continue;
++        }
++        if (out != in)
++            g.winlist[out] = g.winlist[in];
++        out++;
++    }
++    g.maxNdx = out;
++}
++
+@@ -496,0 +559 @@ int addWindowInfo(Window win, int reclevel, int wm_id, unsigned long desktop,
++    set_app_id(&WI);
+@@ -707,0 +771 @@ int initWinlist(void)
++    filter_window_groups();
+@@ -771,2 +835,3 @@ int setFocus(int winNdx)
+-    // pull to head
+-    addToSortlist(g.winlist[winNdx].id, true, true);
++    // Preview focus must not rewrite the MRU order while the switcher is open.
++    if (!(g.option_focus_preview && g.uiShowHasRun))
++        addToSortlist(g.winlist[winNdx].id, true, true);
+@@ -786,0 +852,2 @@ void winPropChangeEvent(XPropertyEvent e)
++    if (g.option_focus_preview && g.uiShowHasRun)
++        return;
+@@ -917,0 +985,2 @@ void winFocusChangeEvent(XFocusChangeEvent e)
++    if (g.option_focus_preview && g.uiShowHasRun)
++        return;

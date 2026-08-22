@@ -34,7 +34,7 @@
         rev = "9472d0bfaed91f5d139431b84198ccd4e8993a6e";
         hash = "sha256-Cptaz0zdyaIVNvlLIFoSXntrpObbLKdaWnGVwEfGx18=";
       };
-      patches = [ ];
+      patches = [ ./alttab-groups.patch ];
       doCheck = false;
     }))
     xmessage
@@ -386,6 +386,19 @@
     isNormalUser = true;
     hashedPassword = "$6$QrKXg5g6nEHsWbkm$GdlWBtzXoQo7djWCJcMYcAZ/Zypk13Bq6nETchLc49hstumtoZ2q0tKvvrX3CLxqEmnZhDA8/0aw/Sen9mo5L/";
     extraGroups = [ "wheel" "pcspkr" "input" ];
+  };
+  virtualisation.vmVariant = {
+    services.displayManager.autoLogin = {
+      enable = lib.mkForce true;
+      user = lib.mkForce "mpontus";
+    };
+    services.openssh.enable = true;
+    users.users.mpontus = {
+      hashedPassword = lib.mkForce "";
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzyhZA4hmSFf9vhRM4QBEgVuTKkZXCQw0VMByKnGLtc m.pontus@gmail.com"
+      ];
+    };
   };
   security.sudo.extraConfig = ''
     Defaults        env_reset,timestamp_timeout=30

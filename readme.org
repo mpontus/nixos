@@ -302,6 +302,24 @@ boot.supportedFilesystems = [ "ntfs" ];
   };
 #+end_src
 
+The graphical VM uses passwordless SSH and autologin only in its test variant.
+
+#+begin_src nix :noweb-ref system-configuration
+  virtualisation.vmVariant = {
+    services.displayManager.autoLogin = {
+      enable = lib.mkForce true;
+      user = lib.mkForce "mpontus";
+    };
+    services.openssh.enable = true;
+    users.users.mpontus = {
+      hashedPassword = lib.mkForce "";
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzyhZA4hmSFf9vhRM4QBEgVuTKkZXCQw0VMByKnGLtc m.pontus@gmail.com"
+      ];
+    };
+  };
+#+end_src
+
 *** sudo
 
 Increase sudo password timeout
@@ -746,7 +764,7 @@ st
     rev = "9472d0bfaed91f5d139431b84198ccd4e8993a6e";
     hash = "sha256-Cptaz0zdyaIVNvlLIFoSXntrpObbLKdaWnGVwEfGx18=";
   };
-  patches = [ ];
+  patches = [ ./alttab-groups.patch ];
   doCheck = false;
 }))
 xmessage
