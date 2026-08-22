@@ -48,6 +48,15 @@ function setKittyTitle(title: string): void {
   );
 }
 
+function hasKittyRemoteControl(): boolean {
+  if (!kittyWindowId) return false;
+  return spawnSync(
+    "kitten",
+    ["@", "ls", "--match", `id:${kittyWindowId}`],
+    { stdio: "ignore" },
+  ).status === 0;
+}
+
 function idleTitle(): string {
   return `π ${project}${currentModel ? ` · ${currentModel}` : ""}`;
 }
@@ -117,6 +126,11 @@ export default function piKitty(pi: ExtensionAPI) {
 
       if (!kittyWindowId) {
         ctx.ui.notify("/window-clone requires Pi to run inside Kitty.", "error");
+        return;
+      }
+
+      if (!hasKittyRemoteControl()) {
+        ctx.ui.notify("Kitty remote control is unavailable.", "error");
         return;
       }
 
