@@ -36,7 +36,6 @@
       };
       patches = [
         ./alttab-groups.patch
-        ./alttab-raise-preview.patch
         ./alttab-popup-singleton.patch
       ];
       doCheck = false;
