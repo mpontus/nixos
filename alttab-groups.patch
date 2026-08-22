@@ -38,7 +38,7 @@ index fe08705..568157a 100644
 +!alttab.focus:           true
 +
 diff --git a/src/alttab.c b/src/alttab.c
-index 1cc156a..ff2ab23 100644
+index 1cc156a..7ad8a2a 100644
 --- a/src/alttab.c
 +++ b/src/alttab.c
 @@ -53,0 +54,2 @@ Options:\n\
@@ -49,7 +49,7 @@ index 1cc156a..ff2ab23 100644
 +    unsigned int wmindex, dsindex, scindex, isrc, bindex, group;
 @@ -117,0 +120 @@ static int use_args_and_xrm(int *argc, char **argv)
 +        {"-g", "*group", XrmoptionSepArg, NULL},
-@@ -141,0 +145 @@ static int use_args_and_xrm(int *argc, char **argv)
+@@ -142,0 +146 @@ static int use_args_and_xrm(int *argc, char **argv)
 +        {"-f", "*focus", XrmoptionIsArg, NULL},
 @@ -250,0 +255,18 @@ static int use_args_and_xrm(int *argc, char **argv)
 +    switch (xresource_load_int(&db, XRMAPPNAME, "group", &group)) {
