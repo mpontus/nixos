@@ -40,6 +40,7 @@
         ./alttab-composite-snapshots.patch
         ./alttab-live-damage.patch
         ./alttab-preview-cache.patch
+        ./alttab-preview-icons.patch
       ];
       buildInputs = old.buildInputs ++ [ libxcomposite libxdamage ];
       doCheck = false;

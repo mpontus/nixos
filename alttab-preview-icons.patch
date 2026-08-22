@@ -1,0 +1,17 @@
+diff --git a/src/gui.c b/src/gui.c
+index 4ac7df1..f052139 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -459,2 +459,8 @@ static void prepareTile(WindowInfo * wi)
+-    // minimized, hidden, or otherwise unavailable windows.
+-    if (drawPreview(wi))
++    // minimized, hidden, or otherwise unavailable windows. Overlay a compact
++    // application icon so snapshots remain identifiable at a glance.
++    if (drawPreview(wi)) {
++        if (g.option_iconSrc != ISRC_NONE && wi->icon_drawable) {
++            XFillRectangle(dpy, wi->tile, g.gcReverse, 2, 2, 28, 28);
++            pixmapFitXrender(wi->icon_drawable, None, wi->tile,
++                             wi->icon_w, wi->icon_h, 24, 24, 4, 4);
++        }
+@@ -461,0 +468 @@ static void prepareTile(WindowInfo * wi)
++    }
