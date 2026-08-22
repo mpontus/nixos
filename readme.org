@@ -1123,6 +1123,8 @@ in {
       background #131c2b
       foreground #f4effa
       allow_remote_control yes
+      bell_on_tab "🔔 "
+      enable_audio_bell no
     '';
     "xfce4/terminal/terminalrc".text = ''
       [Configuration]
