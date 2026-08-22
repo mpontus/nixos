@@ -26,7 +26,7 @@
     gnomeExtensions.appindicator
     dmenu
     st
-    (alttab.overrideAttrs (_: {
+    (alttab.overrideAttrs (old: {
       version = "unstable-2026-05-21";
       src = fetchFromGitHub {
         owner = "sagb";
@@ -37,7 +37,10 @@
       patches = [
         ./alttab-groups.patch
         ./alttab-popup-singleton.patch
+        ./alttab-composite-snapshots.patch
+        ./alttab-live-damage.patch
       ];
+      buildInputs = old.buildInputs ++ [ libxcomposite libxdamage ];
       doCheck = false;
     }))
     xmessage

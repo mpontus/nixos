@@ -756,7 +756,7 @@ st
 ** XFCE + XMonad islands
 
 #+begin_src nix :noweb-ref system-packages
-(alttab.overrideAttrs (_: {
+(alttab.overrideAttrs (old: {
   version = "unstable-2026-05-21";
   src = fetchFromGitHub {
     owner = "sagb";
@@ -767,7 +767,10 @@ st
   patches = [
     ./alttab-groups.patch
     ./alttab-popup-singleton.patch
+    ./alttab-composite-snapshots.patch
+    ./alttab-live-damage.patch
   ];
+  buildInputs = old.buildInputs ++ [ libxcomposite libxdamage ];
   doCheck = false;
 }))
 xmessage

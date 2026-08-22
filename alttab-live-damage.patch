@@ -1,0 +1,129 @@
+diff --git a/configure.ac b/configure.ac
+index f6fb934..1308da8 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -9,0 +10 @@ PKG_CHECK_MODULES([xcomposite], [xcomposite])
++PKG_CHECK_MODULES([xdamage], [xdamage])
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 0a42670..f8cff8c 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -3,2 +3,2 @@ alttab_SOURCES = alttab.c gui.c win.c x.c rp.c util.c ewmh.c icon.c pngd.c randr
+-AM_CFLAGS = $(x11_CFLAGS) $(xft_CFLAGS) $(xrender_CFLAGS) $(xcomposite_CFLAGS) $(xrandr_CFLAGS) $(libpng_CFLAGS) $(fts_CFLAGS) $(xpm_CFLAGS) -Wall
+-LIBS += $(x11_LIBS) $(xft_LIBS) $(xrender_LIBS) $(xcomposite_LIBS) $(xrandr_LIBS) $(libpng_LIBS) $(fts_LIBS) $(xpm_LIBS)
++AM_CFLAGS = $(x11_CFLAGS) $(xft_CFLAGS) $(xrender_CFLAGS) $(xcomposite_CFLAGS) $(xdamage_CFLAGS) $(xrandr_CFLAGS) $(libpng_CFLAGS) $(fts_CFLAGS) $(xpm_CFLAGS) -Wall
++LIBS += $(x11_LIBS) $(xft_LIBS) $(xrender_LIBS) $(xcomposite_LIBS) $(xdamage_LIBS) $(xrandr_LIBS) $(libpng_LIBS) $(fts_LIBS) $(xpm_LIBS)
+diff --git a/src/alttab.c b/src/alttab.c
+index cfa46cc..9325ba0 100644
+--- a/src/alttab.c
++++ b/src/alttab.c
+@@ -661,0 +662,2 @@ int main(int argc, char **argv)
++        if (g.uiShowHasRun)
++            uiRefreshPreviews();
+@@ -678,0 +681,3 @@ int main(int argc, char **argv)
++        if (uiHandleDamage(&ev))
++            continue;
++
+diff --git a/src/alttab.h b/src/alttab.h
+index ffc8e44..dd089f9 100644
+--- a/src/alttab.h
++++ b/src/alttab.h
+@@ -67,0 +68 @@ along with alttab.  If not, see <http://www.gnu.org/licenses/>.
++#include <X11/extensions/Xdamage.h>
+@@ -100,0 +102,2 @@ typedef struct {
++    Damage preview_damage;
++    bool preview_damaged;
+@@ -240,0 +244,2 @@ int uiSupersede(void);
++bool uiHandleDamage(XEvent *event);
++void uiRefreshPreviews(void);
+diff --git a/src/gui.c b/src/gui.c
+index 0b389d7..038e182 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -47,0 +48,5 @@ static Colormap colormap;
++static int damage_available = -1;
++static int damage_event_base;
++
++static void prepareTile(WindowInfo *wi);
++static int placeSingleTile(int index);
+@@ -192,0 +198,8 @@ static bool capturePreview(WindowInfo *wi)
++    if (damage_available < 0) {
++        int error_base;
++        damage_available = XDamageQueryExtension(dpy, &damage_event_base,
++                                                  &error_base);
++    }
++    if (damage_available)
++        wi->preview_damage = XDamageCreate(dpy, wi->id,
++                                           XDamageReportNonEmpty);
+@@ -238,0 +252,4 @@ static void releasePreview(WindowInfo *wi)
++    if (wi->preview_damage) {
++        XDamageDestroy(dpy, wi->preview_damage);
++        wi->preview_damage = None;
++    }
+@@ -248,0 +266,59 @@ static void releasePreview(WindowInfo *wi)
++bool uiHandleDamage(XEvent *event)
++{
++    int i;
++    XDamageNotifyEvent *damage;
++
++    if (!g.uiShowHasRun || !damage_available
++        || event->type != damage_event_base + XDamageNotify)
++        return false;
++    damage = (XDamageNotifyEvent *) event;
++    for (i = 0; i < g.maxNdx; i++) {
++        if (g.winlist[i].id == damage->drawable) {
++            g.winlist[i].preview_damaged = true;
++            if (damage->geometry.width != g.winlist[i].preview_w
++                || damage->geometry.height != g.winlist[i].preview_h) {
++                releasePreview(&g.winlist[i]);
++                capturePreview(&g.winlist[i]);
++            } else {
++                XDamageSubtract(dpy, g.winlist[i].preview_damage, None, None);
++            }
++            break;
++        }
++    }
++    return true;
++}
++
++void uiRefreshPreviews(void)
++{
++    static struct timespec last = {0, 0};
++    struct timespec now;
++    int i;
++    bool redrawn = false;
++    long elapsed;
++
++    if (!g.uiShowHasRun)
++        return;
++    clock_gettime(CLOCK_MONOTONIC, &now);
++    elapsed = (now.tv_sec - last.tv_sec) * 1000000000L
++        + now.tv_nsec - last.tv_nsec;
++    if (elapsed < 33333333L)
++        return;
++
++    for (i = 0; i < g.maxNdx; i++) {
++        if (!g.winlist[i].preview_damaged)
++            continue;
++        g.winlist[i].preview_damaged = false;
++        if (g.winlist[i].tile)
++            XFreePixmap(dpy, g.winlist[i].tile);
++        g.winlist[i].tile = None;
++        prepareTile(&g.winlist[i]);
++        placeSingleTile(i);
++        redrawn = true;
++    }
++    if (redrawn) {
++        framesRedraw();
++        XFlush(dpy);
++        last = now;
++    }
++}
++
+diff --git a/src/win.c b/src/win.c
+index bf85b15..f40856e 100644
+--- a/src/win.c
++++ b/src/win.c
+@@ -560,0 +561,2 @@ int addWindowInfo(Window win, int reclevel, int wm_id, unsigned long desktop,
++    WI.preview_damage = None;
++    WI.preview_damaged = false;

@@ -1,0 +1,135 @@
+diff --git a/configure.ac b/configure.ac
+index 0cdcd10..f6fb934 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -8,0 +9 @@ PKG_CHECK_MODULES([xrender], [xrender])
++PKG_CHECK_MODULES([xcomposite], [xcomposite])
+diff --git a/src/Makefile.am b/src/Makefile.am
+index b6d3fa3..0a42670 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -3,2 +3,2 @@ alttab_SOURCES = alttab.c gui.c win.c x.c rp.c util.c ewmh.c icon.c pngd.c randr
+-AM_CFLAGS = $(x11_CFLAGS) $(xft_CFLAGS) $(xrender_CFLAGS) $(xrandr_CFLAGS) $(libpng_CFLAGS) $(fts_CFLAGS) $(xpm_CFLAGS) -Wall
+-LIBS += $(x11_LIBS) $(xft_LIBS) $(xrender_LIBS) $(xrandr_LIBS) $(libpng_LIBS) $(fts_LIBS) $(xpm_LIBS)
++AM_CFLAGS = $(x11_CFLAGS) $(xft_CFLAGS) $(xrender_CFLAGS) $(xcomposite_CFLAGS) $(xrandr_CFLAGS) $(libpng_CFLAGS) $(fts_CFLAGS) $(xpm_CFLAGS) -Wall
++LIBS += $(x11_LIBS) $(xft_LIBS) $(xrender_LIBS) $(xcomposite_LIBS) $(xrandr_LIBS) $(libpng_LIBS) $(fts_LIBS) $(xpm_LIBS)
+diff --git a/src/alttab.h b/src/alttab.h
+index dede6c5..ffc8e44 100644
+--- a/src/alttab.h
++++ b/src/alttab.h
+@@ -96,0 +97,4 @@ typedef struct {
++    Pixmap preview;
++    Visual *preview_visual;
++    unsigned int preview_w, preview_h;
++    bool preview_redirected;
+diff --git a/src/gui.c b/src/gui.c
+index 4060ada..0b389d7 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -23,0 +24 @@ along with alttab.  If not, see <http://www.gnu.org/licenses/>.
++#include <X11/extensions/Xcomposite.h>
+@@ -24,0 +26 @@ along with alttab.  If not, see <http://www.gnu.org/licenses/>.
++#include <stdint.h>
+@@ -166,0 +169,80 @@ static int pointedTile(int x, int y)
++static bool capturePreview(WindowInfo *wi)
++{
++    static int composite_available = -1;
++    int event_base, error_base;
++    XWindowAttributes attr;
++
++    if (composite_available < 0)
++        composite_available = XCompositeQueryExtension(dpy, &event_base,
++                                                        &error_base);
++    if (!composite_available || !XGetWindowAttributes(dpy, wi->id, &attr)
++        || attr.map_state != IsViewable || attr.width < 1 || attr.height < 1)
++        return false;
++
++    XCompositeRedirectWindow(dpy, wi->id, CompositeRedirectAutomatic);
++    wi->preview_redirected = true;
++    wi->preview = XCompositeNameWindowPixmap(dpy, wi->id);
++    if (!wi->preview) {
++        XCompositeUnredirectWindow(dpy, wi->id, CompositeRedirectAutomatic);
++        wi->preview_redirected = false;
++        return false;
++    }
++    wi->preview_visual = attr.visual;
++    wi->preview_w = attr.width;
++    wi->preview_h = attr.height;
++    return true;
++}
++
++static bool drawPreview(WindowInfo *wi)
++{
++    XRenderPictFormat *src_format, *dst_format;
++    XTransform transform = {{{0}}};
++    Picture src, dst;
++    unsigned int w, h;
++    int x, y;
++
++    if (!wi->preview && !capturePreview(wi))
++        return false;
++    src_format = XRenderFindVisualFormat(dpy, wi->preview_visual);
++    dst_format = XRenderFindVisualFormat(dpy, DefaultVisual(dpy, scr));
++    if (!src_format || !dst_format)
++        return false;
++
++    if ((uint64_t) iconW * wi->preview_h <= (uint64_t) iconH * wi->preview_w) {
++        w = iconW;
++        h = wi->preview_h * iconW / wi->preview_w;
++    } else {
++        h = iconH;
++        w = wi->preview_w * iconH / wi->preview_h;
++    }
++    if (!w || !h)
++        return false;
++    x = (iconW - w) / 2;
++    y = (iconH - h) / 2;
++
++    src = XRenderCreatePicture(dpy, wi->preview, src_format, 0, NULL);
++    dst = XRenderCreatePicture(dpy, wi->tile, dst_format, 0, NULL);
++    transform.matrix[0][0] = ((XFixed) wi->preview_w << 16) / w;
++    transform.matrix[1][1] = ((XFixed) wi->preview_h << 16) / h;
++    transform.matrix[2][2] = XDoubleToFixed(1.0);
++    XRenderSetPictureTransform(dpy, src, &transform);
++    XRenderSetPictureFilter(dpy, src, FilterBilinear, NULL, 0);
++    XRenderComposite(dpy, PictOpOver, src, None, dst, 0, 0, 0, 0,
++                     x, y, w, h);
++    XRenderFreePicture(dpy, src);
++    XRenderFreePicture(dpy, dst);
++    return true;
++}
++
++static void releasePreview(WindowInfo *wi)
++{
++    if (wi->preview) {
++        XFreePixmap(dpy, wi->preview);
++        wi->preview = None;
++    }
++    if (wi->preview_redirected) {
++        XCompositeUnredirectWindow(dpy, wi->id, CompositeRedirectAutomatic);
++        wi->preview_redirected = false;
++    }
++}
++
+@@ -184,4 +266,5 @@ static void prepareTile(WindowInfo * wi)
+-    // mini-window content could be drawn here,
+-    // but there is no backing store of windows
+-    // in my simple environments (as reported by xwininfo)
+-    //
++    // Prefer a compositor-backed window snapshot; retain icon fallback for
++    // minimized, hidden, or otherwise unavailable windows.
++    if (drawPreview(wi))
++        goto endIcon;
++
+@@ -808,0 +892,2 @@ static int uiHideInternal(bool focus)
++        if (g.winlist)
++            releasePreview(&g.winlist[y]);
+diff --git a/src/win.c b/src/win.c
+index 890318c..bf85b15 100644
+--- a/src/win.c
++++ b/src/win.c
+@@ -556,0 +557,4 @@ int addWindowInfo(Window win, int reclevel, int wm_id, unsigned long desktop,
++    WI.preview = None;
++    WI.preview_visual = NULL;
++    WI.preview_w = WI.preview_h = 0;
++    WI.preview_redirected = false;
