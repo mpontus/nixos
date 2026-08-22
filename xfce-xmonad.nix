@@ -114,33 +114,6 @@ let
       runHook postInstall
     '';
   };
-  gtkAccent = pkgs.runCommandCC "gtk-accent" {
-    nativeBuildInputs = [ pkgs.pkg-config ];
-    buildInputs = [ pkgs.gtk3 ];
-  } ''
-    mkdir -p "$out/bin"
-    cat > gtk-accent.c <<'EOF'
-    #include <gtk/gtk.h>
-    #include <stdio.h>
-
-    int main(int argc, char **argv) {
-      GdkRGBA color;
-      gtk_init(&argc, &argv);
-      GtkStyleContext *context = gtk_widget_get_style_context(gtk_button_new());
-      if (!gtk_style_context_lookup_color(context, "theme_selected_bg_color", &color)) {
-        gtk_style_context_set_state(context, GTK_STATE_FLAG_SELECTED);
-        gtk_style_context_get_background_color(context, GTK_STATE_FLAG_SELECTED, &color);
-      }
-      printf("#%02x%02x%02x\n",
-        (int)(color.red * 255 + 0.5),
-        (int)(color.green * 255 + 0.5),
-        (int)(color.blue * 255 + 0.5));
-      return 0;
-    }
-    EOF
-    $CC $(pkg-config --cflags gtk+-3.0) gtk-accent.c \
-      $(pkg-config --libs gtk+-3.0) -o "$out/bin/gtk-accent"
-  '';
   xfceIslandInset = pkgs.writeShellApplication {
     name = "xfce-island-inset";
     runtimeInputs = with pkgs; [ util-linux xdotool ];
@@ -577,7 +550,6 @@ in {
   };
   environment.systemPackages = with pkgs; [
     appmenuXfce
-    gtkAccent
     referenceGtkTheme
     papirus-icon-theme
     xdotool
