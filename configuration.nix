@@ -47,34 +47,6 @@
   ];
 
   nixpkgs.overlays = [
-    (final: prev:
-      let
-        wallpapers = [
-          { prefix = "adapta"; package = prev.adapta-backgrounds; }
-          { prefix = "budgie"; package = prev.budgie-backgrounds; }
-          { prefix = "cosmic"; package = prev.cosmic-wallpapers; }
-          { prefix = "gnome"; package = prev.gnome-backgrounds; }
-          { prefix = "kde"; package = prev.kdePackages.plasma-workspace-wallpapers; }
-          { prefix = "elementary"; package = prev.pantheon.elementary-wallpapers; }
-          { prefix = "pop-hp"; package = prev.pop-hp-wallpapers; }
-          { prefix = "pop"; package = prev.pop-wallpapers; }
-          { prefix = "system76"; package = prev.system76-wallpapers; }
-        ];
-      in {
-        xfdesktop = prev.xfdesktop.overrideAttrs (old: {
-          postInstall = (old.postInstall or "") + ''
-            mkdir -p "$out/share/backgrounds/xfce"
-            ${final.lib.concatMapStringsSep "\n" ({ prefix, package }: ''
-              for directory in "${package}/share/backgrounds" "${package}/share/wallpapers"; do
-                [ -d "$directory" ] || continue
-                ${final.findutils}/bin/find "$directory" -type f \
-                  \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
-                  -exec sh -c 'directory=$1; shift; for image; do relative="''${image#"$directory"/}"; name=$(${final.coreutils}/bin/printf "%s" "$relative" | ${final.coreutils}/bin/tr "/" "-"); ${final.coreutils}/bin/ln -s "$image" "$out/share/backgrounds/xfce/${prefix}-$name"; done' sh "$directory" {} +
-              done
-            '') wallpapers}
-          '';
-        });
-      })
     (let
       moz-rev = "16ab32eeb8390de633eb336eb4910efbbe0091e6";
       moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";
