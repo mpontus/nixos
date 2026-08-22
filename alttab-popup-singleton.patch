@@ -1,0 +1,51 @@
+diff --git a/src/alttab.c b/src/alttab.c
+index c77b77e..4b27c25 100644
+--- a/src/alttab.c
++++ b/src/alttab.c
+@@ -679,0 +680,4 @@ int main(int argc, char **argv)
++        case SelectionClear:
++            if (g.uiShowHasRun)
++                uiSupersede();
++            break;
+diff --git a/src/alttab.h b/src/alttab.h
+index df2c087..dede6c5 100644
+--- a/src/alttab.h
++++ b/src/alttab.h
+@@ -235,0 +236 @@ int uiHide(void);
++int uiSupersede(void);
+diff --git a/src/gui.c b/src/gui.c
+index f898aa6..7a8118c 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -684,0 +685,8 @@ int uiShow(bool direction)
++    // Only one alttab popup may be visible across processes. Serialize the
++    // ownership transfer so the previous popup is unmapped before this one.
++    Atom popup_owner = XInternAtom(dpy, "_ALTTAB_ACTIVE_POPUP", False);
++    XGrabServer(dpy);
++    Window previous_uiwin = XGetSelectionOwner(dpy, popup_owner);
++    if (previous_uiwin != None && previous_uiwin != uiwin)
++        XUnmapWindow(dpy, previous_uiwin);
++    XSetSelectionOwner(dpy, popup_owner, uiwin, CurrentTime);
+@@ -685,0 +694,2 @@ int uiShow(bool direction)
++    XUngrabServer(dpy);
++    XFlush(dpy);
+@@ -766 +776 @@ static void focusSelection(void)
+-// remove ui and switch to chosen window
++// remove ui and optionally switch to chosen window
+@@ -768 +778 @@ static void focusSelection(void)
+-int uiHide(void)
++static int uiHideInternal(bool focus)
+@@ -781 +791 @@ int uiHide(void)
+-    if (g.winlist) {
++    if (focus && g.winlist) {
+@@ -806,0 +817,10 @@ int uiHide(void)
++int uiHide(void)
++{
++    return uiHideInternal(true);
++}
++
++int uiSupersede(void)
++{
++    return uiHideInternal(false);
++}
++

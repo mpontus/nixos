@@ -764,7 +764,11 @@ st
     rev = "9472d0bfaed91f5d139431b84198ccd4e8993a6e";
     hash = "sha256-Cptaz0zdyaIVNvlLIFoSXntrpObbLKdaWnGVwEfGx18=";
   };
-  patches = [ ./alttab-groups.patch ];
+  patches = [
+    ./alttab-groups.patch
+    ./alttab-raise-preview.patch
+    ./alttab-popup-singleton.patch
+  ];
   doCheck = false;
 }))
 xmessage

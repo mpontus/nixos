@@ -1,0 +1,28 @@
+diff --git a/doc/alttab.1.ronn b/doc/alttab.1.ronn
+index fa5c46e..623d7a2 100644
+--- a/doc/alttab.1.ronn
++++ b/doc/alttab.1.ronn
+@@ -109 +109 @@ Most command line options have corresponding X resource, see doc/alttab.ad for e
+-    Focus and raise each selected window while the switcher remains open. Escape restores the original selection.
++    Map and raise each selected window while the switcher remains open without changing input focus. Escape restores the original selection.
+diff --git a/doc/alttab.ad b/doc/alttab.ad
+index 568157a..14bb1c7 100644
+--- a/doc/alttab.ad
++++ b/doc/alttab.ad
+@@ -19 +19 @@
+-! Focus each selection while switching
++! Map and raise each selection while switching
+diff --git a/src/alttab.c b/src/alttab.c
+index 7ad8a2a..c77b77e 100644
+--- a/src/alttab.c
++++ b/src/alttab.c
+@@ -55 +55 @@ Options:\n\
+-    -f        focus each selection immediately\n\
++    -f        map and raise each selection immediately\n\
+diff --git a/src/gui.c b/src/gui.c
+index 94ef8e2..f898aa6 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -762 +762 @@ static void focusSelection(void)
+-    setFocus(selNdx);
++    XMapRaised(dpy, g.winlist[selNdx].id);
