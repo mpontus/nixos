@@ -26,7 +26,17 @@
     gnomeExtensions.appindicator
     dmenu
     st
-    alttab
+    (alttab.overrideAttrs (_: {
+      version = "unstable-2026-05-21";
+      src = fetchFromGitHub {
+        owner = "sagb";
+        repo = "alttab";
+        rev = "9472d0bfaed91f5d139431b84198ccd4e8993a6e";
+        hash = "sha256-Cptaz0zdyaIVNvlLIFoSXntrpObbLKdaWnGVwEfGx18=";
+      };
+      patches = [ ];
+      doCheck = false;
+    }))
     xmessage
     arc-theme
     catppuccin-gtk
