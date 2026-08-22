@@ -1,0 +1,177 @@
+diff --git a/src/alttab.c b/src/alttab.c
+index 9325ba0..bda74fb 100644
+--- a/src/alttab.c
++++ b/src/alttab.c
+@@ -648,0 +649 @@ int main(int argc, char **argv)
++    uiWarmPreviewCache();
+@@ -752,0 +754,7 @@ int main(int argc, char **argv)
++        case MapNotify:
++            if (ev.xmap.window != getUiwin()) {
++                addToSortlist(ev.xmap.window, false, false);
++                uiCacheWindow(ev.xmap.window);
++            }
++            break;
++
+@@ -753,0 +762 @@ int main(int argc, char **argv)
++            uiDropPreview(ev.xdestroywindow.window);
+diff --git a/src/alttab.h b/src/alttab.h
+index dd089f9..bf1f7e2 100644
+--- a/src/alttab.h
++++ b/src/alttab.h
+@@ -103,0 +104 @@ typedef struct {
++    bool preview_cached;
+@@ -126,0 +128,4 @@ typedef struct PermanentWindowInfo {
++    Pixmap preview;
++    Visual *preview_visual;
++    unsigned int preview_w, preview_h;
++    bool preview_redirected;
+@@ -245,0 +251,3 @@ void uiRefreshPreviews(void);
++void uiCacheWindow(Window window);
++void uiWarmPreviewCache(void);
++void uiDropPreview(Window window);
+diff --git a/src/gui.c b/src/gui.c
+index 038e182..4ac7df1 100644
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -30,0 +31 @@ along with alttab.  If not, see <http://www.gnu.org/licenses/>.
++#include <utlist.h>
+@@ -173,0 +175,54 @@ static int pointedTile(int x, int y)
++static PermanentWindowInfo *findPreviewCache(Window window)
++{
++    PermanentWindowInfo *cached;
++
++    DL_SEARCH_SCALAR(g.sortlist, cached, id, window);
++    return cached;
++}
++
++static void releaseCachedPreview(PermanentWindowInfo *cached)
++{
++    int i;
++
++    if (!cached || !cached->preview)
++        return;
++    if (g.winlist) {
++        for (i = 0; i < g.maxNdx; i++) {
++            if (g.winlist[i].id != cached->id || !g.winlist[i].preview_cached)
++                continue;
++            if (g.winlist[i].preview_damage)
++                XDamageDestroy(dpy, g.winlist[i].preview_damage);
++            g.winlist[i].preview_damage = None;
++            g.winlist[i].preview = None;
++            g.winlist[i].preview_redirected = false;
++            g.winlist[i].preview_cached = false;
++        }
++    }
++    XFreePixmap(dpy, cached->preview);
++    if (cached->preview_redirected)
++        XCompositeUnredirectWindow(dpy, cached->id,
++                                   CompositeRedirectAutomatic);
++    cached->preview = None;
++    cached->preview_redirected = false;
++}
++
++static void trimPreviewCache(Window keep)
++{
++    PermanentWindowInfo *cached;
++    int count = 0;
++
++    DL_FOREACH(g.sortlist, cached)
++        if (cached->preview)
++            count++;
++    if (count <= 32)
++        return;
++    for (cached = g.sortlist; cached && cached->next; cached = cached->next)
++        ;
++    for (; cached && count > 32; cached = cached->prev) {
++        if (cached->preview && cached->id != keep) {
++            releaseCachedPreview(cached);
++            count--;
++        }
++    }
++}
++
+@@ -178,0 +234,11 @@ static bool capturePreview(WindowInfo *wi)
++    PermanentWindowInfo *cached = findPreviewCache(wi->id);
++
++    if (cached && cached->preview) {
++        wi->preview = cached->preview;
++        wi->preview_visual = cached->preview_visual;
++        wi->preview_w = cached->preview_w;
++        wi->preview_h = cached->preview_h;
++        wi->preview_redirected = cached->preview_redirected;
++        wi->preview_cached = true;
++        goto damage;
++    }
+@@ -197,0 +264,11 @@ static bool capturePreview(WindowInfo *wi)
++    if (cached) {
++        cached->preview = wi->preview;
++        cached->preview_visual = wi->preview_visual;
++        cached->preview_w = wi->preview_w;
++        cached->preview_h = wi->preview_h;
++        cached->preview_redirected = wi->preview_redirected;
++        wi->preview_cached = true;
++        trimPreviewCache(wi->id);
++    }
++
++damage:
+@@ -255,0 +333,6 @@ static void releasePreview(WindowInfo *wi)
++    if (wi->preview_cached) {
++        wi->preview = None;
++        wi->preview_redirected = false;
++        wi->preview_cached = false;
++        return;
++    }
+@@ -265,0 +349,33 @@ static void releasePreview(WindowInfo *wi)
++void uiDropPreview(Window window)
++{
++    PermanentWindowInfo *cached = findPreviewCache(window);
++    int i;
++
++    if (g.winlist) {
++        for (i = 0; i < g.maxNdx; i++)
++            if (g.winlist[i].id == window)
++                releasePreview(&g.winlist[i]);
++    }
++    releaseCachedPreview(cached);
++}
++
++void uiCacheWindow(Window window)
++{
++    WindowInfo preview = {0};
++
++    if (!findPreviewCache(window))
++        return;
++    uiDropPreview(window);
++    preview.id = window;
++    if (capturePreview(&preview))
++        releasePreview(&preview);
++}
++
++void uiWarmPreviewCache(void)
++{
++    PermanentWindowInfo *cached;
++
++    DL_FOREACH(g.sortlist, cached)
++        uiCacheWindow(cached->id);
++}
++
+@@ -280 +396 @@ bool uiHandleDamage(XEvent *event)
+-                releasePreview(&g.winlist[i]);
++                uiDropPreview(g.winlist[i].id);
+@@ -282 +398 @@ bool uiHandleDamage(XEvent *event)
+-            } else {
++            } else if (g.winlist[i].preview_damage) {
+diff --git a/src/win.c b/src/win.c
+index f40856e..c25dd66 100644
+--- a/src/win.c
++++ b/src/win.c
+@@ -272,0 +273,4 @@ void addToSortlist(Window w, bool to_head, bool move)
++        s->preview = None;
++        s->preview_visual = NULL;
++        s->preview_w = s->preview_h = 0;
++        s->preview_redirected = false;
+@@ -301 +305 @@ int startupWintasks(void)
+-    long rootevmask = 0;
++    long rootevmask = SubstructureNotifyMask;
+@@ -562,0 +567 @@ int addWindowInfo(Window win, int reclevel, int wm_id, unsigned long desktop,
++    WI.preview_cached = false;

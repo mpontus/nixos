@@ -39,6 +39,7 @@
         ./alttab-popup-singleton.patch
         ./alttab-composite-snapshots.patch
         ./alttab-live-damage.patch
+        ./alttab-preview-cache.patch
       ];
       buildInputs = old.buildInputs ++ [ libxcomposite libxdamage ];
       doCheck = false;
