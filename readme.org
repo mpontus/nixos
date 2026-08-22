@@ -738,6 +738,7 @@ st
 ** XFCE + XMonad islands
 
 #+begin_src nix :noweb-ref system-packages
+alttab
 xmessage
 #+end_src
 

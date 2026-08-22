@@ -26,6 +26,7 @@
     gnomeExtensions.appindicator
     dmenu
     st
+    alttab
     xmessage
     arc-theme
     catppuccin-gtk
