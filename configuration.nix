@@ -488,6 +488,7 @@
   };
   services.xserver.enable = true;
   services.xserver.xkb.options = "ctrl:swapcaps";
+  i18n.inputMethod.enable = false;
   services.xserver.config = ''
   Section "Device"
   

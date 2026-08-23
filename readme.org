@@ -594,6 +594,7 @@ environment.variables = {
 #+begin_src nix :noweb-ref system-configuration
   services.xserver.enable = true;
   services.xserver.xkb.options = "ctrl:swapcaps";
+  i18n.inputMethod.enable = false;
 #+end_src
 
 *** Attempt to fix window flickering
@@ -993,6 +994,7 @@ in {
     papirus-icon-theme
     xfce.xfce4-panel
     xfce.xfce4-whiskermenu-plugin
+    xfce.xfce4-xkb-plugin
     xfce.xfce4-pulseaudio-plugin
     snixembed
     pavucontrol
@@ -1033,7 +1035,7 @@ in {
             <property name="position" type="string" value="p=0;x=${toString xfceIslands.right.centerX};y=${toString xfceIslands.centerY}"/>
             <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
             <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
-            <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/></property>
+            <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="15"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/></property>
           </property>
           <property name="panel-4" type="empty">
             <property name="position" type="string" value="p=0;x=${toString xfceIslands.power.centerX};y=${toString xfceIslands.centerY}"/>
@@ -1050,6 +1052,7 @@ in {
           </property>
           <property name="plugin-6" type="string" value="systray"><property name="square-icons" type="bool" value="true"/></property>
           <property name="plugin-7" type="string" value="appmenu"/>
+          <property name="plugin-15" type="string" value="xkb"/>
           <property name="plugin-8" type="string" value="pulseaudio"/>
           <property name="plugin-9" type="string" value="power-manager-plugin"/>
           <property name="plugin-10" type="string" value="notification-plugin"/>
