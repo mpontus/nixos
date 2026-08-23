@@ -205,6 +205,7 @@
       unstable.claude-code
       (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
       unstable.rustc cargo wasm-pack
+      guile
       unstable.gh hub
       deno
       mitmproxy

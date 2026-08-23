@@ -2271,7 +2271,10 @@ programs.firejail = {
 #+end_src
 
 Target packages register sandboxed commands in their own sections using the ~firejail-wrapped-binaries~ noweb ref. Wrapped binaries replace the normal command name when the target app should always run sandboxed.
-
+** Guile
+#+begin_src nix :noweb-ref home-packages
+guile
+#+end_src
 ** Git
 
 #+begin_src nix :noweb-ref system-packages
