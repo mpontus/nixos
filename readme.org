@@ -772,7 +772,6 @@ st
     ./alttab-live-damage.patch
     ./alttab-preview-cache.patch
     ./alttab-preview-icons.patch
-    ./alttab-close-workspace-change.patch
   ];
   buildInputs = old.buildInputs ++ [ libxcomposite libxdamage ];
   doCheck = false;
