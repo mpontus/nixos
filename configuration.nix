@@ -41,6 +41,7 @@
         ./alttab-live-damage.patch
         ./alttab-preview-cache.patch
         ./alttab-preview-icons.patch
+        ./alttab-raise-when-obscured.patch
       ];
       buildInputs = old.buildInputs ++ [ libxcomposite libxdamage ];
       doCheck = false;

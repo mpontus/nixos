@@ -1,0 +1,53 @@
+--- a/src/alttab.c
++++ b/src/alttab.c
+@@ -749,6 +749,19 @@
+ 
+         case PropertyNotify:
+             winPropChangeEvent(ev.xproperty);
++            if (g.uiShowHasRun && ev.xproperty.window == root
++                && (ev.xproperty.atom == g.naw || ev.xproperty.atom == g.ncd)) {
++                XRaiseWindow(dpy, getUiwin());
++                XFlush(dpy);
++            }
++            break;
++
++        case VisibilityNotify:
++            if (g.uiShowHasRun && ev.xvisibility.window == getUiwin()
++                && ev.xvisibility.state != VisibilityUnobscured) {
++                XRaiseWindow(dpy, getUiwin());
++                XFlush(dpy);
++            }
+             break;
+ 
+         case MapNotify:
+--- a/src/alttab.h
++++ b/src/alttab.h
+@@ -231,6 +231,7 @@
+     icon_t *ic;                 // cache of all icons
+     EwmhFeatures ewmh;          // guessed by ewmh_detectFeatures
+     Atom naw;                   // _NET_ACTIVE_WINDOW
++    Atom ncd;                   // _NET_CURRENT_DESKTOP
+ //    SwitchMoment last; // for detecting false focus events from WM
+     bool option_keep_ui;
+     bool option_sort_minimize;
+--- a/src/gui.c
++++ b/src/gui.c
+@@ -929,7 +929,7 @@
+ // warning: this overwrites any previous value.
+ // note: x_setCommonPropertiesForAnyWindow does the same thing for any window
+     XSelectInput(dpy, uiwin, ExposureMask | KeyPressMask | KeyReleaseMask
+-                 | ButtonPressMask | ButtonReleaseMask);
++                 | ButtonPressMask | ButtonReleaseMask | VisibilityChangeMask);
+     grabKeysAtUiShow(true);
+ // set window type so that WM will hopefully not resize it
+ // before mapping: https://specifications.freedesktop.org/wm-spec/1.3/ar01s05.html
+--- a/src/win.c
++++ b/src/win.c
+@@ -312,6 +312,7 @@
+     // root: watching for _NET_ACTIVE_WINDOW
+     if (g.option_wm == WM_EWMH) {
+         g.naw = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", true);
++        g.ncd = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", true);
+         rootevmask |= PropertyChangeMask;
+     }
+     // warning: this overwrites any previous value.
