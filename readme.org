@@ -970,7 +970,9 @@ in {
     package = pkgs.picom;
     backend = "glx";
     vSync = false;
-    fade = false;
+    fade = true;
+    fadeDelta = 50;
+    fadeSteps = [ 1 1 ];
     shadow = false;
     settings = {
       corner-radius = xfceIslands.radius;
