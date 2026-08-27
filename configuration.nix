@@ -308,6 +308,10 @@
       config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
     programs.emacs = {
       enable = true;
+      extraPackages = epkgs: [
+        pkgs.typescript
+        pkgs.typescript-language-server
+      ];
       # package = pkgs.emacs.withPackages (epkgs: with epkgs; [
       #   vterm
       # ]);
