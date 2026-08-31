@@ -1130,7 +1130,7 @@ in {
       foreground #f4effa
       allow_remote_control yes
       bell_on_tab "🔔 "
-      enable_audio_bell no
+      enable_audio_bell yes
     '';
     "xfce4/terminal/terminalrc".text = ''
       [Configuration]
