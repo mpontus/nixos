@@ -2049,7 +2049,7 @@ Needed for [emacs-anywhere](https://github.com/zachcurry/emacs-anywhere#try-it).
 *** WM controls
 
 #+begin_src nix :noweb-ref home-packages
-  wmctrl xdotool xorg.xprop xorg.xwininfo
+  wmctrl xdotool xkill xorg.xprop xorg.xwininfo
 #+end_src
 
 * Development

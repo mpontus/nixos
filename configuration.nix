@@ -194,7 +194,7 @@
       imagemagick
       wl-clipboard
       xclip
-      wmctrl xdotool xorg.xprop xorg.xwininfo
+      wmctrl xdotool xkill xorg.xprop xorg.xwininfo
       # unstable.nodejs
       yarn
       pnpm
