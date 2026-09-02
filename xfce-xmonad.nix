@@ -194,12 +194,7 @@ in {
     xfce.xfce4-terminal
   ];
 
-  home-manager.users.mpontus.xsession = {
-    enable = true;
-    initExtra = ''
-      setxkbmap -option "" -option terminate:ctrl_alt_bksp -option ctrl:swapcaps
-    '';
-  };
+  home-manager.users.mpontus.xsession.enable = true;
 
   home-manager.users.mpontus.xdg.configFile = {
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".force = true;
