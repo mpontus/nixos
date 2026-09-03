@@ -195,19 +195,20 @@ in {
   ];
 
   home-manager.users.mpontus.xsession.enable = true;
+  # Keep Home Manager's default `setxkbmap -layout us` service from
+  # overriding services.xserver.xkb after login or keyboard hotplug.
+  home-manager.users.mpontus.home.keyboard = null;
+
+  # Apply through xfconf, not its mutable XML cache.
+  home-manager.users.mpontus.xfconf.settings = {
+    keyboard-layout."Default/XkbDisable" = true;
+    xfce4-panel."plugins/plugin-15/display-type" = {
+      type = "uint";
+      value = 2; # system-font layout label
+    };
+  };
 
   home-manager.users.mpontus.xdg.configFile = {
-    "xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml" = {
-      force = true;
-      text = ''
-        <?xml version="1.0" encoding="UTF-8"?>
-        <channel name="keyboard-layout" version="1.0">
-          <property name="Default" type="empty">
-            <property name="XkbDisable" type="bool" value="true"/>
-          </property>
-        </channel>
-      '';
-    };
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".force = true;
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
@@ -249,9 +250,7 @@ in {
           </property>
           <property name="plugin-6" type="string" value="systray"><property name="square-icons" type="bool" value="true"/></property>
           <property name="plugin-7" type="string" value="appmenu"/>
-          <property name="plugin-15" type="string" value="xkb">
-            <property name="display-type" type="uint" value="2"/>
-          </property>
+          <property name="plugin-15" type="string" value="xkb"/>
           <property name="plugin-8" type="string" value="pulseaudio"/>
           <property name="plugin-9" type="string" value="power-manager-plugin"/>
           <property name="plugin-10" type="string" value="notification-plugin"/>
