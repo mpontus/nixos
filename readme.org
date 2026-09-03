@@ -1018,7 +1018,7 @@ in {
             <property name="XkbDisable" type="bool" value="true"/>
           </property>
         </channel>
-      ';
+      '';
     };
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".force = true;
     "xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml".text = ''
