@@ -255,7 +255,7 @@
     } // (lib.trivial.pipe {
       "<Super>e" = {
         name = "Switch to Emacs";
-        command = "launch-or-raise -W Emacsd emacsclient --create-frame";
+        command = "emacsclient --create-frame";
       };
       "<Super>i" = {
         name = "Emacs Everyhere";
@@ -322,8 +322,6 @@
     services.emacs = {
       enable = true;
       socketActivation.enable = true;
-      startWithUserSession = false;
-      client.enable = true;
       defaultEditor = true;
     };
     programs.firefox.enable = true;
@@ -524,7 +522,6 @@
     };
   };
   programs.vim.enable = true;
-  programs.vim.defaultEditor = true;
   programs.fish.enable = true;
   # Enable `locate` command
   services.locate = {

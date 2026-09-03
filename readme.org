@@ -1231,7 +1231,7 @@ input-leap
 #+begin_src nix :noweb-ref dconf-keymap
   "<Super>e" = {
     name = "Switch to Emacs";
-    command = "launch-or-raise -W Emacsd emacsclient --create-frame";
+    command = "emacsclient --create-frame";
   };
 #+end_src
 
@@ -1341,8 +1341,6 @@ vterm
 services.emacs = {
   enable = true;
   socketActivation.enable = true;
-  startWithUserSession = false;
-  client.enable = true;
   defaultEditor = true;
 };
 #+end_src
@@ -1423,7 +1421,6 @@ Github-styled markdown previewer.
 **** Default editor
 #+begin_src nix :noweb-ref system-configuration
 programs.vim.enable = true;
-programs.vim.defaultEditor = true;
 #+end_src
 ** Browser
 *** Firefox
