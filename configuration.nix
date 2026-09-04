@@ -312,6 +312,18 @@
         pkgs.typescript
         pkgs.typescript-language-server
       ];
+      package = pkgs.symlinkJoin {
+        name = "emacs-with-copilot-libs";
+        paths = [ pkgs.emacs ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/emacs --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [
+            pkgs.libsecret
+            pkgs.glib
+            pkgs.stdenv.cc.cc
+          ]}
+        '';
+      };
       # package = pkgs.emacs.withPackages (epkgs: with epkgs; [
       #   vterm
       # ]);
