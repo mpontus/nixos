@@ -58,6 +58,7 @@
     rose-pine-gtk-theme
     tokyonight-gtk-theme
     ly
+    evtest
     unstable.uv
     pkg-config libssh2 zlib
     unstable.postman

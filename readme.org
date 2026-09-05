@@ -1928,6 +1928,15 @@ List open files and sockets
 #+begin_src nix :noweb-ref home-packages
 lsof
 #+end_src
+
+*** evtest
+
+Inspect Linux input device events.
+
+#+begin_src nix :noweb-ref system-packages
+evtest
+#+end_src
+
 *** inetutils
 
 Traceroute...
