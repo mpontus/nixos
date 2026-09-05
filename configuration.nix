@@ -505,6 +505,24 @@
   services.xserver.xkb.layout = "us,ru";
   services.xserver.xkb.options = "grp:win_space_toggle,ctrl:swapcaps";
   i18n.inputMethod.enable = false;
+  services.keyd = {
+    enable = true;
+    keyboards.default.settings = {
+      main.wakeup = "layer(numpad)";
+      numpad = {
+        y = "kp7";
+        u = "kp8";
+        i = "kp9";
+        h = "kp4";
+        j = "kp5";
+        k = "kp6";
+        b = "kp1";
+        n = "kp2";
+        m = "kp3";
+        space = "kp0";
+      };
+    };
+  };
   services.xserver.config = ''
   Section "Device"
   
