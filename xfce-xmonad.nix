@@ -325,6 +325,7 @@ in {
       background #131c2b
       foreground #f4effa
       allow_remote_control yes
+      map ctrl+shift+t new_tab_with_cwd
       bell_on_tab "🔔 "
       enable_audio_bell yes
     '';
