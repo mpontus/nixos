@@ -815,16 +815,100 @@ This module keeps GNOME available as a GDM fallback while making the tested Xorg
     config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
 #+end_src
 
-*** Application launcher
+*** Rofi command center
 
 #+begin_src nix :noweb-ref home-packages
 rofi
+rofi-calc
+rofi-emoji
+fd
+ripgrep
+jq
+libnotify
+pulseaudio
+bluez
+xorg.xrandr
+xclip
+clipnotify
+arandr
 #+end_src
 
 #+begin_src nix :noweb-ref home-configuration
+home.file.".local/bin/rofi-hub" = {
+  executable = true;
+  text = ''
+    #!${pkgs.bash}/bin/bash
+    set -eu
+    export PATH=${lib.makeBinPath [ pkgs.rofi pkgs.fd pkgs.xdg-utils pkgs.kitty pkgs.pulseaudio pkgs.bluez pkgs.blueman pkgs.xorg.xrandr pkgs.arandr pkgs.xclip pkgs.xfce.xfce4-session ]}
+    pick() { rofi -dmenu -i -monitor -1 -p "$1"; }
+    confirm() { printf 'No\nYes\n' | rofi -dmenu -monitor -1 -p "Confirm $1" | grep -qx Yes; }
+    action="''${1:-}"
+    if [ -z "$action" ]; then
+      action=$(printf '%s\n' '󰀻  Apps + windows' '  Calculator' '󰍉  Files' '󰘧  Projects' '󰖟  Web + bookmarks' '󰩫  Snippets' '󰞅  Emoji' '󰢹  Clipboard' '󰣀  SSH' '󰕾  Audio' '  Bluetooth' '󰍹  Displays' '󰐥  Session' | pick Actions) || exit 0
+      action=$(printf '%s' "$action" | sed 's/^.*  //')
+    fi
+    case "$action" in
+      'Apps + windows') exec rofi -show combi -combi-modes 'drun,window' -monitor -1 ;;
+      Calculator) exec rofi -show calc -modi calc -no-show-match -no-sort -monitor -1 ;;
+      Files) f=$(fd --type f --hidden --exclude .git . "$HOME" | sed "s|^$HOME/||" | pick Files) && xdg-open "$HOME/$f" ;;
+      Projects) d=$(fd --type d --max-depth 4 --hidden --exclude .git . "$HOME/projects" | pick Projects) && exec kitty --directory "$d" ;;
+      'Web + bookmarks')
+        q=$(cat "$HOME/.config/rofi/bookmarks"; printf 'Search the web…\n') | pick Web || exit 0
+        case "$q" in *'|'*) xdg-open "''${q#*|}" ;; *) [ "$q" = 'Search the web…' ] && q=$(rofi -dmenu -monitor -1 -p 'Web search') || true; [ -n "$q" ] && xdg-open "https://duckduckgo.com/?q=$(printf %s "$q" | jq -sRr @uri)" ;; esac ;;
+      Snippets) q=$(cat "$HOME/.config/rofi/snippets" | pick Snippets) && printf %s "''${q#*|}" | xclip -selection clipboard ;;
+      Emoji) exec rofi -show emoji -modi emoji -monitor -1 ;;
+      Clipboard) exec "$HOME/.local/bin/rofi-clipboard" ;;
+      SSH) h=$(awk '/^[[:space:]]*Host[[:space:]]+/ { for(i=2;i<=NF;i++) if ($i !~ /[*?!]/) print $i }' "$HOME/.ssh/config" 2>/dev/null | sort -u | pick SSH) && exec kitty ssh "$h" ;;
+      Audio) s=$(pactl list short sinks | cut -f2 | pick 'Default audio sink') && pactl set-default-sink "$s" ;;
+      Bluetooth) exec blueman-manager ;;
+      Displays) q=$(printf 'Open ARandR\nLaptop only\nExternal only\nExtend automatically\n' | pick Displays) || exit 0; case "$q" in 'Open ARandR') exec arandr ;; 'Laptop only') confirm "$q" && xrandr --output eDP-1 --auto $(xrandr | awk '/ connected/ && $1 != "eDP-1" {printf " --output %s --off",$1}') ;; 'External only') confirm "$q" && xrandr --output eDP-1 --off $(xrandr | awk '/ connected/ && $1 != "eDP-1" {printf " --output %s --auto",$1}') ;; 'Extend automatically') confirm "$q" && xrandr --auto ;; esac ;;
+      Session) q=$(printf 'Lock\nLog out\nReboot\nShut down\n' | pick Session) || exit 0; confirm "$q" || exit 0; case "$q" in Lock) xflock4 ;; 'Log out') xfce4-session-logout --logout ;; Reboot) systemctl reboot ;; 'Shut down') systemctl poweroff ;; esac ;;
+    esac
+  '';
+};
+home.file.".local/bin/rofi-clipboard-daemon" = {
+  executable = true;
+  text = ''
+    #!${pkgs.bash}/bin/bash
+    set -eu
+    export PATH=${lib.makeBinPath [ pkgs.xclip pkgs.clipnotify pkgs.coreutils ]}
+    dir="''${XDG_RUNTIME_DIR:?}/rofi-clipboard"
+    install -d -m 700 "$dir"
+    rm -f "$dir"/*
+    while clipnotify; do
+      if xclip -selection clipboard -t image/png -o > "$dir/.new" 2>/dev/null && [ -s "$dir/.new" ]; then ext=png
+      elif xclip -selection clipboard -t UTF8_STRING -o > "$dir/.new" 2>/dev/null && [ -s "$dir/.new" ]; then ext=txt
+      else rm -f "$dir/.new"; continue
+      fi
+      hash=$(sha256sum "$dir/.new" | cut -c1-12)
+      mv "$dir/.new" "$dir/$(date +%s)-$hash.$ext"
+      ls -1t "$dir"/* 2>/dev/null | tail -n +51 | xargs -r rm -f
+    done
+  '';
+};
+home.file.".local/bin/rofi-clipboard" = {
+  executable = true;
+  text = ''
+    #!${pkgs.bash}/bin/bash
+    set -eu
+    export PATH=${lib.makeBinPath [ pkgs.rofi pkgs.xclip pkgs.coreutils ]}
+    dir="''${XDG_RUNTIME_DIR:?}/rofi-clipboard"
+    [ -d "$dir" ] || exit 0
+    item=$(for f in $(ls -1t "$dir"/* 2>/dev/null); do case "$f" in *.png) printf 'Image %s|%s\n' "$(basename "$f")" "$f" ;; *.txt) printf '%s|%s\n' "$(tr '\n' ' ' < "$f" | cut -c1-100)" "$f" ;; esac; done | rofi -dmenu -i -monitor -1 -p Clipboard) || exit 0
+    f="''${item##*|}"
+    case "$f" in *.png) xclip -selection clipboard -t image/png -i "$f" ;; *.txt) xclip -selection clipboard -i "$f" ;; esac
+  '';
+};
+xdg.configFile."rofi/bookmarks".text = ''
+  NixOS options|https://search.nixos.org/options
+  Nix packages|https://search.nixos.org/packages
+'';
+xdg.configFile."rofi/snippets".text = ''
+  Shrug|¯\\_(ツ)_/¯
+'';
 xdg.configFile."rofi/config.rasi".text = ''
   configuration {
-      modes: "drun,window,run";
+      modes: "drun,window,run,combi";
       font: "JetBrainsMono Nerd Font 11";
       show-icons: true;
       icon-theme: "Papirus-Dark";
