@@ -100,7 +100,15 @@ nix.settings = {
   sandbox = true;
   sandbox-fallback = false;
   require-sigs = true;
-  substituters = [ "https://cache.nixos.org/" ];
+  substituters = [
+    "https://cache.nixos.org/"
+    "https://codex-cli.cachix.org"
+    "https://claude-code.cachix.org"
+  ];
+  trusted-public-keys = [
+    "codex-cli.cachix.org-1:1Br3H1hHoRYG22n//cGKJOk3cQXgYobUel6O8DgSing="
+    "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
+  ];
 };
 #+end_src
 
@@ -216,7 +224,8 @@ nix.package = pkgs.nixVersions.git;
 
 #+begin_src nix :noweb-ref inputs
 nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+codex-cli-nix.url = "github:sadjow/codex-cli-nix";
+claude-code-nix.url = "github:sadjow/claude-code-nix";
 #+end_src
 
 ** sops-nix
@@ -241,12 +250,6 @@ sops.age.keyFile = "/home/mpontus/.config/sops/age/keys.txt";
 
 #+begin_src nix :noweb-ref package-overrides
 unstable = import inputs.nixpkgs-unstable {
-  system = "x86_64-linux";
-  config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    <<unfree-packages>>
-  ];
-};
-master = import inputs.nixpkgs-master {
   system = "x86_64-linux";
   config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     <<unfree-packages>>
@@ -2191,7 +2194,7 @@ unstable.gemini-cli
 ** Claude
 
 #+begin_src nix :noweb-ref home-packages
-unstable.claude-code
+inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
@@ -2201,7 +2204,7 @@ unstable.claude-code
 ** OpenAI Codex
 
 #+begin_src nix :noweb-ref home-packages
-master.codex
+inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 #+end_src
 
 ** PI
