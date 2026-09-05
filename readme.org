@@ -815,6 +815,12 @@ This module keeps GNOME available as a GDM fallback while making the tested Xorg
     config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
 #+end_src
 
+*** Screenshots
+
+#+begin_src nix :noweb-ref home-packages
+flameshot
+#+end_src
+
 #+begin_src nix :noweb-ref import-files
 ./xfce-xmonad.nix
 #+end_src

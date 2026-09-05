@@ -159,6 +159,7 @@
   
     home.packages = with pkgs; [
       dconf-editor
+      flameshot
       pavucontrol
       input-leap
       # latest.firefox-nightly-bin
