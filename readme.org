@@ -815,6 +815,79 @@ This module keeps GNOME available as a GDM fallback while making the tested Xorg
     config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
 #+end_src
 
+*** Application launcher
+
+#+begin_src nix :noweb-ref home-packages
+rofi
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+xdg.configFile."rofi/config.rasi".text = ''
+  configuration {
+      modes: "drun,window,run";
+      font: "JetBrainsMono Nerd Font 11";
+      show-icons: true;
+      icon-theme: "Papirus-Dark";
+      terminal: "kitty";
+      matching: "fuzzy";
+      drun-display-format: "{name}";
+      display-drun: "Apps";
+      display-window: "Windows";
+      display-run: "Run";
+  }
+  @theme "/dev/null"
+  * {
+      background-color: #0e1624;
+      text-color: #f4effa;
+      border-color: #b75681;
+  }
+  window {
+      width: 560px;
+      location: center;
+      anchor: center;
+      border: 2px;
+      border-radius: 12px;
+      padding: 16px;
+  }
+  mainbox {
+      spacing: 12px;
+      children: [ inputbar, listview ];
+  }
+  inputbar {
+      spacing: 12px;
+      padding: 8px;
+      children: [ prompt, entry ];
+  }
+  prompt { text-color: #b8f2e6; }
+  entry { placeholder: "Search applications…"; }
+  listview {
+      lines: 8;
+      columns: 1;
+      spacing: 4px;
+      scrollbar: false;
+      fixed-height: false;
+  }
+  element {
+      padding: 10px;
+      spacing: 10px;
+      border-radius: 6px;
+  }
+  element selected.normal {
+      background-color: #b8f2e6;
+      text-color: #0e1624;
+  }
+  element-icon {
+      size: 24px;
+      background-color: inherit;
+  }
+  element-text {
+      background-color: inherit;
+      text-color: inherit;
+      vertical-align: 0.5;
+  }
+'';
+#+end_src
+
 *** Screenshots
 
 #+begin_src nix :noweb-ref home-packages

@@ -159,6 +159,7 @@
   
     home.packages = with pkgs; [
       dconf-editor
+      rofi
       flameshot
       pavucontrol
       input-leap
@@ -214,7 +215,7 @@
       unstable.gemini-cli
       inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
       inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-      (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
+      unstable.pi-coding-agent
       unstable.rustc cargo wasm-pack
       guile
       unstable.gh hub
@@ -317,6 +318,70 @@
     );
     home.file.".config/xmonad/xmonad.hs".source =
       config.lib.file.mkOutOfStoreSymlink "/home/mpontus/projects/xmonad-config/xmonad.hs";
+    xdg.configFile."rofi/config.rasi".text = ''
+      configuration {
+          modes: "drun,window,run";
+          font: "JetBrainsMono Nerd Font 11";
+          show-icons: true;
+          icon-theme: "Papirus-Dark";
+          terminal: "kitty";
+          matching: "fuzzy";
+          drun-display-format: "{name}";
+          display-drun: "Apps";
+          display-window: "Windows";
+          display-run: "Run";
+      }
+      @theme "/dev/null"
+      * {
+          background-color: #0e1624;
+          text-color: #f4effa;
+          border-color: #b75681;
+      }
+      window {
+          width: 560px;
+          location: center;
+          anchor: center;
+          border: 2px;
+          border-radius: 12px;
+          padding: 16px;
+      }
+      mainbox {
+          spacing: 12px;
+          children: [ inputbar, listview ];
+      }
+      inputbar {
+          spacing: 12px;
+          padding: 8px;
+          children: [ prompt, entry ];
+      }
+      prompt { text-color: #b8f2e6; }
+      entry { placeholder: "Search applications…"; }
+      listview {
+          lines: 8;
+          columns: 1;
+          spacing: 4px;
+          scrollbar: false;
+          fixed-height: false;
+      }
+      element {
+          padding: 10px;
+          spacing: 10px;
+          border-radius: 6px;
+      }
+      element selected.normal {
+          background-color: #b8f2e6;
+          text-color: #0e1624;
+      }
+      element-icon {
+          size: 24px;
+          background-color: inherit;
+      }
+      element-text {
+          background-color: inherit;
+          text-color: inherit;
+          vertical-align: 0.5;
+      }
+    '';
     programs.emacs = {
       enable = true;
       extraPackages = epkgs: [
@@ -546,6 +611,7 @@
   };
   programs.vim.enable = true;
   programs.fish.enable = true;
+  programs.coolercontrol.enable = true;
   # Enable `locate` command
   services.locate = {
     enable = true;
