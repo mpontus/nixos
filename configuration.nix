@@ -159,9 +159,7 @@
   
     home.packages = with pkgs; [
       dconf-editor
-      rofi
-      rofi-calc
-      rofi-emoji
+      (rofi.override { plugins = [ rofi-calc rofi-emoji ]; })
       fd
       ripgrep
       jq
@@ -335,30 +333,39 @@
       text = ''
         #!${pkgs.bash}/bin/bash
         set -eu
-        export PATH=${lib.makeBinPath [ pkgs.rofi pkgs.fd pkgs.xdg-utils pkgs.kitty pkgs.pulseaudio pkgs.bluez pkgs.blueman pkgs.xorg.xrandr pkgs.arandr pkgs.xclip pkgs.xfce.xfce4-session ]}
-        pick() { rofi -dmenu -i -monitor -1 -p "$1"; }
-        confirm() { printf 'No\nYes\n' | rofi -dmenu -monitor -1 -p "Confirm $1" | grep -qx Yes; }
+        export PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.gnused pkgs.gawk pkgs.gnugrep pkgs.jq pkgs.openssh pkgs.systemd pkgs.fd pkgs.xdg-utils pkgs.kitty pkgs.pulseaudio pkgs.bluez pkgs.blueman pkgs.xorg.xrandr pkgs.arandr pkgs.xclip pkgs.xfce.xfce4-session ]}
+        rofi="''${ROFI_HUB_ROFI:-${pkgs.rofi.override { plugins = [ pkgs.rofi-calc pkgs.rofi-emoji ]; }}/bin/rofi}"
+        xdg_open="''${ROFI_HUB_XDG_OPEN:-xdg-open}"
+        xrandr="''${ROFI_HUB_XRANDR:-xrandr}"
+        pick() { "$rofi" -dmenu -i -monitor -1 -p "$1"; }
+        confirm() { printf 'No\nYes\n' | "$rofi" -dmenu -monitor -1 -p "Confirm $1" | grep -qx Yes; }
+        if [ "''${ROFI_HUB_CHECK:-}" = 1 ]; then
+          for command in cat printf sed awk grep sort cut jq ssh systemctl fd kitty pactl bluetoothctl blueman-manager arandr xclip xflock4 xfce4-session-logout; do
+            command -v "$command" >/dev/null || exit 1
+          done
+          exit 0
+        fi
         action="''${1:-}"
         if [ -z "$action" ]; then
           action=$(printf '%s\n' '󰀻  Apps + windows' '  Calculator' '󰍉  Files' '󰘧  Projects' '󰖟  Web + bookmarks' '󰩫  Snippets' '󰞅  Emoji' '󰢹  Clipboard' '󰣀  SSH' '󰕾  Audio' '  Bluetooth' '󰍹  Displays' '󰐥  Session' | pick Actions) || exit 0
           action=$(printf '%s' "$action" | sed 's/^.*  //')
         fi
         case "$action" in
-          'Apps + windows') exec rofi -show combi -combi-modes 'drun,window' -monitor -1 ;;
-          Calculator) exec rofi -show calc -modi calc -no-show-match -no-sort -monitor -1 ;;
-          Files) f=$(fd --type f --hidden --exclude .git . "$HOME" | sed "s|^$HOME/||" | pick Files) && xdg-open "$HOME/$f" ;;
+          'Apps + windows') exec "$rofi" -show combi -combi-modes 'drun,window' -monitor -1 ;;
+          Calculator) exec "$rofi" -show calc -modi calc -no-show-match -no-sort -monitor -1 ;;
+          Files) f=$(fd --type f --hidden --exclude .git . "$HOME" | sed "s|^$HOME/||" | pick Files) && "$xdg_open" "$HOME/$f" ;;
           Projects) d=$(fd --type d --max-depth 4 --hidden --exclude .git . "$HOME/projects" | pick Projects) && exec kitty --directory "$d" ;;
           'Web + bookmarks')
-            q=$(cat "$HOME/.config/rofi/bookmarks"; printf 'Search the web…\n') | pick Web || exit 0
-            case "$q" in *'|'*) xdg-open "''${q#*|}" ;; *) [ "$q" = 'Search the web…' ] && q=$(rofi -dmenu -monitor -1 -p 'Web search') || true; [ -n "$q" ] && xdg-open "https://duckduckgo.com/?q=$(printf %s "$q" | jq -sRr @uri)" ;; esac ;;
-          Snippets) q=$(cat "$HOME/.config/rofi/snippets" | pick Snippets) && printf %s "''${q#*|}" | xclip -selection clipboard ;;
-          Emoji) exec rofi -show emoji -modi emoji -monitor -1 ;;
+            q=$( { cat "$HOME/.config/rofi/bookmarks"; printf 'Search the web…\n'; } | pick Web) || exit 0
+            case "$q" in *'|'*) "$xdg_open" "''${q#*|}" ;; *) [ "$q" = 'Search the web…' ] && q=$("$rofi" -dmenu -monitor -1 -p 'Web search') || true; [ -n "$q" ] && "$xdg_open" "https://duckduckgo.com/?q=$(printf %s "$q" | jq -sRr @uri)" ;; esac ;;
+          Snippets) q=$(pick Snippets < "$HOME/.config/rofi/snippets") && printf %s "''${q#*|}" | xclip -selection clipboard ;;
+          Emoji) exec "$rofi" -show emoji -modi emoji -monitor -1 ;;
           Clipboard) exec "$HOME/.local/bin/rofi-clipboard" ;;
           SSH) h=$(awk '/^[[:space:]]*Host[[:space:]]+/ { for(i=2;i<=NF;i++) if ($i !~ /[*?!]/) print $i }' "$HOME/.ssh/config" 2>/dev/null | sort -u | pick SSH) && exec kitty ssh "$h" ;;
-          Audio) s=$(pactl list short sinks | cut -f2 | pick 'Default audio sink') && pactl set-default-sink "$s" ;;
+          Audio) q=$(printf 'Output device\nMicrophone\n' | pick Audio) || exit 0; case "$q" in 'Output device') s=$(pactl list short sinks | cut -f2 | pick 'Default output') && pactl set-default-sink "$s" ;; Microphone) s=$(pactl list short sources | cut -f2 | pick 'Default microphone') && pactl set-default-source "$s" ;; esac ;;
           Bluetooth) exec blueman-manager ;;
-          Displays) q=$(printf 'Open ARandR\nLaptop only\nExternal only\nExtend automatically\n' | pick Displays) || exit 0; case "$q" in 'Open ARandR') exec arandr ;; 'Laptop only') confirm "$q" && xrandr --output eDP-1 --auto $(xrandr | awk '/ connected/ && $1 != "eDP-1" {printf " --output %s --off",$1}') ;; 'External only') confirm "$q" && xrandr --output eDP-1 --off $(xrandr | awk '/ connected/ && $1 != "eDP-1" {printf " --output %s --auto",$1}') ;; 'Extend automatically') confirm "$q" && xrandr --auto ;; esac ;;
-          Session) q=$(printf 'Lock\nLog out\nReboot\nShut down\n' | pick Session) || exit 0; confirm "$q" || exit 0; case "$q" in Lock) xflock4 ;; 'Log out') xfce4-session-logout --logout ;; Reboot) systemctl reboot ;; 'Shut down') systemctl poweroff ;; esac ;;
+          Displays) q=$(printf 'Open ARandR\nLaptop only\nMirror to projector\n' | pick Displays) || exit 0; case "$q" in 'Open ARandR') exec arandr ;; 'Laptop only') confirm "$q" && "$xrandr" --output eDP-1 --auto $("$xrandr" | awk '/ connected/ && $1 != "eDP-1" {printf " --output %s --off",$1}') ;; 'Mirror to projector') external=$("$xrandr" | awk '/ connected/ && $1 != "eDP-1" {print $1; exit}'); [ -n "$external" ] || exit 0; confirm "$q" && "$xrandr" --output eDP-1 --auto --output "$external" --auto --same-as eDP-1 ;; esac ;;
+          Session) q=$(printf 'Lock\nSuspend\nLog out\nReboot\nShut down\n' | pick Session) || exit 0; confirm "$q" || exit 0; case "$q" in Lock) xflock4 ;; Suspend) systemctl suspend ;; 'Log out') xfce4-session-logout --logout ;; Reboot) systemctl reboot ;; 'Shut down') systemctl poweroff ;; esac ;;
         esac
       '';
     };
@@ -367,10 +374,16 @@
       text = ''
         #!${pkgs.bash}/bin/bash
         set -eu
-        export PATH=${lib.makeBinPath [ pkgs.xclip pkgs.clipnotify pkgs.coreutils ]}
+        export PATH=${lib.makeBinPath [ pkgs.xclip pkgs.clipnotify pkgs.coreutils pkgs.findutils pkgs.util-linux ]}
+        umask 077
         dir="''${XDG_RUNTIME_DIR:?}/rofi-clipboard"
         install -d -m 700 "$dir"
-        rm -f "$dir"/*
+        exec 9>"$dir/daemon.lock"
+        flock -n 9 || exit 0
+        cleanup() { rm -rf "$dir"; }
+        trap cleanup EXIT
+        trap 'exit 0' HUP INT TERM
+        find "$dir" -mindepth 1 ! -name daemon.lock -delete
         while clipnotify; do
           if xclip -selection clipboard -t image/png -o > "$dir/.new" 2>/dev/null && [ -s "$dir/.new" ]; then ext=png
           elif xclip -selection clipboard -t UTF8_STRING -o > "$dir/.new" 2>/dev/null && [ -s "$dir/.new" ]; then ext=txt
@@ -378,7 +391,7 @@
           fi
           hash=$(sha256sum "$dir/.new" | cut -c1-12)
           mv "$dir/.new" "$dir/$(date +%s)-$hash.$ext"
-          ls -1t "$dir"/* 2>/dev/null | tail -n +51 | xargs -r rm -f
+          find "$dir" -maxdepth 1 -type f \( -name '*.png' -o -name '*.txt' \) -printf '%T@ %p\n' | sort -rn | tail -n +51 | cut -d ' ' -f2- | xargs -r rm -f
         done
       '';
     };
@@ -387,12 +400,20 @@
       text = ''
         #!${pkgs.bash}/bin/bash
         set -eu
-        export PATH=${lib.makeBinPath [ pkgs.rofi pkgs.xclip pkgs.coreutils ]}
+        export PATH=${lib.makeBinPath [ pkgs.xclip pkgs.coreutils pkgs.findutils ]}
+        rofi="''${ROFI_CLIPBOARD_ROFI:-${pkgs.rofi.override { plugins = [ pkgs.rofi-calc pkgs.rofi-emoji ]; }}/bin/rofi}"
+        xclip="''${ROFI_CLIPBOARD_XCLIP:-xclip}"
         dir="''${XDG_RUNTIME_DIR:?}/rofi-clipboard"
         [ -d "$dir" ] || exit 0
-        item=$(for f in $(ls -1t "$dir"/* 2>/dev/null); do case "$f" in *.png) printf 'Image %s|%s\n' "$(basename "$f")" "$f" ;; *.txt) printf '%s|%s\n' "$(tr '\n' ' ' < "$f" | cut -c1-100)" "$f" ;; esac; done | rofi -dmenu -i -monitor -1 -p Clipboard) || exit 0
-        f="''${item##*|}"
-        case "$f" in *.png) xclip -selection clipboard -t image/png -i "$f" ;; *.txt) xclip -selection clipboard -i "$f" ;; esac
+        mapfile -d $'\\0' files < <(find "$dir" -maxdepth 1 -type f \( -name '*.png' -o -name '*.txt' \) -printf '%T@ %p\0' | sort -zrn | cut -zd ' ' -f2-)
+        [ "''${#files[@]}" -gt 0 ] || exit 0
+        index=$(for f in "''${files[@]}"; do case "$f" in *.png) printf 'Image %s\n' "$(basename "$f")" ;; *.txt) printf '%s\n' "$(tr '\n' ' ' < "$f" | cut -c1-100)" ;; esac; done | "$rofi" -dmenu -i -monitor -1 -p Clipboard -format i -no-custom) || exit 0
+        [ -n "$index" ] || exit 0
+        case "$index" in *[!0-9]*) exit 0 ;; esac
+        [ "$index" -lt "''${#files[@]}" ] || exit 0
+        f="''${files[$index]}"
+        [ -f "$f" ] || exit 0
+        case "$f" in *.png) "$xclip" -selection clipboard -t image/png -i "$f" ;; *.txt) "$xclip" -selection clipboard -i "$f" ;; esac
       '';
     };
     xdg.configFile."rofi/bookmarks".text = ''
