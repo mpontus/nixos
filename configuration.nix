@@ -110,6 +110,24 @@
         "spotify" "spotify-unwrapped"
       ];
     };
+    master = import inputs.nixpkgs-master {
+      system = "x86_64-linux";
+      config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+        "corefonts"
+        "upwork"
+        "slack"
+        "discord"
+        "amazon-q-cli"
+        "claude-code"
+        "code" "vscode"
+        "cursor"
+        "postman"
+        "ngrok"
+        "Oracle_VirtualBox_Extension_Pack" "virtualbox-extpack"
+        "steam" "steam-unwrapped"
+        "spotify" "spotify-unwrapped"
+      ];
+    };
   };
 
   nixpkgs.config.permittedInsecurePackages = [
@@ -204,7 +222,7 @@
       unstable.opencode
       unstable.gemini-cli
       unstable.claude-code
-      unstable.codex
+      master.codex
       (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
       unstable.rustc cargo wasm-pack
       guile

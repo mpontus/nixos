@@ -216,6 +216,7 @@ nix.package = pkgs.nixVersions.git;
 
 #+begin_src nix :noweb-ref inputs
 nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 #+end_src
 
 ** sops-nix
@@ -240,6 +241,12 @@ sops.age.keyFile = "/home/mpontus/.config/sops/age/keys.txt";
 
 #+begin_src nix :noweb-ref package-overrides
 unstable = import inputs.nixpkgs-unstable {
+  system = "x86_64-linux";
+  config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    <<unfree-packages>>
+  ];
+};
+master = import inputs.nixpkgs-master {
   system = "x86_64-linux";
   config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     <<unfree-packages>>
@@ -2194,7 +2201,7 @@ unstable.claude-code
 ** OpenAI Codex
 
 #+begin_src nix :noweb-ref home-packages
-unstable.codex
+master.codex
 #+end_src
 
 ** PI
