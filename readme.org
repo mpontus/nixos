@@ -598,29 +598,6 @@ environment.variables = {
   i18n.inputMethod.enable = false;
 #+end_src
 
-*** Fn numpad layer
-
-#+begin_src nix :noweb-ref system-configuration
-services.keyd = {
-  enable = true;
-  keyboards.default.settings = {
-    main.wakeup = "layer(numpad)";
-    numpad = {
-      y = "kp7";
-      u = "kp8";
-      i = "kp9";
-      h = "kp4";
-      j = "kp5";
-      k = "kp6";
-      b = "kp1";
-      n = "kp2";
-      m = "kp3";
-      space = "kp0";
-    };
-  };
-};
-#+end_src
-
 *** Attempt to fix window flickering
 
 See: https://askubuntu.com/a/1231443/350323
