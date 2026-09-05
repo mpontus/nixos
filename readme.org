@@ -1092,6 +1092,11 @@ in {
                 <property name="last-image" type="string" value="${pkgs.pantheon.elementary-wallpapers}/share/backgrounds/Ashim DSilva.jpg"/>
               </property>
             </property>
+            <property name="monitorHDMI-1" type="empty">
+              <property name="workspace0" type="empty">
+                <property name="last-image" type="string" value="${pkgs.pantheon.elementary-wallpapers}/share/backgrounds/Ashim DSilva.jpg"/>
+              </property>
+            </property>
           </property>
         </property>
       </channel>
