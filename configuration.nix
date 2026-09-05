@@ -204,6 +204,7 @@
       unstable.opencode
       unstable.gemini-cli
       unstable.claude-code
+      unstable.codex
       (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
       unstable.rustc cargo wasm-pack
       guile

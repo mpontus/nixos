@@ -2191,6 +2191,12 @@ unstable.claude-code
 "claude-code"
 #+end_src
 
+** OpenAI Codex
+
+#+begin_src nix :noweb-ref home-packages
+unstable.codex
+#+end_src
+
 ** PI
 
 #+begin_src nix :noweb-ref system-configuration
