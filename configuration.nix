@@ -333,39 +333,83 @@
       text = ''
         #!${pkgs.bash}/bin/bash
         set -eu
-        export PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.gnused pkgs.gawk pkgs.gnugrep pkgs.jq pkgs.openssh pkgs.systemd pkgs.fd pkgs.xdg-utils pkgs.kitty pkgs.pulseaudio pkgs.bluez pkgs.blueman pkgs.xorg.xrandr pkgs.arandr pkgs.xclip pkgs.xfce.xfce4-session ]}
+        export PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.gnused pkgs.gawk pkgs.gnugrep pkgs.jq pkgs.systemd pkgs.fd pkgs.xdg-utils pkgs.pulseaudio pkgs.bluez pkgs.blueman pkgs.xorg.xrandr pkgs.arandr pkgs.xclip pkgs.xfce.xfce4-session ]}
         rofi="''${ROFI_HUB_ROFI:-${pkgs.rofi.override { plugins = [ pkgs.rofi-calc pkgs.rofi-emoji ]; }}/bin/rofi}"
         xdg_open="''${ROFI_HUB_XDG_OPEN:-xdg-open}"
         xrandr="''${ROFI_HUB_XRANDR:-xrandr}"
-        pick() { "$rofi" -dmenu -i -monitor -1 -p "$1"; }
-        confirm() { printf 'No\nYes\n' | "$rofi" -dmenu -monitor -1 -p "Confirm $1" | grep -qx Yes; }
+        pick() { "$rofi" -dmenu -i -monitor -1 -p "$1" "''${@:2}"; }
+        confirm() { printf 'No\nYes\n' | "$rofi" -dmenu -monitor -1 -p "Confirm $1" -no-custom | grep -qx Yes; }
         if [ "''${ROFI_HUB_CHECK:-}" = 1 ]; then
-          for command in cat printf sed awk grep sort cut jq ssh systemctl fd kitty pactl bluetoothctl blueman-manager arandr xclip xflock4 xfce4-session-logout; do
+          for command in cat printf sed awk grep sort cut jq systemctl fd pactl blueman-manager arandr xclip xflock4 xfce4-session-logout; do
             command -v "$command" >/dev/null || exit 1
           done
           exit 0
         fi
-        action="''${1:-}"
-        if [ -z "$action" ]; then
-          action=$(printf '%s\n' '󰀻  Apps + windows' '  Calculator' '󰍉  Files' '󰘧  Projects' '󰖟  Web + bookmarks' '󰩫  Snippets' '󰞅  Emoji' '󰢹  Clipboard' '󰣀  SSH' '󰕾  Audio' '  Bluetooth' '󰍹  Displays' '󰐥  Session' | pick Actions) || exit 0
-          action=$(printf '%s' "$action" | sed 's/^.*  //')
-        fi
+        action="''${1:-main}"
+        filter="''${2:-}"
         case "$action" in
-          'Apps + windows') exec "$rofi" -show combi -combi-modes 'drun,window' -monitor -1 ;;
-          Calculator) exec "$rofi" -show calc -modi calc -no-show-match -no-sort -monitor -1 ;;
-          Files) f=$(fd --type f --hidden --exclude .git . "$HOME" | sed "s|^$HOME/||" | pick Files) && "$xdg_open" "$HOME/$f" ;;
-          Projects) d=$(fd --type d --max-depth 4 --hidden --exclude .git . "$HOME/projects" | pick Projects) && exec kitty --directory "$d" ;;
-          'Web + bookmarks')
-            q=$( { cat "$HOME/.config/rofi/bookmarks"; printf 'Search the web…\n'; } | pick Web) || exit 0
-            case "$q" in *'|'*) "$xdg_open" "''${q#*|}" ;; *) [ "$q" = 'Search the web…' ] && q=$("$rofi" -dmenu -monitor -1 -p 'Web search') || true; [ -n "$q" ] && "$xdg_open" "https://duckduckgo.com/?q=$(printf %s "$q" | jq -sRr @uri)" ;; esac ;;
-          Snippets) q=$(pick Snippets < "$HOME/.config/rofi/snippets") && printf %s "''${q#*|}" | xclip -selection clipboard ;;
-          Emoji) exec "$rofi" -show emoji -modi emoji -monitor -1 ;;
-          Clipboard) exec "$HOME/.local/bin/rofi-clipboard" ;;
-          SSH) h=$(awk '/^[[:space:]]*Host[[:space:]]+/ { for(i=2;i<=NF;i++) if ($i !~ /[*?!]/) print $i }' "$HOME/.ssh/config" 2>/dev/null | sort -u | pick SSH) && exec kitty ssh "$h" ;;
+          main)
+            set +e
+            filter=$("$rofi" -show combi -modi "combi,actions:$HOME/.local/bin/rofi-actions" -combi-modes 'drun,window,actions' -monitor -1 -message 'All destinations · Alt+C calc · Alt+E emoji · Alt+V clipboard · Ctrl+Alt+F files · use !bang to narrow' -kb-custom-1 'Alt+c' -kb-custom-2 'Alt+e' -kb-custom-3 'Alt+v' -kb-custom-4 'Control+Alt+f' -format f)
+            result=$?
+            set -e
+            case "$result" in
+              10) exec "$0" Calculator "$filter" ;;
+              11) exec "$0" Emoji "$filter" ;;
+              12) exec "$HOME/.local/bin/rofi-clipboard" ;;
+              13) exec "$0" Files "$filter" ;;
+              0|1) exit 0 ;;
+              *) exit "$result" ;;
+            esac ;;
+          Calculator) exec "$rofi" -show calc -modi calc -no-show-match -no-sort -no-history -monitor -1 -message 'Enter copies result · Esc returns' -filter "$filter" ;;
+          Emoji) exec "$rofi" -show emoji -modi emoji -monitor -1 -message 'Select emoji · Esc returns' -filter "$filter" ;;
+          Files) f=$(fd --type f --hidden --exclude .git . "$HOME" | sed "s|^$HOME/||" | pick Files -filter "$filter") && "$xdg_open" "$HOME/$f" ;;
           Audio) q=$(printf 'Output device\nMicrophone\n' | pick Audio) || exit 0; case "$q" in 'Output device') s=$(pactl list short sinks | cut -f2 | pick 'Default output') && pactl set-default-sink "$s" ;; Microphone) s=$(pactl list short sources | cut -f2 | pick 'Default microphone') && pactl set-default-source "$s" ;; esac ;;
           Bluetooth) exec blueman-manager ;;
           Displays) q=$(printf 'Open ARandR\nLaptop only\nMirror to projector\n' | pick Displays) || exit 0; case "$q" in 'Open ARandR') exec arandr ;; 'Laptop only') confirm "$q" && "$xrandr" --output eDP-1 --auto $("$xrandr" | awk '/ connected/ && $1 != "eDP-1" {printf " --output %s --off",$1}') ;; 'Mirror to projector') external=$("$xrandr" | awk '/ connected/ && $1 != "eDP-1" {print $1; exit}'); [ -n "$external" ] || exit 0; confirm "$q" && "$xrandr" --output eDP-1 --auto --output "$external" --auto --same-as eDP-1 ;; esac ;;
-          Session) q=$(printf 'Lock\nSuspend\nLog out\nReboot\nShut down\n' | pick Session) || exit 0; confirm "$q" || exit 0; case "$q" in Lock) xflock4 ;; Suspend) systemctl suspend ;; 'Log out') xfce4-session-logout --logout ;; Reboot) systemctl reboot ;; 'Shut down') systemctl poweroff ;; esac ;;
+          Lock) xflock4 ;;
+          Suspend|Reboot|'Shut down'|'Log out') confirm "$action" || exit 0; case "$action" in Suspend) systemctl suspend ;; Reboot) systemctl reboot ;; 'Shut down') systemctl poweroff ;; 'Log out') xfce4-session-logout --logout ;; esac ;;
+        esac
+      '';
+    };
+    home.file.".local/bin/rofi-actions" = {
+      executable = true;
+      text = ''
+        #!${pkgs.bash}/bin/bash
+        set -eu
+        export PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.gnused pkgs.gawk pkgs.gnugrep pkgs.findutils pkgs.fd pkgs.openssh pkgs.kitty pkgs.xdg-utils pkgs.xclip ]}
+        hub="''${ROFI_ACTIONS_HUB:-$HOME/.local/bin/rofi-hub}"
+        xdg_open="''${ROFI_HUB_XDG_OPEN:-xdg-open}"
+        emit() { printf '%s\0info\x1f%s\n' "$1" "$2"; }
+        clean() { tr '\n\r' '  ' | cut -c1-180; }
+        bookmarks="$HOME/.config/rofi/bookmarks"
+        snippets="$HOME/.config/rofi/snippets"
+        projects() { [ -d "$HOME/projects" ] && fd --type d --max-depth 4 --hidden --exclude .git . "$HOME/projects" | sort || true; }
+        hosts() { awk '/^[[:space:]]*Host[[:space:]]+/ { for(i=2;i<=NF;i++) if ($i !~ /[*?!]/) print $i }' "$HOME/.ssh/config" 2>/dev/null | sort -u || true; }
+        if [ "''${ROFI_RETV:-0}" = 0 ]; then
+          i=0; while IFS='|' read -r name value; do [ -n "$name" ] && emit "󰖟  $(printf %s "$name" | clean)" "bookmark:$i"; i=$((i+1)); done < "$bookmarks"
+          i=0; while IFS= read -r path; do emit "󰘧  $(basename "$path" | clean)" "project:$i"; i=$((i+1)); done < <(projects)
+          i=0; while IFS='|' read -r name value; do [ -n "$name" ] && emit "󰩫  $(printf %s "$name" | clean)" "snippet:$i"; i=$((i+1)); done < "$snippets"
+          i=0; while IFS= read -r host; do emit "󰣀  $(printf %s "$host" | clean)" "ssh:$i"; i=$((i+1)); done < <(hosts)
+          emit '󰕾  Choose audio device' action:Audio
+          emit '  Open Bluetooth manager' action:Bluetooth
+          emit '󰍹  Configure displays' action:Displays
+          emit '󰌾  Lock screen' action:Lock
+          emit '󰤄  Suspend' action:Suspend
+          emit '󰍃  Log out' 'action:Log out'
+          emit '󰜉  Reboot' action:Reboot
+          emit '󰐥  Shut down' 'action:Shut down'
+          exit 0
+        fi
+        id="''${ROFI_INFO:-}"
+        kind="''${id%%:*}"; index="''${id#*:}"
+        case "$index" in *[!0-9]*) [ "$kind" = action ] || exit 0 ;; esac
+        case "$kind" in
+          bookmark) value=$(sed -n "$((index+1))p" "$bookmarks"); "$xdg_open" "''${value#*|}" ;;
+          project) path=$(projects | sed -n "$((index+1))p"); [ -n "$path" ] && exec kitty --directory "$path" ;;
+          snippet) value=$(sed -n "$((index+1))p" "$snippets"); printf %s "''${value#*|}" | xclip -selection clipboard ;;
+          ssh) host=$(hosts | sed -n "$((index+1))p"); [ -n "$host" ] && exec kitty ssh "$host" ;;
+          action) exec "$hub" "$index" ;;
         esac
       '';
     };
@@ -452,7 +496,11 @@
       }
       mainbox {
           spacing: 12px;
-          children: [ inputbar, listview ];
+          children: [ inputbar, message, listview ];
+      }
+      message {
+          padding: 0px 8px;
+          text-color: #b8f2e6;
       }
       inputbar {
           spacing: 12px;
