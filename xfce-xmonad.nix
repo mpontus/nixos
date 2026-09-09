@@ -162,6 +162,7 @@ in {
     fade = true;
     fadeDelta = 50;
     fadeSteps = [ 1 1 ];
+    fadeExclude = [ "class_g = 'Rofi'" ];
     shadow = false;
     settings = {
       corner-radius = xfceIslands.radius;
