@@ -284,8 +284,8 @@
         command = "emacsclient --eval '(emacs-everywhere)'";
       };
       "<Super>w" = {
-        name = "Switch to Firefox";
-        command = "launch-or-raise -W Navigator firefox";
+        name = "Open new Firefox window";
+        command = "firefox --new-window";
       };
       "<Shift><Super>c" = {
         name = "Switch to Chromium";
