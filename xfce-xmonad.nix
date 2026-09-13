@@ -184,6 +184,7 @@ in {
     gtkAccent
     referenceGtkTheme
     papirus-icon-theme
+    kdePackages.breeze
     xfce.xfce4-panel
     xfce.xfce4-whiskermenu-plugin
     xfce.xfce4-xkb-plugin
@@ -298,6 +299,9 @@ in {
         <property name="Net" type="empty">
           <property name="ThemeName" type="string" value="Mpontus-Reference"/>
           <property name="IconThemeName" type="string" value="Papirus-Dark"/>
+        </property>
+        <property name="Gtk" type="empty">
+          <property name="CursorThemeName" type="string" value="breeze_cursors"/>
         </property>
       </channel>
     '';
