@@ -697,7 +697,7 @@
     ownerEmail = "mpontus@localhost";
     databaseConfig = ''
       step = 10
-      pings = 5
+      pings = 10
       # consfn mrhb steps total
       AVERAGE 0.5 1   8640
       AVERAGE 0.5 6  10080
