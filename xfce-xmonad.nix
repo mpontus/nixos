@@ -189,6 +189,7 @@ in {
     xfce.xfce4-whiskermenu-plugin
     xfce.xfce4-xkb-plugin
     xfce.xfce4-pulseaudio-plugin
+    xfce.xfce4-genmon-plugin
     snixembed
     pavucontrol
     material-icons
@@ -197,6 +198,22 @@ in {
   ];
 
   home-manager.users.mpontus.xsession.enable = true;
+  home-manager.users.mpontus.home.file.".local/bin/power-profile-panel" = {
+    executable = true;
+    text = ''
+      #!${pkgs.bash}/bin/bash
+      set -eu
+      powerprofilesctl=${pkgs.power-profiles-daemon}/bin/powerprofilesctl
+      if [ "''${1:-}" = select ]; then
+        profile=$(printf 'power-saver\nbalanced\nperformance\n' | ${pkgs.rofi}/bin/rofi -dmenu -i -p 'Power profile' -no-custom) || exit 0
+        "$powerprofilesctl" set "$profile"
+        ${pkgs.xfce.xfce4-panel}/bin/xfce4-panel --plugin-event=genmon-16:refresh:bool:true
+        exit 0
+      fi
+      profile=$($powerprofilesctl get)
+      printf '<txt>󰌪 %s</txt><tool>Power profile: %s</tool><click>%s select</click>\n' "$profile" "$profile" "$0"
+    '';
+  };
   # Keep Home Manager's default `setxkbmap -layout us` service from
   # overriding services.xserver.xkb after login or keyboard hotplug.
   home-manager.users.mpontus.home.keyboard = null;
@@ -236,7 +253,7 @@ in {
             <property name="position" type="string" value="p=0;x=${toString xfceIslands.right.centerX};y=${toString xfceIslands.centerY}"/>
             <property name="length" type="double" value="${toString xfceIslands.right.lengthPercent}"/><property name="length-adjust" type="bool" value="true"/><property name="size" type="uint" value="${toString xfceIslands.panelSize}"/>
             <property name="position-locked" type="bool" value="true"/><property name="enable-struts" type="bool" value="false"/>
-            <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="15"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="10"/></property>
+            <property name="plugin-ids" type="array"><value type="int" value="6"/><value type="int" value="15"/><value type="int" value="8"/><value type="int" value="9"/><value type="int" value="16"/><value type="int" value="10"/></property>
           </property>
           <property name="panel-4" type="empty">
             <property name="position" type="string" value="p=0;x=${toString xfceIslands.power.centerX};y=${toString xfceIslands.centerY}"/>
@@ -256,6 +273,10 @@ in {
           <property name="plugin-15" type="string" value="xkb"/>
           <property name="plugin-8" type="string" value="pulseaudio"/>
           <property name="plugin-9" type="string" value="power-manager-plugin"/>
+          <property name="plugin-16" type="string" value="genmon">
+            <property name="command" type="string" value="/home/mpontus/.local/bin/power-profile-panel"/>
+            <property name="update-period" type="int" value="5"/>
+          </property>
           <property name="plugin-10" type="string" value="notification-plugin"/>
           <property name="plugin-12" type="string" value="clock">
             <property name="mode" type="uint" value="2"/>
