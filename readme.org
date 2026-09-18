@@ -481,6 +481,53 @@ services.piavpn.enable = true;
 networking.resolvconf.dnsExtensionMechanism = false;
 #+end_src
 
+*** SmokePing
+
+Track short outages to the local router separately from upstream Internet loss.
+The web interface is available at [[http://localhost/][http://localhost/]].
+
+#+begin_src nix :noweb-ref system-configuration
+services.smokeping = {
+  enable = true;
+  hostName = "localhost";
+  cgiUrl = "http://localhost/smokeping.fcgi";
+  owner = "mpontus";
+  ownerEmail = "mpontus@localhost";
+  databaseConfig = ''
+    step = 10
+    pings = 5
+    # consfn mrhb steps total
+    AVERAGE 0.5 1   8640
+    AVERAGE 0.5 6  10080
+        MIN 0.5 6  10080
+        MAX 0.5 6  10080
+    AVERAGE 0.5 360 8760
+        MIN 0.5 360 8760
+        MAX 0.5 360 8760
+  '';
+  targetConfig = ''
+    probe = FPing
+    menu = Top
+    title = Network latency and packet loss
+    + Network
+    menu = Network
+    title = Local router and Internet
+    ++ Router
+    menu = Router
+    title = Router (192.168.1.254)
+    host = 192.168.1.254
+    ++ Cloudflare
+    menu = Cloudflare
+    title = Cloudflare DNS (1.1.1.1)
+    host = 1.1.1.1
+    ++ Google
+    menu = Google
+    title = Google DNS (8.8.8.8)
+    host = 8.8.8.8
+  '';
+};
+#+end_src
+
 *** COMMENT Paper VPN
 #+begin_src nix :noweb-ref system-packages
 (callPackage ./pkgs/outline.nix { })
