@@ -484,13 +484,15 @@ networking.resolvconf.dnsExtensionMechanism = false;
 *** SmokePing
 
 Track short outages to the local router separately from upstream Internet loss.
-The web interface is available at [[http://localhost/][http://localhost/]].
+The web interface is available at [[http://smokeping.local/][http://smokeping.local/]].
 
 #+begin_src nix :noweb-ref system-configuration
+networking.hosts."127.0.0.1" = [ "smokeping.local" ];
 services.smokeping = {
   enable = true;
-  hostName = "localhost";
-  cgiUrl = "http://localhost/smokeping.fcgi";
+  host = "smokeping.local";
+  hostName = "smokeping.local";
+  cgiUrl = "http://smokeping.local/smokeping.fcgi";
   owner = "mpontus";
   ownerEmail = "mpontus@localhost";
   databaseConfig = ''

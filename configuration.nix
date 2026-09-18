@@ -689,10 +689,12 @@
   };
   services.openvpn.servers.pia.autoStart = false;
   networking.resolvconf.dnsExtensionMechanism = false;
+  networking.hosts."127.0.0.1" = [ "smokeping.local" ];
   services.smokeping = {
     enable = true;
-    hostName = "localhost";
-    cgiUrl = "http://localhost/smokeping.fcgi";
+    host = "smokeping.local";
+    hostName = "smokeping.local";
+    cgiUrl = "http://smokeping.local/smokeping.fcgi";
     owner = "mpontus";
     ownerEmail = "mpontus@localhost";
     databaseConfig = ''
