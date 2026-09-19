@@ -2749,6 +2749,29 @@ virtualisation.docker.liveRestore = false;
 docker-compose
 #+end_src
 
+*** Obkio Wi-Fi monitoring agent
+
+Run Obkio from the laptop network namespace so its measurements follow the
+laptop's Wi-Fi connection. The agent is temporary diagnostic infrastructure;
+its disposable enrollment credential is intentionally stored with this config.
+
+#+begin_src nix :noweb-ref system-configuration
+virtualisation.oci-containers = {
+  backend = "docker";
+  containers.obkio = {
+    image = "obkio/supervisor:latest";
+    autoStart = true;
+    privileged = true;
+    environment = {
+      AGENT_ID = "57626538";
+      AGENT_SECRET_KEY = "Eqm87EwtARsTgDEUXxbboOmvWRj_AG0-axMHZlUvXTGs6O7yFVS3FNx7LM30k5TN";
+    };
+    volumes = [ "/var/lib/obkio:/opt/obkio" ];
+    extraOptions = [ "--network=host" ];
+  };
+};
+#+end_src
+
 ** COMMENT Podman
 #+begin_src nix :noweb-ref system-configuration
 virtualisation.podman = {
