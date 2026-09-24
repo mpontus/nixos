@@ -97,6 +97,7 @@
       config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         "corefonts"
         "upwork"
+        "upwork_5.8.0.35_amd64.deb"
         "slack"
         "discord"
         "amazon-q-cli"
@@ -119,6 +120,7 @@
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "corefonts"
     "upwork"
+    "upwork_5.8.0.35_amd64.deb"
     "slack"
     "discord"
     "amazon-q-cli"
@@ -170,10 +172,10 @@
       xclip
       clipnotify
       arandr
-      delta
       flameshot
       pavucontrol
       input-leap
+      delta
       # latest.firefox-nightly-bin
       unstable.tor-browser
       unstable.chromium
