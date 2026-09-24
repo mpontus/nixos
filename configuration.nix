@@ -170,6 +170,7 @@
       xclip
       clipnotify
       arandr
+      delta
       flameshot
       pavucontrol
       input-leap
