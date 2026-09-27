@@ -173,7 +173,6 @@
       flameshot
       pavucontrol
       input-leap
-      delta
       # latest.firefox-nightly-bin
       unstable.tor-browser
       unstable.chromium
@@ -541,10 +540,12 @@
       extraPackages = epkgs: [
         pkgs.typescript
         pkgs.typescript-language-server
+        epkgs.magit-delta
       ];
       package = pkgs.symlinkJoin {
         name = "emacs-with-copilot-libs";
-        paths = [ pkgs.emacs ];
+        paths = [ pkgs.emacs pkgs.delta ];
+        meta = pkgs.emacs.meta;
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
           wrapProgram $out/bin/emacs --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [
