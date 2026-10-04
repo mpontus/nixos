@@ -1540,6 +1540,12 @@ hardware.bluetooth.enable = true;
   };
 #+end_src
 
+** usbmuxd
+
+#+begin_src nix :noweb-ref system-configuration
+services.usbmuxd.enable = true;
+#+end_src
+
 ** Remote access
 #+begin_src nix :noweb-ref home-packages
 input-leap

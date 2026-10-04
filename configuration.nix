@@ -805,6 +805,7 @@
         # MultiProfile = "multiple";
     };
   };
+  services.usbmuxd.enable = true;
   programs.vim.enable = true;
   programs.fish.enable = true;
   programs.coolercontrol.enable = true;
