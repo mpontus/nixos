@@ -8,6 +8,8 @@ const kittyWindowId = process.env.KITTY_WINDOW_ID;
 const project = basename(process.cwd());
 const activeTools = new Map<string, string>();
 let running = false;
+let terminalEnabled = false;
+const kittyTimeout = { timeout: 1000, killSignal: "SIGKILL" as const };
 let currentModel: string | undefined;
 
 function loadAttentionPatterns(): { patterns: RegExp[]; invalid: string[] } {
@@ -40,11 +42,12 @@ function loadAttentionPatterns(): { patterns: RegExp[]; invalid: string[] } {
 const attention = loadAttentionPatterns();
 
 function setKittyTitle(title: string): void {
-  if (!kittyWindowId) return;
+  if (!terminalEnabled || !kittyWindowId) return;
+  // Terminal cosmetics must not indefinitely block tool execution.
   spawnSync(
     "kitten",
     ["@", "set-window-title", "--temporary", "--match", `id:${kittyWindowId}`, title],
-    { stdio: "ignore" },
+    { stdio: "ignore", ...kittyTimeout },
   );
 }
 
@@ -53,7 +56,7 @@ function hasKittyRemoteControl(): boolean {
   return spawnSync(
     "kitten",
     ["@", "ls", "--match", `id:${kittyWindowId}`],
-    { stdio: "ignore" },
+    { stdio: "ignore", ...kittyTimeout },
   ).status === 0;
 }
 
@@ -67,6 +70,7 @@ function updateTitle(): void {
 }
 
 function ringBell(): void {
+  if (!terminalEnabled) return;
   try {
     writeFileSync("/dev/tty", "\x07");
   } catch {
@@ -76,6 +80,8 @@ function ringBell(): void {
 
 export default function piKitty(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
+    // Subagents inherit KITTY_WINDOW_ID but do not own the parent's terminal.
+    terminalEnabled = ctx.mode === "tui";
     currentModel = ctx.model?.id;
     if (kittyWindowId && attention.invalid.length > 0) {
       ctx.ui.notify(
@@ -124,7 +130,7 @@ export default function piKitty(pi: ExtensionAPI) {
     handler: async (_args, ctx) => {
       await ctx.waitForIdle();
 
-      if (!kittyWindowId) {
+      if (!terminalEnabled || !kittyWindowId) {
         ctx.ui.notify("/window-clone requires Pi to run inside Kitty.", "error");
         return;
       }
@@ -165,7 +171,7 @@ export default function piKitty(pi: ExtensionAPI) {
           "--session",
           clonedSession,
         ],
-        { encoding: "utf8" },
+        { encoding: "utf8", ...kittyTimeout },
       );
 
       if (result.error || result.status !== 0) {
