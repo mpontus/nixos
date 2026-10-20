@@ -2177,12 +2177,23 @@ unstable.upwork
 ** Communication
 *** Slack
 
+Expose Electron's optional libdbusmenu library to Slack so its native menu can
+appear in the Xfce panel. With Slack open, run
+=bash tests/slack-appmenu-regression.sh= in the graphical user's session to check
+the exported menu.
+
 #+begin_src nix :noweb-ref unfree-packages
 "slack"
 #+end_src
 
 #+begin_src nix :noweb-ref home-packages
-unstable.slack
+(unstable.slack.overrideAttrs (old: {
+  postInstall = (old.postInstall or "") + ''
+    wrapProgram "$out/bin/slack" \
+      --prefix LD_LIBRARY_PATH : \
+      "${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu ]}"
+  '';
+}))
 #+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap

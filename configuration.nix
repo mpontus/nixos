@@ -194,7 +194,13 @@
       unstable.upwork
       (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
       (callPackage ./pkgs/toptracker { })
-      unstable.slack
+      (unstable.slack.overrideAttrs (old: {
+        postInstall = (old.postInstall or "") + ''
+          wrapProgram "$out/bin/slack" \
+            --prefix LD_LIBRARY_PATH : \
+            "${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu ]}"
+        '';
+      }))
       unstable.telegram-desktop
       discord
       beep
