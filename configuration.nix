@@ -186,23 +186,6 @@
           sops
           age
           monero-gui
-            (pkgs.writeShellApplication {
-              name = "zellij-start";
-              runtimeInputs = [ pkgs.zellij pkgs.git pkgs.coreutils ];
-              text = ''
-                if [[ -n "''${ZELLIJ_SESSION_NAME:-}" ]]; then
-                  session=$ZELLIJ_SESSION_NAME
-                elif root=$(git rev-parse --show-toplevel 2>/dev/null); then
-                  digest=$(printf '%s' "$root" | sha256sum)
-                  session="$(basename "$root")-''${digest:0:8}"
-                else
-                  exec zellij -l welcome
-                fi
-                # A fresh GUI terminal is a new client, not a nested multiplexer.
-                unset ZELLIJ ZELLIJ_SESSION_NAME
-                exec zellij attach --create "$session"
-              '';
-            })
           tilix
           ghostty
           kitty
@@ -627,59 +610,6 @@
             };
           };
         # programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
-        programs.zellij = {
-          enable = true;
-          enableBashIntegration = false;
-          enableFishIntegration = false;
-          enableZshIntegration = false;
-          settings = {
-            mirror_session = false;
-            on_force_close = "detach";
-            session_serialization = true;
-            default_mode = "locked";
-            default_layout = "default";
-          };
-          extraConfig = ''
-            keybinds clear-defaults=true {
-              locked {
-                bind "Ctrl g" { SwitchToMode "Normal"; }
-              }
-              normal {
-                bind "Ctrl g" { Write 7; SwitchToMode "Locked"; }
-                bind "n" { NewTab; SwitchToMode "Locked"; }
-                bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
-                bind "Left" { GoToPreviousTab; SwitchToMode "Locked"; }
-                bind "Right" { GoToNextTab; SwitchToMode "Locked"; }
-                bind "Tab" { ToggleTab; SwitchToMode "Locked"; }
-                bind "s" {
-                  LaunchOrFocusPlugin "session-manager" { floating true; move_to_focused_tab true; }
-                  SwitchToMode "Locked";
-                }
-                bind "d" { Detach; }
-                bind "v" { NewPane "Right"; SwitchToMode "Locked"; }
-                bind "h" { NewPane "Down"; SwitchToMode "Locked"; }
-                bind "o" { FocusNextPane; SwitchToMode "Locked"; }
-                bind "f" { ToggleFocusFullscreen; SwitchToMode "Locked"; }
-                bind "[" { SwitchToMode "Scroll"; }
-              }
-              scroll {
-                bind "Up" { ScrollUp; }
-                bind "Down" { ScrollDown; }
-                bind "PageUp" { PageScrollUp; }
-                bind "PageDown" { PageScrollDown; }
-              }
-              renametab {
-                bind "Esc" { UndoRenameTab; SwitchToMode "Locked"; }
-              }
-              shared_except "locked" {
-                bind "Enter" { SwitchToMode "Locked"; }
-              }
-              shared_except "locked" "renametab" {
-                bind "Esc" { SwitchToMode "Locked"; }
-              }
-            }
-          '';
-        };
           programs.tmux = {
             enable = true;
             prefix = "C-a";
