@@ -52,6 +52,18 @@ let
         --replace-fail '"emacs23-lucid",' "" \
         --replace-fail '"emacs24",' "" \
         --replace-fail '"emacs24-lucid",' ""
+      sed -i \
+        '/^        private int menu_update_delay = 500;/a\
+        private int active_menu_update_delay = 100;' \
+        lib/appmenu-wnck.vala
+      sed -i \
+        '/^        private void on_active_window_changed(Wnck.Window? prev)$/,/^        }$/c\
+        private void on_active_window_changed(Wnck.Window? prev)\
+        {\
+            reset_menu_update_timeout();\
+            delayed_menu_update_id = Timeout.add(active_menu_update_delay, menu_update_timeout);\
+        }' \
+        lib/appmenu-wnck.vala
     '';
     postFixup = ''
       mkdir -p $out/share/appmenu-schemas
