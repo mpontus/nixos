@@ -1826,9 +1826,20 @@ programs.firefox =
       default = {
         path = "v2mbprxk.default";
         settings = {
-          "widget.gtk.global-menu.enabled" = false;
+          "widget.gtk.global-menu.enabled" = true;
           "widget.gtk.global-menu.wayland.enabled" = true;
+          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
         };
+        userChrome = ''
+          /* Keep Firefox's exported menu from opening an empty local toolbar. */
+          #toolbar-menubar:has(#main-menubar[native]) {
+            display: none !important;
+          }
+          #main-window[customtitlebar] #TabsToolbar > .titlebar-buttonbox-container {
+            display: flex !important;
+            visibility: visible !important;
+          }
+        '';
       };
       work = {
         id = 1;
