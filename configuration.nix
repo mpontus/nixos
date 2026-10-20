@@ -599,7 +599,7 @@
               default = {
                 path = "v2mbprxk.default";
                 settings = {
-                  "widget.gtk.global-menu.enabled" = true;
+                  "widget.gtk.global-menu.enabled" = false;
                   "widget.gtk.global-menu.wayland.enabled" = true;
                 };
               };
