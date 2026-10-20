@@ -550,7 +550,7 @@
       ];
       package = pkgs.symlinkJoin {
         name = "emacs-with-copilot-libs";
-        paths = [ pkgs.emacs pkgs.delta ];
+        paths = [ pkgs.emacs-gtk pkgs.delta ];
         meta = pkgs.emacs.meta;
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''

@@ -46,6 +46,12 @@ let
         --replace-fail "xp.get_variable(pkgconfig:'libdir')" "get_option('libdir')"
       substituteInPlace data/meson.build \
         --replace-fail "xp.get_variable(pkgconfig:'prefix')" "get_option('prefix')"
+      substituteInPlace subprojects/appmenu-gtk-module/src/blacklist.c \
+        --replace-fail '"emacs",' "" \
+        --replace-fail '"emacs23",' "" \
+        --replace-fail '"emacs23-lucid",' "" \
+        --replace-fail '"emacs24",' "" \
+        --replace-fail '"emacs24-lucid",' ""
     '';
     postFixup = ''
       mkdir -p $out/share/appmenu-schemas
@@ -175,7 +181,7 @@ in {
   # XFCE owns native panel geometry; no Plasma shell or panel provisioning.
   environment.sessionVariables = {
     GTK_MODULES = "appmenu-gtk-module";
-    GTK_PATH = "${appmenuXfce}/lib";
+    GTK_PATH = "${appmenuXfce}/lib/gtk-3.0";
     GSETTINGS_SCHEMA_DIR = "${appmenuXfce}/share/appmenu-schemas";
     UBUNTU_MENUPROXY = "1";
   };
