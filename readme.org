@@ -1788,9 +1788,42 @@ programs.vim.enable = true;
 *** Firefox
 
 #+begin_src nix :noweb-ref home-configuration
-programs.firefox.enable = true;
-# programs.firefox.package = pkgs.unstable.firefox-unwrapped;
-programs.firefox.package = pkgs.firefox-beta.unwrapped;
+programs.firefox =
+  let
+    # Firefox's native menu loads libdbusmenu dynamically.
+    firefoxUnwrapped = pkgs.firefox-beta.unwrapped;
+    firefoxWithAppmenu = pkgs.symlinkJoin {
+      name = "firefox-beta-unwrapped-appmenu";
+      paths = [ firefoxUnwrapped ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/firefox-beta \
+          --prefix LD_LIBRARY_PATH : \
+          "${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu-gtk3 ]}"
+      '';
+      inherit (firefoxUnwrapped) applicationName binaryName gtk3 meta;
+      passthru = firefoxUnwrapped.passthru;
+    };
+  in
+  {
+    enable = true;
+    # package = pkgs.unstable.firefox-unwrapped;
+    package = firefoxWithAppmenu;
+    # Keep existing profile paths while Home Manager writes user.js.
+    profiles = {
+      default = {
+        path = "v2mbprxk.default";
+        settings = {
+          "widget.gtk.global-menu.enabled" = true;
+          "widget.gtk.global-menu.wayland.enabled" = true;
+        };
+      };
+      work = {
+        id = 1;
+        path = "emrwt21p.work";
+      };
+    };
+  };
 #+end_src
 
 #+begin_src nix :noweb-ref dconf-keymap
