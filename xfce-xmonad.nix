@@ -372,6 +372,7 @@ in {
       }
     '';
     "kitty/kitty.conf".text = ''
+      shell zellij-start
       background #131c2b
       foreground #f4effa
       allow_remote_control yes
