@@ -1479,6 +1479,20 @@ in {
       foreground #f4effa
       allow_remote_control yes
       map ctrl+shift+t new_tab_with_cwd
+      # Press F7 and then c to jump to the "cool" project
+      map f7>c goto_session ~/path/to/cool/cool.kitty-session
+      # Press F7 and then h to jump to the "hot" project
+      map f7>h goto_session ~/path/to/hot/hot.kitty-session
+      # Browse and select from the list of known projects defined via goto_session commands
+      map f7>/ goto_session
+      # Browse and select from the list of active projects defined via goto_session commands
+      map f7>/ goto_session --active-only [=no]
+      # Same as above, but the sessions are listed alphabetically instead of by most recent
+      map f7>/ goto_session --sort-by=alphabetical
+      # Browse session files inside a directory and pick one
+      map f7>p goto_session ~/.local/share/kitty/sessions
+      # Go to the previously active session (larger negative numbers jump further back in history)
+      map f7>- goto_session -1
       bell_on_tab "🔔 "
       enable_audio_bell yes
     '';
