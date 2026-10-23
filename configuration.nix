@@ -231,7 +231,7 @@
           unstable.gemini-cli
           inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
           inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-          (unstable.callPackage ./pkgs/pi-coding-agent-latest { })
+          inputs.pi-nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.pi-coding-agent
           unstable.rustc cargo wasm-pack
           guile
           unstable.gh hub

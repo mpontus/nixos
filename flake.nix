@@ -14,6 +14,7 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pi-nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
   outputs = { self, nixpkgs, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {

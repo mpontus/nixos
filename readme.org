@@ -2622,6 +2622,13 @@ inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
 ** PI
 
+Pi uses a separate nixpkgs input so its extension compatibility updates do not
+upgrade the other unstable packages.
+
+#+begin_src nix :noweb-ref inputs
+pi-nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+#+end_src
+
 #+begin_src nix :noweb-ref system-configuration
 sops.secrets.ynab_access_token = {
   owner = "mpontus";
@@ -2630,7 +2637,7 @@ sops.secrets.ynab_access_token = {
 #+end_src
 
 #+begin_src nix :noweb-ref home-packages
-(unstable.callPackage ./pkgs/pi-coding-agent-latest { })
+inputs.pi-nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.pi-coding-agent
 #+end_src
 
 ** Rust toolchain
