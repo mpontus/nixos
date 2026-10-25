@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { homedir } from "node:os";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const kittyWindowId = process.env.KITTY_WINDOW_ID;
 const project = basename(process.cwd());
@@ -126,10 +126,8 @@ export default function piKitty(pi: ExtensionAPI) {
   });
 
   pi.registerCommand("window-clone", {
-    description: "Clone the current conversation into a new Kitty tab",
+    description: "Clone the current conversation into a new Kitty tab without waiting for active work",
     handler: async (_args, ctx) => {
-      await ctx.waitForIdle();
-
       if (!terminalEnabled || !kittyWindowId) {
         ctx.ui.notify("/window-clone requires Pi to run inside Kitty.", "error");
         return;
@@ -140,7 +138,8 @@ export default function piKitty(pi: ExtensionAPI) {
         return;
       }
 
-      if (!ctx.sessionManager.getSessionFile()) {
+      const sessionFile = ctx.sessionManager.getSessionFile();
+      if (!sessionFile) {
         ctx.ui.notify("Current session is ephemeral; cannot clone it.", "error");
         return;
       }
@@ -151,7 +150,8 @@ export default function piKitty(pi: ExtensionAPI) {
         return;
       }
 
-      const clonedSession = ctx.sessionManager.createBranchedSession(leafId);
+      // Branch a separate manager so active work keeps writing to the original session.
+      const clonedSession = SessionManager.open(sessionFile).createBranchedSession(leafId);
       if (!clonedSession) {
         ctx.ui.notify("Failed to create cloned session.", "error");
         return;
