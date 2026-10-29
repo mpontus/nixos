@@ -650,7 +650,6 @@
            |body { --focused-pane-color: #b8f2e6; }
            |body[dt-dark|=dark] .dt-titlebar, body[dt-dark|=dark].focused .dt-titlebar { background-color: #131c2b; color: #f4effa; }
         '';
-        programs.zellij.enable = true;
           programs.tmux = {
             enable = true;
             prefix = "C-a";

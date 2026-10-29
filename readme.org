@@ -2096,15 +2096,6 @@ style.user =
  |body[dt-dark|=dark] .dt-titlebar, body[dt-dark|=dark].focused .dt-titlebar { background-color: #131c2b; color: #f4effa; }
 #+end_src
 
-*** Zellij
-
-Zellij remains available with its upstream defaults. No custom launcher or shell
-autostart integration is installed.
-
-#+begin_src nix :noweb-ref home-configuration
-programs.zellij.enable = true;
-#+end_src
-
 *** tmux
 #+begin_src nix :noweb-ref home-configuration
   programs.tmux = {
