@@ -640,6 +640,13 @@
             '';
             enableVteIntegration = true;
           };
+        xdg.configFile."wezterm/wezterm.lua".text = ''
+          return {
+            unix_domains = { { name = 'unix' } },
+            default_gui_startup_args = { 'connect', '--workspace', 'default', 'unix' },
+            tab_bar_at_bottom = true,
+          }
+        '';
         programs.direnv = {
           enable = true;
           nix-direnv.enable = true;

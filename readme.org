@@ -2170,12 +2170,27 @@ kitty
 
 *** WezTerm
 
-Super+Shift+Return opens WezTerm with upstream defaults. Super+Return continues
-to open Kitty. No custom appearance, key bindings, or multiplexer startup is
-configured.
+Super+Shift+Return opens a new WezTerm GUI attached to the shared local mux
+server's default workspace. The server starts on demand, so separate GUI
+processes share running terminals without a login service. Tabs appear at the
+bottom. Super+Return continues to open Kitty.
+
+Use Detach Domain to disconnect a GUI without terminating its terminals;
+closing tabs is not a substitute for detaching. Existing terminals in the
+built-in local domain are not migrated into the shared server.
 
 #+begin_src nix :noweb-ref home-packages
 wezterm
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+xdg.configFile."wezterm/wezterm.lua".text = ''
+  return {
+    unix_domains = { { name = 'unix' } },
+    default_gui_startup_args = { 'connect', '--workspace', 'default', 'unix' },
+    tab_bar_at_bottom = true,
+  }
+'';
 #+end_src
 
 *** Guake
