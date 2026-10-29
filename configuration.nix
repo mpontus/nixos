@@ -186,6 +186,25 @@
           sops
           age
           monero-gui
+          (stdenv.mkDerivation {
+            pname = "domterm";
+            version = "3.2.0-unstable-2026-10-24";
+            src = fetchFromGitHub {
+              owner = "PerBothner";
+              repo = "DomTerm";
+              rev = "f8f84bc722b992c75c126e1a4befb13ec52d1bd6";
+              hash = "sha256-HAc11GaGhBKtpqjBC9Ymr+u1abEmja4qCg2WK5lDCw4=";
+            };
+            nativeBuildInputs = [ autoreconfHook pkg-config zip xxd perl ncurses texinfo asciidoctor makeWrapper ];
+            buildInputs = [ libwebsockets file zlib openssl ];
+            configureFlags = [ "--without-qt" "--without-java" "--without-wry" "--enable-compiled-in-resources" ];
+            enableParallelBuilding = true;
+            postFixup = ''
+              wrapProgram "$out/bin/domterm" \
+                --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.electron-bin ]} \
+                --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu ]}
+            '';
+          })
           tilix
           ghostty
           kitty
@@ -621,6 +640,16 @@
             };
           };
         # programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
+        xdg.configFile."domterm/settings.ini".text = ''
+          browser.default = electron
+          style.dark = yes
+          color.background = #131c2b
+          color.foreground = #f4effa
+          style.user =
+           |div.domterm, div.domterm[dt-dark$=dark] { background: #131c2b; }
+           |body { --focused-pane-color: #b8f2e6; }
+           |body[dt-dark|=dark] .dt-titlebar, body[dt-dark|=dark].focused .dt-titlebar { background-color: #131c2b; color: #f4effa; }
+        '';
         programs.zellij.enable = true;
           programs.tmux = {
             enable = true;

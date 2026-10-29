@@ -2035,10 +2035,70 @@ monero-gui
 #+end_src
 
 ** Shell
+*** DomTerm
+
+Super+Shift+Return opens DomTerm with the Electron frontend. Super+Return
+continues to open Kitty. The launcher creates a normal shell; session handling
+and key bindings retain their upstream defaults.
+
+DomTerm is pinned and built from source because it is not packaged by either
+configured Nixpkgs input. Electron uses the binary package to avoid compiling
+Chromium. The wrapper exposes libdbusmenu for the existing Xfce global menu.
+See [[https://domterm.org/Frontends.html][frontends]] and [[https://domterm.org/Settings.html][settings]].
+
+In a disposable graphical VM with no other DomTerm frontend running, use
+=bash tests/domterm-session-regression.sh /path/to/domterm /path/to/settings.ini=
+to verify that detach/reattach preserves the same live shell. Detach explicitly;
+ordinary Close and Quit are not substitutes for detaching.
+
+#+begin_src nix :noweb-ref home-packages
+(stdenv.mkDerivation {
+  pname = "domterm";
+  version = "3.2.0-unstable-2026-10-24";
+  src = fetchFromGitHub {
+    owner = "PerBothner";
+    repo = "DomTerm";
+    rev = "f8f84bc722b992c75c126e1a4befb13ec52d1bd6";
+    hash = "sha256-HAc11GaGhBKtpqjBC9Ymr+u1abEmja4qCg2WK5lDCw4=";
+  };
+  nativeBuildInputs = [ autoreconfHook pkg-config zip xxd perl ncurses texinfo asciidoctor makeWrapper ];
+  buildInputs = [ libwebsockets file zlib openssl ];
+  configureFlags = [ "--without-qt" "--without-java" "--without-wry" "--enable-compiled-in-resources" ];
+  enableParallelBuilding = true;
+  postFixup = ''
+    wrapProgram "$out/bin/domterm" \
+      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.electron-bin ]} \
+      --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu ]}
+  '';
+})
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+xdg.configFile."domterm/settings.ini".text = ''
+  browser.default = electron
+  <<domterm-colors>>
+'';
+#+end_src
+
+**** Colors
+
+Match Kitty's background and foreground. Keep the unused terminal area solid
+rather than striped, and use the desktop's mint focus accent. Other colors,
+fonts, and terminal behavior remain at their upstream defaults.
+
+#+begin_src conf :noweb-ref domterm-colors
+style.dark = yes
+color.background = #131c2b
+color.foreground = #f4effa
+style.user =
+ |div.domterm, div.domterm[dt-dark$=dark] { background: #131c2b; }
+ |body { --focused-pane-color: #b8f2e6; }
+ |body[dt-dark|=dark] .dt-titlebar, body[dt-dark|=dark].focused .dt-titlebar { background-color: #131c2b; color: #f4effa; }
+#+end_src
+
 *** Zellij
 
-Zellij uses its upstream defaults. Super+Shift+Return opens =kitty zellij=;
-ordinary Kitty launches remain plain shells. No custom launcher or shell
+Zellij remains available with its upstream defaults. No custom launcher or shell
 autostart integration is installed.
 
 #+begin_src nix :noweb-ref home-configuration
