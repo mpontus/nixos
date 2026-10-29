@@ -2083,18 +2083,49 @@ xdg.configFile."domterm/settings.ini".text = ''
 
 **** Colors
 
-Match Kitty's background and foreground. Keep the unused terminal area solid
-rather than striped, and use the desktop's mint focus accent. Other colors,
-fonts, and terminal behavior remain at their upstream defaults.
+Match Kitty's navy background and pale foreground, with the desktop's rose
+accent and mint focus/selection colors. Keep the palette separate from the
+layout rules below.
 
 #+begin_src conf :noweb-ref domterm-colors
 style.dark = yes
 color.background = #131c2b
 color.foreground = #f4effa
+color.selection = #131c2b #b8f2e6
 style.user =
- |div.domterm, div.domterm[dt-dark$=dark] { background: #131c2b; }
- |body { --focused-pane-color: #b8f2e6; }
- |body[dt-dark|=dark] .dt-titlebar, body[dt-dark|=dark].focused .dt-titlebar { background-color: #131c2b; color: #f4effa; }
+ |body { --dt-background: #131c2b; --dt-bar: #0e1624; --dt-border: #28364a; --dt-text: #f4effa; --dt-muted: #acb6c8; --dt-accent: #b75681; --focused-pane-color: #b8f2e6; }
+ <<domterm-style>>
+#+end_src
+
+**** Tabs and spacing
+
+Use a compact, dark tab strip with a rose underline on the active tab. Show
+application titles instead of the generated DomTerm label where available;
+keep the label as a fallback for unnamed terminals. Parentheses are part of
+DomTerm's title text and remain unchanged. These selectors target the pinned
+DomTerm version's GoldenLayout markup. Terminal key bindings, menus, and
+session behavior retain their defaults.
+
+#+begin_src css :noweb-ref domterm-style
+|div.domterm, div.domterm[dt-dark$=dark] { background: var(--dt-background); padding: 10px 12px; --monospace-family: "JetBrainsMono Nerd Font", monospace; }
+|.lm_goldenlayout { --lm_border_color: var(--dt-border); --lm_splitter_drag_color: var(--dt-accent); }
+|body[dt-dark|=dark] .lm_header, body[dt-dark|=dark].focused .lm_header.lm_focused { height: 32px; background: var(--dt-bar); color: var(--dt-muted); }
+|.lm_header .lm_tabs { padding: 0 6px; align-self: stretch; }
+|.lm_header .lm_tabs .lm_tab { height: 32px; margin: 0 4px 0 0; padding: 0 28px 0 12px; border: 0; border-radius: 0; background: transparent; color: var(--dt-muted); font: 12px/32px "JetBrainsMono Nerd Font", monospace; }
+|.lm_header.lm_tight_mode .lm_tabs .lm_tab { margin-left: 0 !important; }
+|.lm_header .lm_tabs .lm_tab:hover { background: var(--dt-border); color: var(--dt-text); }
+|.lm_header .lm_tabs .lm_tab.lm_active { background: var(--dt-background); color: var(--dt-text); box-shadow: inset 0 -2px var(--dt-accent) !important; }
+|.lm_header .lm_tab .lm_title { padding: 0; line-height: 32px; }
+|.lm_header .lm_tab .lm_title:has(.domterm-windowname) { font-size: 0; }
+|.lm_header .lm_tab .lm_title span.domterm-windowname { display: inline-block !important; max-width: 240px; overflow: hidden; text-overflow: ellipsis; vertical-align: top; white-space: nowrap; color: inherit; font: 12px/32px "JetBrainsMono Nerd Font", monospace; }
+|.lm_header .lm_tab .lm_close_tab { top: 11px; right: 8px; filter: invert(1); opacity: .45; }
+|.lm_header .lm_tab:hover .lm_close_tab, .lm_header .lm_tab.lm_active .lm_close_tab { opacity: .85; }
+|.lm_header .lm_controls { top: 7px; }
+|.lm_header .lm_controls .lm_tabdropdown:before { color: var(--dt-muted); }
+|.lm_header .lm_tabdropdown_list { padding: 4px; background: var(--dt-bar); color: var(--dt-text); border: 1px solid var(--dt-border); }
+|.lm_header .lm_tabdropdown_list > .lm_title { padding: 6px 10px; border: 0; font: 12px/20px "JetBrainsMono Nerd Font", monospace; }
+|.lm_header .lm_tabdropdown_list > .lm_title:hover { background: var(--dt-border); }
+|.lm_header .lm_tabdropdown_list .domterm-windowname { color: inherit; font: inherit; }
 #+end_src
 
 *** tmux
