@@ -642,6 +642,7 @@
         # programs.firefox.package = pkgs.latest.firefox-nightly-bin.unwrapped;
         xdg.configFile."domterm/settings.ini".text = ''
           browser.default = electron
+          titlebar = system
           style.dark = yes
           color.background = #131c2b
           color.foreground = #f4effa

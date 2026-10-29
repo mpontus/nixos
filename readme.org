@@ -2076,6 +2076,7 @@ ordinary Close and Quit are not substitutes for detaching.
 #+begin_src nix :noweb-ref home-configuration
 xdg.configFile."domterm/settings.ini".text = ''
   browser.default = electron
+  titlebar = system
   <<domterm-colors>>
 '';
 #+end_src
