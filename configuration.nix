@@ -650,13 +650,15 @@
           style.user =
            |body { --dt-background: #131c2b; --dt-bar: #0e1624; --dt-border: #28364a; --dt-text: #f4effa; --dt-muted: #acb6c8; --dt-accent: #b75681; --focused-pane-color: #b8f2e6; }
            |div.domterm, div.domterm[dt-dark$=dark] { background: var(--dt-background); padding: 10px 12px; --monospace-family: "JetBrainsMono Nerd Font", monospace; }
+           |div.dt-buffers { scrollbar-width: none; }
+           |div.dt-buffers::-webkit-scrollbar { display: none; }
            |.lm_goldenlayout { --lm_border_color: var(--dt-border); --lm_splitter_drag_color: var(--dt-accent); }
            |body[dt-dark|=dark] .lm_header, body[dt-dark|=dark].focused .lm_header.lm_focused { height: 32px; background: var(--dt-bar); color: var(--dt-muted); }
            |.lm_header .lm_tabs { padding: 0 6px; align-self: stretch; }
            |.lm_header .lm_tabs .lm_tab { height: 32px; margin: 0 4px 0 0; padding: 0 28px 0 12px; border: 0; border-radius: 0; background: transparent; color: var(--dt-muted); font: 12px/32px "JetBrainsMono Nerd Font", monospace; }
            |.lm_header.lm_tight_mode .lm_tabs .lm_tab { margin-left: 0 !important; }
-           |.lm_header .lm_tabs .lm_tab:hover { background: var(--dt-border); color: var(--dt-text); }
-           |.lm_header .lm_tabs .lm_tab.lm_active { background: var(--dt-background); color: var(--dt-text); box-shadow: inset 0 -2px var(--dt-accent) !important; }
+           |.lm_header .lm_tabs .lm_tab:hover { background: transparent; color: var(--dt-text); }
+           |.lm_header .lm_tabs .lm_tab.lm_active { background: transparent; color: var(--dt-text); box-shadow: none !important; }
            |.lm_header .lm_tab .lm_title { padding: 0; line-height: 32px; }
            |.lm_header .lm_tab .lm_title:has(.domterm-windowname) { font-size: 0; }
            |.lm_header .lm_tab .lm_title span.domterm-windowname { display: inline-block !important; max-width: 240px; overflow: hidden; text-overflow: ellipsis; vertical-align: top; white-space: nowrap; color: inherit; font: 12px/32px "JetBrainsMono Nerd Font", monospace; }
@@ -666,7 +668,7 @@
            |.lm_header .lm_controls .lm_tabdropdown:before { color: var(--dt-muted); }
            |.lm_header .lm_tabdropdown_list { padding: 4px; background: var(--dt-bar); color: var(--dt-text); border: 1px solid var(--dt-border); }
            |.lm_header .lm_tabdropdown_list > .lm_title { padding: 6px 10px; border: 0; font: 12px/20px "JetBrainsMono Nerd Font", monospace; }
-           |.lm_header .lm_tabdropdown_list > .lm_title:hover { background: var(--dt-border); }
+           |.lm_header .lm_tabdropdown_list > .lm_title:hover { background: transparent; }
            |.lm_header .lm_tabdropdown_list .domterm-windowname { color: inherit; font: inherit; }
         '';
           programs.tmux = {
