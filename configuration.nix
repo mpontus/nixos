@@ -195,10 +195,12 @@
               rev = "f8f84bc722b992c75c126e1a4befb13ec52d1bd6";
               hash = "sha256-HAc11GaGhBKtpqjBC9Ymr+u1abEmja4qCg2WK5lDCw4=";
             };
-            nativeBuildInputs = [ autoreconfHook pkg-config zip xxd perl ncurses texinfo asciidoctor makeWrapper ];
+            patches = [ ./domterm-tabs.patch ];
+            nativeBuildInputs = [ autoreconfHook pkg-config zip xxd perl ncurses texinfo asciidoctor groff makeWrapper ];
             buildInputs = [ libwebsockets file zlib openssl ];
             configureFlags = [ "--without-qt" "--without-java" "--without-wry" "--enable-compiled-in-resources" ];
-            enableParallelBuilding = true;
+            # Upstream invokes tic twice against the same output directory.
+            enableParallelBuilding = false;
             postFixup = ''
               wrapProgram "$out/bin/domterm" \
                 --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.electron-bin ]} \
@@ -643,16 +645,19 @@
         xdg.configFile."domterm/settings.ini".text = ''
           browser.default = electron
           titlebar = system
+          keymap.master =
+           | "Ctrl+Tab": select-tab-next
+           | "Ctrl+Shift+Tab": select-tab-previous
           style.dark = yes
           color.background = #131c2b
           color.foreground = #f4effa
           color.selection = #131c2b #b8f2e6
           style.user =
            |body { --dt-background: #131c2b; --dt-bar: #0e1624; --dt-border: #28364a; --dt-text: #f4effa; --dt-muted: #acb6c8; --dt-accent: #b75681; --focused-pane-color: #b8f2e6; background: var(--dt-background); }
-           |div.domterm, div.domterm[dt-dark$=dark] { background: var(--dt-background); padding: 10px 12px; --monospace-family: "JetBrainsMono Nerd Font", monospace; font: 15px/1.55 "Noto Sans", sans-serif; }
+           |div.domterm, div.domterm[dt-dark$=dark] { background: var(--dt-background); padding: 10px 12px; --monospace-family: monospace; font: 15px/1.55 system-ui, sans-serif; }
            |div.domterm-pre { font: 15px/1.4 var(--monospace-family); }
            |div.domterm :is(pre, code, kbd, samp) { font-family: var(--monospace-family); font-size: 14px; }
-           |div.domterm :is(h1, h2, h3) { font-family: "Noto Sans", sans-serif; font-weight: 600; line-height: 1.3; margin: .8em 0 .35em; }
+           |div.domterm :is(h1, h2, h3) { font-family: system-ui, sans-serif; font-weight: 600; line-height: 1.3; margin: .8em 0 .35em; }
            |div.domterm h1 { font-size: 1.5em; }
            |div.domterm h2 { font-size: 1.25em; }
            |div.domterm h3 { font-size: 1.1em; }
@@ -664,21 +669,24 @@
            |.lm_goldenlayout { --lm_border_color: var(--dt-border); --lm_splitter_drag_color: var(--dt-accent); }
            |body[dt-dark|=dark] .lm_header, body[dt-dark|=dark].focused .lm_header.lm_focused { height: 32px; background: var(--dt-bar); color: var(--dt-muted); }
            |.lm_header .lm_tabs { padding: 0 6px; align-self: stretch; }
-           |.lm_header .lm_tabs .lm_tab { height: 32px; margin: 0 4px 0 0; padding: 0 28px 0 12px; border: 0; border-radius: 0; background: transparent; color: var(--dt-muted); font: 13px/32px "Noto Sans", sans-serif; }
+           |.lm_header .lm_tabs .lm_tab { height: 32px; margin: 0 4px 0 0; padding: 0 28px 0 12px; border: 0; border-radius: 0; background: transparent; color: var(--dt-muted); font: 13px/32px system-ui, sans-serif; }
            |.lm_header.lm_tight_mode .lm_tabs .lm_tab { margin-left: 0 !important; }
            |.lm_header .lm_tabs .lm_tab:hover { background: transparent; color: var(--dt-text); }
            |.lm_header .lm_tabs .lm_tab.lm_active { background: transparent; color: var(--dt-text); box-shadow: none !important; }
            |.lm_header .lm_tab .lm_title { padding: 0; line-height: 32px; }
            |.lm_header .lm_tab .lm_title:has(.domterm-windowname) { font-size: 0; }
-           |.lm_header .lm_tab .lm_title span.domterm-windowname { display: inline-block !important; max-width: 240px; overflow: hidden; text-overflow: ellipsis; vertical-align: top; white-space: nowrap; color: inherit; font: 13px/32px "Noto Sans", sans-serif; }
+           |.lm_header .lm_tab .lm_title span.domterm-windowname { display: inline-block !important; max-width: 240px; overflow: hidden; text-overflow: ellipsis; vertical-align: top; white-space: nowrap; color: inherit; font: 13px/32px system-ui, sans-serif; }
            |.lm_header .lm_tab .lm_close_tab { top: 11px; right: 8px; filter: invert(1); opacity: .45; }
            |.lm_header .lm_tab:hover .lm_close_tab, .lm_header .lm_tab.lm_active .lm_close_tab { opacity: .85; }
            |.lm_header .lm_controls { top: 7px; }
            |.lm_header .lm_controls .lm_tabdropdown:before { color: var(--dt-muted); }
            |.lm_header .lm_tabdropdown_list { padding: 4px; background: var(--dt-bar); color: var(--dt-text); border: 1px solid var(--dt-border); }
-           |.lm_header .lm_tabdropdown_list > .lm_title { padding: 6px 10px; border: 0; font: 13px/20px "Noto Sans", sans-serif; }
+           |.lm_header .lm_tabdropdown_list > .lm_title { padding: 6px 10px; border: 0; font: 13px/20px system-ui, sans-serif; }
            |.lm_header .lm_tabdropdown_list > .lm_title:hover { background: transparent; }
            |.lm_header .lm_tabdropdown_list .domterm-windowname { color: inherit; font: inherit; }
+           |.lm_stack > .lm_header { position: absolute; bottom: 0; }
+           |.lm_stack > .lm_items { position: absolute; top: 0; right: 0; bottom: 32px; left: 0; }
+           |.lm_stack .lm_header .lm_tabdropdown_list { top: auto; bottom: 32px; }
         '';
           programs.tmux = {
             enable = true;

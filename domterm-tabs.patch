@@ -1,0 +1,28 @@
+diff --git a/hlib/commands.js b/hlib/commands.js
+index 855768d..57a0974 100644
+--- a/hlib/commands.js
++++ b/hlib/commands.js
+@@ -99,0 +100,15 @@ cmd('new-window', // FIXME needed
++function selectTab(forwards) {
++    const layout = DomTerm._layout;
++    const item = layout?._numberToLayoutItem(DomTerm.focusedWindowNumber);
++    const stack = item?.parent;
++    if (stack?.type === 'stack') {
++        const tabs = stack.contentItems;
++        const step = forwards ? 1 : -1;
++        const index = (tabs.indexOf(item) + step + tabs.length) % tabs.length;
++        layout._selectLayoutPane(tabs[index], "keyboard");
++    }
++    return true;
++}
++cmd('select-tab-next', () => selectTab(true), {context: "parent"});
++cmd('select-tab-previous', () => selectTab(false), {context: "parent"});
++
+diff --git a/hlib/domterm-layout.js b/hlib/domterm-layout.js
+index 1b8868e..1aa3c64 100644
+--- a/hlib/domterm-layout.js
++++ b/hlib/domterm-layout.js
+@@ -284,0 +285 @@ DomTermLayout.config = {
++    header: { show: 'bottom' },
+@@ -296,0 +298 @@ DomTermLayout.config = {
++        headerHeight: 32,
