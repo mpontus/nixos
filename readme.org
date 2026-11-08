@@ -575,6 +575,17 @@ services.openssh = {
 };
 #+end_src
 
+** Tailscale diagnostic access
+
+Use ordinary SSH over Tailscale from the iPhone to check responsiveness during
+freezes. Authenticate interactively with ~sudo tailscale up~ after activation;
+no enrollment credentials are stored here. Tailscale SSH and routing remain off.
+This does not restrict existing SSH access: the host firewall is currently disabled.
+
+#+begin_src nix :noweb-ref system-configuration
+services.tailscale.enable = true;
+#+end_src
+
 ** Virtualization
 #+begin_src nix :noweb-ref system-packages
 pkgs.virt-manager

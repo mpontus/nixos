@@ -800,6 +800,7 @@
         PermitRootLogin = "prohibit-password"; # "yes", "without-password", "prohibit-password", "forced-commands-only", "no"
       };
     };
+    services.tailscale.enable = true;
     virtualisation.libvirtd.enable = true;
     environment.variables = {
         QEMU_OPTS = "-m 4096 -smp 4 -enable-kvm";
