@@ -689,6 +689,8 @@
       # Use the systemd-boot EFI boot loader.
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
+      # Trial workaround for Intel display freezes; keep other power settings unchanged.
+      boot.kernelParams = [ "i915.enable_psr=0" ];
       boot.kernelModules = [
         "kvm-intel" "kvm-amd"
         "pcspkr"
