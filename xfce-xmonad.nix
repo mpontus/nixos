@@ -377,6 +377,10 @@ in {
       foreground #f4effa
       allow_remote_control yes
       map ctrl+shift+t new_tab_with_cwd
+      # Herdr owns tab shortcuts only while its outer title carries this marker.
+      map --when-focus-on title:^herdr: ctrl+shift+t
+      map --when-focus-on title:^herdr: ctrl+tab
+      map --when-focus-on title:^herdr: ctrl+shift+tab
       # Press F7 and then c to jump to the "cool" project
       map f7>c goto_session ~/path/to/cool/cool.kitty-session
       # Press F7 and then h to jump to the "hot" project
