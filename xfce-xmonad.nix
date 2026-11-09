@@ -239,6 +239,7 @@ in {
   # Apply through xfconf, not its mutable XML cache.
   home-manager.users.mpontus.xfconf.settings = {
     keyboard-layout."Default/XkbDisable" = true;
+    xfce4-session."general/SaveOnExit" = false;
     xfce4-keyboard-shortcuts."commands/custom/Print" = "flameshot gui";
     xfce4-panel."plugins/plugin-15/display-type" = {
       type = "uint";
