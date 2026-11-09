@@ -152,7 +152,7 @@
         "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
       ];
     };
-      home-manager.users.mpontus = { config, pkgs, ... }: {
+      home-manager.users.mpontus = { config, lib, pkgs, ... }: {
         imports = [
           
         ];
@@ -231,6 +231,8 @@
           unstable.gemini-cli
           inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
           inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+          inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default
+          python3
           inputs.pi-nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.pi-coding-agent
           unstable.rustc cargo wasm-pack
           guile
@@ -651,6 +653,13 @@
           enable = true;
           nix-direnv.enable = true;
         };
+        home.activation.herdrIntegrations =
+          let herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          in lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+            run ${pkgs.coreutils}/bin/mkdir -m 700 -p "$HOME/.codex" "$HOME/.pi/agent"
+            run ${pkgs.coreutils}/bin/env CODEX_HOME="$HOME/.codex" ${herdr}/bin/herdr integration install codex
+            run ${pkgs.coreutils}/bin/env PI_CODING_AGENT_DIR="$HOME/.pi/agent" ${herdr}/bin/herdr integration install pi
+          '';
         programs.vscode = {
           enable = false;
           package = pkgs.unstable.vscode;

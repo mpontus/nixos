@@ -150,7 +150,7 @@ inputs.home-manager.nixosModules.home-manager
 Configure home environment
 
 #+begin_src nix :noweb-ref system-configuration
-  home-manager.users.mpontus = { config, pkgs, ... }: {
+  home-manager.users.mpontus = { config, lib, pkgs, ... }: {
     imports = [
       <<home-import-files>>
     ];
@@ -226,6 +226,7 @@ nix.package = pkgs.nixVersions.git;
 nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 codex-cli-nix.url = "github:sadjow/codex-cli-nix";
 claude-code-nix.url = "github:sadjow/claude-code-nix";
+herdr.url = "github:herdrdev/herdr";
 #+end_src
 
 ** sops-nix
@@ -2642,6 +2643,33 @@ inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
 #+begin_src nix :noweb-ref home-packages
 inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+#+end_src
+
+** Herdr
+
+Terminal multiplexer for AI coding agents ([[https://herdr.dev][herdr.dev]]), built from its own flake.
+
+Home Manager installs the official Codex and Pi integrations from that same pinned
+package on activation. The upstream installers preserve unrelated Codex settings
+and hooks, and refresh the generated Pi extension even when its agent directory
+is a symlink. Python is required by the Codex session hook. No agents or Herdr
+server are started; resume conversations inside Herdr to associate them with panes.
+Removing this activation entry does not uninstall the integrations; use
+~herdr integration uninstall codex~ and ~herdr integration uninstall pi~ for that.
+
+#+begin_src nix :noweb-ref home-packages
+inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default
+python3
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+home.activation.herdrIntegrations =
+  let herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  in lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    run ${pkgs.coreutils}/bin/mkdir -m 700 -p "$HOME/.codex" "$HOME/.pi/agent"
+    run ${pkgs.coreutils}/bin/env CODEX_HOME="$HOME/.codex" ${herdr}/bin/herdr integration install codex
+    run ${pkgs.coreutils}/bin/env PI_CODING_AGENT_DIR="$HOME/.pi/agent" ${herdr}/bin/herdr integration install pi
+  '';
 #+end_src
 
 ** PI
