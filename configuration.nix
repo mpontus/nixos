@@ -104,6 +104,8 @@
           "code" "vscode"
           "cursor"
           "postman"
+          # Dropbox's FHS environment includes Firefox for account linking.
+          "dropbox" "firefox-bin" "firefox-bin-unwrapped"
           "ngrok"
             "Oracle_VirtualBox_Extension_Pack" "virtualbox-extpack"
             "steam" "steam-unwrapped"
@@ -126,6 +128,8 @@
       "code" "vscode"
       "cursor"
       "postman"
+      # Dropbox's FHS environment includes Firefox for account linking.
+      "dropbox" "firefox-bin" "firefox-bin-unwrapped"
       "ngrok"
         "Oracle_VirtualBox_Extension_Pack" "virtualbox-extpack"
         "steam" "steam-unwrapped"
@@ -237,6 +241,7 @@
           unstable.rustc cargo wasm-pack
           guile
           unstable.gh hub
+          dropbox
           deno
           mitmproxy
           docker-compose
@@ -675,6 +680,20 @@
           };
         };
     
+        systemd.user.services.dropbox = {
+          Unit = {
+            Description = "Dropbox local-folder synchronization";
+            Conflicts = [ "rclone-dropbox.service" ];
+            ConditionPathIsMountPoint = "!%h/Dropbox";
+          };
+          Service = {
+            ExecStart = "${pkgs.dropbox}/bin/dropbox";
+            Restart = "on-failure";
+            RestartSec = "10s";
+          };
+          Install = { WantedBy = [ "default.target" ]; };
+        };
+
         home.stateVersion = "18.09";
       };
     home-manager.useGlobalPkgs = true;

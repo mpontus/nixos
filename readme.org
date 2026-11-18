@@ -2868,6 +2868,44 @@ programs.gnupg.agent = {
     enableSshSupport = true;
   };
 #+end_src
+** Dropbox synchronization
+
+Use the official Dropbox client to synchronize real local files in ~/Dropbox.
+Agent symlinks point into this directory; their targets remain available when
+Dropbox is stopped or the network is offline. Keep agent folders included in
+local sync. Cloud quota errors still prevent uploads; synchronization is not a
+backup against deletions or conflicting edits.
+
+The [[https://wiki.nixos.org/wiki/Dropbox][NixOS Dropbox package]] bootstraps the self-updating Linux client. On first
+start, complete the Dropbox account-linking prompt. Before replacing an existing
+mount, stop it and reconcile its cloud data, write cache, and underlying local
+files without overwriting newer conversations. Keep a separate recovery copy.
+
+#+begin_src nix :noweb-ref home-packages
+dropbox
+#+end_src
+
+#+begin_src nix :noweb-ref unfree-packages
+# Dropbox's FHS environment includes Firefox for account linking.
+"dropbox" "firefox-bin" "firefox-bin-unwrapped"
+#+end_src
+
+#+begin_src nix :noweb-ref home-configuration
+  systemd.user.services.dropbox = {
+    Unit = {
+      Description = "Dropbox local-folder synchronization";
+      Conflicts = [ "rclone-dropbox.service" ];
+      ConditionPathIsMountPoint = "!%h/Dropbox";
+    };
+    Service = {
+      ExecStart = "${pkgs.dropbox}/bin/dropbox";
+      Restart = "on-failure";
+      RestartSec = "10s";
+    };
+    Install = { WantedBy = [ "default.target" ]; };
+  };
+#+end_src
+
 ** Deno
 #+begin_src nix :noweb-ref home-packages
 deno
