@@ -1748,7 +1748,7 @@ vterm
 services.emacs = {
   enable = true;
   socketActivation.enable = true;
-  defaultEditor = true;
+  defaultEditor = false;
 };
 #+end_src
 
@@ -1828,6 +1828,7 @@ Github-styled markdown previewer.
 **** Default editor
 #+begin_src nix :noweb-ref system-configuration
 programs.vim.enable = true;
+programs.vim.defaultEditor = true;
 #+end_src
 ** Browser
 *** Firefox
