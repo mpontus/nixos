@@ -716,8 +716,9 @@
     home.stateVersion = "18.09";
   };
   nix.package = pkgs.nixVersions.git;
-  sops.defaultSopsFile = ./secrets/ynab.yaml;
-  sops.age.keyFile = "/home/mpontus/.config/sops/age/keys.txt";
+  # YNAB integration temporarily disabled: this laptop has no decryption key.
+  # sops.defaultSopsFile = ./secrets/ynab.yaml;
+  # sops.age.keyFile = "/home/mpontus/.config/sops/age/keys.txt";
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -964,10 +965,11 @@
           '';
   };
   environment.localBinInPath = true;
-  sops.secrets.ynab_access_token = {
-    owner = "mpontus";
-    mode = "0400";
-  };
+  # Re-enable together with the YNAB SOPS file and age key configuration.
+  # sops.secrets.ynab_access_token = {
+  #   owner = "mpontus";
+  #   mode = "0400";
+  # };
   # See https://github.com/sfackler/rust-openssl/issues/1663#issuecomment-1603606249
   environment.variables = {
     PKG_CONFIG_PATH = [ "${pkgs.openssl.dev}/lib/pkgconfig" "${pkgs.zlib.dev}/lib/pkgconfig" ];
