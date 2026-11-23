@@ -697,7 +697,11 @@
     home.stateVersion = "18.09";
   };
   home-manager.useGlobalPkgs = true;
-  home-manager.backupFileExtension = "hm-backup";
+  # Preserve previous backups when XFCE rewrites Home Manager-managed files.
+  home-manager.backupCommand = "${pkgs.writeShellScript "home-manager-backup" ''
+    set -eu
+    exec ${pkgs.coreutils}/bin/mv --backup=numbered --no-target-directory -- "$1" "$1.hm-backup"
+  ''}";
   home-manager.users.er = { pkgs, ... }: {
     imports = [
       
