@@ -767,7 +767,7 @@
     };
   };
   boot.kernelModules = [
-    "kvm-intel" "kvm-amd"
+    "kvm-intel"
     "pcspkr"
   ];
   boot.supportedFilesystems = [ "ntfs" ];
