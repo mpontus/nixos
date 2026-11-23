@@ -5,8 +5,8 @@
 
 {
   imports =
-    [ # include the results of the hardware scan.
-      ./hardware-configuration.nix
+    [ # Machine-local hardware scan; flake builds require --impure.
+      /etc/nixos/hardware-configuration.nix
       # ./pia-openvpn.nix
       # ./cachix.nix
       ./xfce-xmonad.nix
@@ -690,6 +690,8 @@
       Install = { WantedBy = [ "default.target" ]; };
     };
   
+    # Avoid legacy environment-derived XDG paths when building with --impure.
+    xdg.enable = true;
     home.stateVersion = "18.09";
   };
   home-manager.useGlobalPkgs = true;
