@@ -1009,20 +1009,6 @@
   virtualisation.docker.enable = true;
   users.extraGroups.docker.members = ["mpontus"];
   virtualisation.docker.liveRestore = false;
-  virtualisation.oci-containers = {
-    backend = "docker";
-    containers.obkio = {
-      image = "obkio/supervisor:latest";
-      autoStart = true;
-      privileged = true;
-      environment = {
-        AGENT_ID = "57626538";
-        AGENT_SECRET_KEY = "Eqm87EwtARsTgDEUXxbboOmvWRj_AG0-axMHZlUvXTGs6O7yFVS3FNx7LM30k5TN";
-      };
-      volumes = [ "/var/lib/obkio:/opt/obkio" ];
-      extraOptions = [ "--network=host" ];
-    };
-  };
   networking.firewall.allowedTCPPorts = [ 6443 ];
   services.k3s = {
     enable = false;
