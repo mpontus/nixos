@@ -656,10 +656,13 @@
       nix-direnv.enable = true;
     };
     home.activation.herdrIntegrations =
-      let herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      let
+        herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        codex = inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       in lib.hm.dag.entryAfter [ "linkGeneration" ] ''
         run ${pkgs.coreutils}/bin/mkdir -m 700 -p "$HOME/.codex" "$HOME/.pi/agent"
         run ${pkgs.coreutils}/bin/env CODEX_HOME="$HOME/.codex" ${herdr}/bin/herdr integration install codex
+        run ${pkgs.coreutils}/bin/env CODEX_HOME="$HOME/.codex" ${codex}/bin/codex features disable daemon_auto_start
         run ${pkgs.coreutils}/bin/env PI_CODING_AGENT_DIR="$HOME/.pi/agent" ${herdr}/bin/herdr integration install pi
       '';
     programs.vscode = {

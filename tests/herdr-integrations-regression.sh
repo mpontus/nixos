@@ -18,7 +18,7 @@ unset DRY_RUN
 
 mkdir -p "$HOME/.codex" "$HOME/.pi" "$HOME/pi-config/agent/extensions"
 ln -s ../pi-config/agent "$HOME/.pi/agent"
-printf 'model = "keep-me"\n[features]\nshell_snapshot = false\n' > "$HOME/.codex/config.toml"
+printf 'model = "keep-me"\n[features]\nshell_snapshot = false\ndaemon_auto_start = true\n' > "$HOME/.codex/config.toml"
 printf '%s\n' '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo keep-existing-hook"}]}]}}' > "$HOME/.codex/hooks.json"
 chmod 600 "$HOME/.codex/config.toml" "$HOME/.codex/hooks.json"
 printf '// keep-existing-extension\n' > "$HOME/.pi/agent/extensions/existing.ts"
@@ -35,6 +35,7 @@ config = tomllib.loads((home / ".codex/config.toml").read_text())
 assert config["model"] == "keep-me"
 assert config["features"]["shell_snapshot"] is False
 assert config["features"]["hooks"] is True
+assert config["features"]["daemon_auto_start"] is False
 assert (home / ".codex/config.toml").stat().st_mode & 0o777 == 0o600
 assert (home / ".codex/hooks.json").stat().st_mode & 0o777 == 0o600
 hooks = json.loads((home / ".codex/hooks.json").read_text())
@@ -65,7 +66,9 @@ python3 - <<'PY'
 from pathlib import Path
 import tomllib
 home = Path.home()
-assert tomllib.loads((home / ".codex/config.toml").read_text())["features"]["hooks"] is True
+config = tomllib.loads((home / ".codex/config.toml").read_text())
+assert config["features"]["hooks"] is True
+assert config["features"]["daemon_auto_start"] is False
 assert (home / ".codex").stat().st_mode & 0o777 == 0o700
 assert (home / ".pi/agent").stat().st_mode & 0o777 == 0o700
 PY
