@@ -96,7 +96,7 @@
       system = "x86_64-linux";
       config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         "corefonts"
-        "upwork"
+        "upwork" "upwork_5.8.0.35_amd64.deb"
         "slack"
         "discord"
         "amazon-q-cli"
@@ -120,7 +120,7 @@
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "corefonts"
-    "upwork"
+    "upwork" "upwork_5.8.0.35_amd64.deb"
     "slack"
     "discord"
     "amazon-q-cli"
@@ -193,7 +193,6 @@
       wezterm
       guake
       unstable.upwork
-      (callPackage ./pkgs/upwork-wayland { upwork = unstable.upwork; })
       (callPackage ./pkgs/toptracker { })
       (unstable.slack.overrideAttrs (old: {
         postInstall = (old.postInstall or "") + ''
