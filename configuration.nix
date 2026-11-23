@@ -575,7 +575,7 @@
     services.emacs = {
       enable = true;
       socketActivation.enable = true;
-      defaultEditor = true;
+      defaultEditor = false;
     };
     programs.firefox =
       let
@@ -896,6 +896,7 @@
   };
   services.usbmuxd.enable = true;
   programs.vim.enable = true;
+  programs.vim.defaultEditor = true;
   programs.fish.enable = true;
   # Enable `locate` command
   services.locate = {
