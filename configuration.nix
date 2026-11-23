@@ -717,8 +717,55 @@
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.kernel.sysctl = {
+    "kernel.watchdog" = 1;
+    "kernel.nmi_watchdog" = 1;
+    "kernel.hardlockup_panic" = 1;
+    "kernel.softlockup_panic" = 1;
+    "kernel.panic" = 30;
+    "kernel.sysrq" = 184;
+  };
   # Trial workaround for Intel display freezes; keep other power settings unchanged.
-  boot.kernelParams = [ "i915.enable_psr=0" ];
+  boot.kernelParams = [ "efi_pstore.pstore_disable=0" "i915.enable_psr=0" ];
+  # NixOS already enables systemd-pstore; retain dumps on disk after reboot.
+  environment.etc."systemd/pstore.conf".text = ''
+    [PStore]
+    Storage=external
+    Unlink=yes
+  '';
+  services.journald.extraConfig = ''
+    Storage=persistent
+    SyncIntervalSec=15s
+    SystemMaxUse=1G
+  '';
+  systemd.services.freeze-diagnostics = {
+    description = "Record power and thermal context for freeze diagnosis";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "nobody";
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+    };
+    script = ''
+      for f in /sys/class/power_supply/*/{online,status,capacity,voltage_now,current_now,power_now} \
+               /sys/class/thermal/thermal_zone*/{type,temp} \
+               /proc/pressure/{cpu,memory,io} /proc/loadavg; do
+        if [ -r "$f" ]; then
+          printf '%s: ' "$f"
+          ${pkgs.coreutils}/bin/cat "$f"
+        fi
+      done
+    '';
+  };
+  systemd.timers.freeze-diagnostics = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "1min";
+      OnUnitActiveSec = "1min";
+      AccuracySec = "5s";
+    };
+  };
   boot.kernelModules = [
     "kvm-intel" "kvm-amd"
     "pcspkr"
