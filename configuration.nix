@@ -953,7 +953,7 @@
   services.locate = {
     enable = true;
     locate = pkgs.mlocate;
-    interval = "1h";
+    interval = "hourly";
   };
   programs.npm = {
           enable = true;
