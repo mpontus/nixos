@@ -5,7 +5,7 @@
     xorg.libX11
     xorg.libXScrnSaver
     gtk2
-    libappindicator-gtk2
+    libappindicator
     qt5.qtbase
     qt5.qtsvg
     qt5.qtmultimedia
