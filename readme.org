@@ -37,6 +37,10 @@
       <<insecure-packages>>
     ];
 
+    # gtk2 is marked broken (removal in 27.05); allow until local prebuilt
+    # packages (toptracker, ipfs-desktop) drop their gtk2 runtime deps.
+    nixpkgs.config.problems.handlers."gtk+".broken = "warn";
+
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
       <<unfree-packages>>
     ];
@@ -871,7 +875,6 @@ gruvbox-dark-gtk
 nordic
 orchis-theme
 pop-gtk-theme
-rose-pine-gtk-theme
 tokyonight-gtk-theme
 #+end_src
 
@@ -1843,13 +1846,13 @@ programs.vim.defaultEditor = true;
 programs.firefox =
   let
     # Firefox's native menu loads libdbusmenu dynamically.
-    firefoxUnwrapped = pkgs.firefox-beta.unwrapped;
+    firefoxUnwrapped = pkgs.firefox.unwrapped;
     firefoxWithAppmenu = pkgs.symlinkJoin {
-      name = "firefox-beta-unwrapped-appmenu";
+      name = "firefox-unwrapped-appmenu";
       paths = [ firefoxUnwrapped ];
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
-        wrapProgram $out/bin/firefox-beta \
+        wrapProgram $out/bin/firefox \
           --prefix LD_LIBRARY_PATH : \
           "${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu-gtk3 ]}"
       '';
@@ -2360,7 +2363,7 @@ discord
 #+end_src
 
 #+begin_src nix :noweb-ref unfree-packages
-"discord"
+"discord" "discord-unwrapped"
 #+end_src
 *** COMMENT Bluejeans
 
@@ -2460,7 +2463,7 @@ unstable.rclone
 Search text in files.
 
 #+begin_src nix :noweb-ref home-packages
-silver-searcher
+silver-searcher-ng
 #+end_src
 
 *** ripgrep
@@ -2859,7 +2862,7 @@ gnumake gcc binutils cmake
 programs.gnupg.agent = {
   enable = true;
   enableSSHSupport = true;
-  pinentryPackage = pkgs.pinentry-gtk2;
+  pinentryPackage = pkgs.pinentry-qt;
 };
 #+end_src
   gnupg

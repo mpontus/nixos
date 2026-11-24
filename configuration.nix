@@ -55,7 +55,6 @@
     nordic
     orchis-theme
     pop-gtk-theme
-    rose-pine-gtk-theme
     tokyonight-gtk-theme
     ly
     evtest
@@ -98,7 +97,7 @@
         "corefonts"
         "upwork" "upwork_5.8.0.35_amd64.deb"
         "slack"
-        "discord"
+        "discord" "discord-unwrapped"
         "amazon-q-cli"
         "claude-code"
         "code" "vscode"
@@ -118,11 +117,15 @@
     "nodejs-16.20.2"
   ];
 
+  # gtk2 is marked broken (removal in 27.05); allow until local prebuilt
+  # packages (toptracker, ipfs-desktop) drop their gtk2 runtime deps.
+  nixpkgs.config.problems.handlers."gtk+".broken = "warn";
+
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "corefonts"
     "upwork" "upwork_5.8.0.35_amd64.deb"
     "slack"
-    "discord"
+    "discord" "discord-unwrapped"
     "amazon-q-cli"
     "claude-code"
     "code" "vscode"
@@ -213,7 +216,7 @@
       unzip
       sshfs
       unstable.rclone
-      silver-searcher
+      silver-searcher-ng
       ripgrep
       fd
       jq
@@ -580,13 +583,13 @@
     programs.firefox =
       let
         # Firefox's native menu loads libdbusmenu dynamically.
-        firefoxUnwrapped = pkgs.firefox-beta.unwrapped;
+        firefoxUnwrapped = pkgs.firefox.unwrapped;
         firefoxWithAppmenu = pkgs.symlinkJoin {
-          name = "firefox-beta-unwrapped-appmenu";
+          name = "firefox-unwrapped-appmenu";
           paths = [ firefoxUnwrapped ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
-            wrapProgram $out/bin/firefox-beta \
+            wrapProgram $out/bin/firefox \
               --prefix LD_LIBRARY_PATH : \
               "${pkgs.lib.makeLibraryPath [ pkgs.libdbusmenu-gtk3 ]}"
           '';
@@ -739,11 +742,11 @@
     Storage=external
     Unlink=yes
   '';
-  services.journald.extraConfig = ''
-    Storage=persistent
-    SyncIntervalSec=15s
-    SystemMaxUse=1G
-  '';
+  services.journald.settings.Journal = {
+    Storage = "persistent";
+    SyncIntervalSec = "15s";
+    SystemMaxUse = "1G";
+  };
   systemd.services.freeze-diagnostics = {
     description = "Record power and thermal context for freeze diagnosis";
     serviceConfig = {
@@ -1000,7 +1003,7 @@
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
-    pinentryPackage = pkgs.pinentry-gtk2;
+    pinentryPackage = pkgs.pinentry-qt;
   };
   networking.extraHosts = ''
     127.0.0.1 localhost
