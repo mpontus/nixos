@@ -746,6 +746,12 @@ Enable literate configuration for dconf settings and keymap
   );
 #+end_src
 
+*** Desktop color scheme
+
+#+begin_src nix :noweb-ref dconf-settings
+  "org/gnome/desktop/interface".color-scheme = "prefer-dark";
+#+end_src
+
 *** Disable warning message when opening GUI
 
 #+begin_src nix :noweb-ref dconf-settings

@@ -271,6 +271,7 @@
   
   
     dconf.settings = {
+      "org/gnome/desktop/interface".color-scheme = "prefer-dark";
       "ca/desrt/dconf-editor" = { show-warning = false; };
       "org/gnome/shell" = {
         enabled-extensions = [
