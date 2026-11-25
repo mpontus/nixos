@@ -1,11 +1,16 @@
 { pkgs ? import <nixpkgs> {} }: with pkgs; let
+  # gtk2 appindicator stack was removed from current nixpkgs (GTK 2 deprecation);
+  # pin an old nixpkgs just for the runtime library.
+  legacy = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/refs/heads/nixos-23.11.tar.gz";
+  }) {};
   deps = [
     stdenv.cc.cc
     glib
     xorg.libX11
     xorg.libXScrnSaver
     gtk2
-    libappindicator
+    legacy.libappindicator-gtk2
     qt5.qtbase
     qt5.qtsvg
     qt5.qtmultimedia
